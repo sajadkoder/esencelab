@@ -455,12 +455,10 @@ If you encounter any issues:
 
 This project was built by an amazing team:
 
-- **Sajad K** - Lead Developer
+- **Sajad** - Lead Developer
 - **Harikrishnan K** - Frontend & UX Developer
 - **Adwaith PC** - Documentation & Backend Support
 - **Jishnu MR** - Testing, Research & Analytics
-- **Adwaith P C** - UI/UX Design
-- **Jishnu M R** - Full Stack Developer
 
 ---
 
