@@ -441,6 +441,8 @@ If you encounter any issues:
 
 ## Acknowledgments
 
+### Technology Credits
+
 - [React](https://react.dev) - UI library
 - [Supabase](https://supabase.com) - Backend-as-a-Service
 - [Google Gemini](https://gemini.google.com) - AI capabilities
@@ -448,6 +450,15 @@ If you encounter any issues:
 - [Tailwind CSS](https://tailwindcss.com) - Styling
 - [Framer Motion](https://www.framer.com/motion/) - Animations
 - [Lucide](https://lucide.dev) - Icons
+
+### Team Members
+
+This project was built by an amazing team:
+
+- **Sajad K** - Lead Developer
+- **Harikrishnan K** - Backend & Database
+- **Adwaith P C** - UI/UX Design
+- **Jishnu M R** - Full Stack Developer
 
 ---
 
