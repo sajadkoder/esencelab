@@ -22,6 +22,9 @@ export function Header({ title, subtitle, actions }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Actions */}
+          {actions}
+
           {/* Search */}
           <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 focus-within:border-indigo-500/50 transition-colors">
             <Search className="w-4 h-4 text-slate-400" />

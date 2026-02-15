@@ -7,11 +7,15 @@ import { useCourses } from '@/hooks/useCourses';
 import { useCandidates } from '@/hooks/useCandidates';
 import { useApplications } from '@/hooks/useApplications';
 import { Header } from '@/components/layout/Header';
-import { GlassCard, GlassBadge, GlassProgress, GlassButton } from '@/components/ui/Glass';
+import { GlassCard, GlassBadge, GlassButton } from '@/components/ui/Glass';
+import { CareerChatbot } from '@/components/chatbot/CareerChatbot';
+import { NotificationsDropdown } from '@/components/notifications/NotificationsDropdown';
+import { TargetRoleSelector, SkillGapAnalysis } from '@/components/profile/TargetRoleSelector';
 import { toast } from 'sonner';
+import type { TargetRole } from '@/types';
 import { 
-  Upload, FileText, Check, Loader2, Briefcase, GraduationCap, 
-  Award, MapPin, DollarSign, CheckCircle, Clock, TrendingUp
+  Upload, FileText, Check, Briefcase, GraduationCap, 
+  Award, MapPin, DollarSign, CheckCircle, Clock, TrendingUp, Target
 } from 'lucide-react';
 
 export function StudentDashboard() {
@@ -24,6 +28,7 @@ export function StudentDashboard() {
   const [expandedJob, setExpandedJob] = useState<string | null>(null);
   const [expandedCourse, setExpandedCourse] = useState<string | null>(null);
   const [isParsing, setIsParsing] = useState(false);
+  const [selectedTargetRole, setSelectedTargetRole] = useState<TargetRole | null>(null);
 
   const onDrop = (acceptedFiles: File[]) => {
     if (acceptedFiles[0]) {
@@ -43,13 +48,24 @@ export function StudentDashboard() {
 
   const userCandidate = candidates.find(c => c.email === user?.email);
   const skills = userCandidate?.skills || [];
+  const skillNames = skills.map(s => s.name);
   const userApplications = applications.filter(a => a.candidate_id === userCandidate?.id);
+
+  const handleTargetRoleSelect = (role: TargetRole) => {
+    setSelectedTargetRole(role);
+    toast.success(`Target role set to ${role.name}`);
+  };
 
   return (
     <div className="min-h-screen bg-slate-900">
       <Header 
         title={`Welcome, ${user?.name?.split(' ')[0] || 'Student'}`} 
         subtitle="Find your dream job and track your applications"
+        actions={
+          <div className="flex items-center gap-4">
+            <NotificationsDropdown userId={user?.id} />
+          </div>
+        }
       />
       
       <div className="p-6 lg:p-8">
@@ -70,19 +86,7 @@ export function StudentDashboard() {
           <GlassCard className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-400">Saved Courses</p>
-                <p className="text-2xl font-bold gradient-text">0</p>
-              </div>
-              <div className="p-3 rounded-xl bg-cyan-500/20">
-                <GraduationCap className="w-5 h-5 text-cyan-400" />
-              </div>
-            </div>
-          </GlassCard>
-          
-          <GlassCard className="p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-400">Skills Detected</p>
+                <p className="text-sm text-slate-400">Skills</p>
                 <p className="text-2xl font-bold gradient-text">{skills.length}</p>
               </div>
               <div className="p-3 rounded-xl bg-emerald-500/20">
@@ -102,81 +106,89 @@ export function StudentDashboard() {
               </div>
             </div>
           </GlassCard>
+          
+          <GlassCard className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-400">Courses</p>
+                <p className="text-2xl font-bold gradient-text">{courses.length}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-cyan-500/20">
+                <GraduationCap className="w-5 h-5 text-cyan-400" />
+              </div>
+            </div>
+          </GlassCard>
         </div>
 
-        {/* Resume Upload Section */}
-        {!userCandidate ? (
-          <GlassCard className="mb-8 p-8">
-            <div 
-              {...getRootProps()}
-              className={`p-12 rounded-2xl border-2 border-dashed transition-all cursor-pointer ${
-                isDragActive 
-                  ? 'border-indigo-500 bg-indigo-500/10' 
-                  : 'border-white/10 hover:border-indigo-500/30 hover:bg-white/5'
-              }`}
-            >
-              {isParsing ? (
-                <div className="text-center">
-                  <Loader2 className="w-10 h-10 animate-spin mx-auto mb-4 text-indigo-400" />
-                  <p className="text-white font-medium mb-1">Parsing your resume...</p>
-                  <p className="text-sm text-slate-400">Using AI to extract skills and experience</p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Target Role Selector */}
+          <div className="lg:col-span-2">
+            <GlassCard className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Target className="w-5 h-5 text-indigo-400" />
+                <h2 className="font-semibold text-white">Set Your Target Role</h2>
+              </div>
+              <p className="text-sm text-slate-400 mb-4">
+                Select your career goal to get personalized skill gap analysis and recommendations.
+              </p>
+              <TargetRoleSelector 
+                selectedRole={selectedTargetRole} 
+                onSelect={handleTargetRoleSelect}
+              />
+            </GlassCard>
+          </div>
+
+          {/* Resume Upload */}
+          <div>
+            <GlassCard className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <FileText className="w-5 h-5 text-indigo-400" />
+                <h2 className="font-semibold text-white">Resume</h2>
+              </div>
+              {!userCandidate ? (
+                <div 
+                  {...getRootProps()}
+                  className={`p-6 rounded-xl border-2 border-dashed transition-all cursor-pointer ${
+                    isDragActive 
+                      ? 'border-indigo-500 bg-indigo-500/10' 
+                      : 'border-white/10 hover:border-indigo-500/30'
+                  }`}
+                >
+                  {isParsing ? (
+                    <div className="text-center">
+                      <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                      <p className="text-sm text-slate-400">Parsing...</p>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                      <p className="text-sm text-white">Drop resume PDF</p>
+                      <p className="text-xs text-slate-500">AI will extract skills</p>
+                    </div>
+                  )}
+                  <input {...getInputProps()} />
                 </div>
               ) : (
                 <div className="text-center">
-                  <div className="w-14 h-14 rounded-xl bg-indigo-500/20 flex items-center justify-center mx-auto mb-4">
-                    <Upload className="w-6 h-6 text-indigo-400" />
+                  <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-3">
+                    <Check className="w-6 h-6 text-emerald-400" />
                   </div>
-                  <p className="text-white font-medium mb-1">Upload your resume</p>
-                  <p className="text-sm text-slate-400 mb-4">Drag & drop PDF or click to browse</p>
-                  <input {...getInputProps()} />
-                  <GlassButton variant="secondary">
-                    <FileText className="w-4 h-4 mr-2" />
-                    Browse files
-                  </GlassButton>
+                  <p className="text-white font-medium">Resume Uploaded</p>
+                  <p className="text-sm text-slate-400">{skills.length} skills detected</p>
                 </div>
               )}
-            </div>
-          </GlassCard>
-        ) : (
-          <GlassCard className="mb-8 p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                  <Check className="w-6 h-6 text-emerald-400" />
-                </div>
-                <div>
-                  <p className="font-medium text-white">Profile Active</p>
-                  <p className="text-sm text-slate-400">{skills.length} skills on your profile</p>
-                </div>
-              </div>
-              <GlassBadge variant="success">
-                <CheckCircle className="w-3 h-3 mr-1" />
-                Active
-              </GlassBadge>
-            </div>
-          </GlassCard>
-        )}
+            </GlassCard>
+          </div>
+        </div>
 
-        {/* Skills Section */}
-        {skills.length > 0 && (
-          <GlassCard className="mb-8 p-6">
-            <div className="flex items-center gap-2 mb-6">
-              <Award className="w-5 h-5 text-indigo-400" />
-              <h2 className="font-semibold text-white">Your Skills</h2>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {skills.map((skill: { name: string; score: number; category: string }) => (
-                <div key={skill.name} className="p-4 rounded-xl bg-white/5">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-white">{skill.name}</span>
-                    <span className="text-sm text-slate-400">{skill.score}%</span>
-                  </div>
-                  <GlassProgress value={skill.score} color={skill.category === 'technical' ? 'indigo' : 'cyan'} />
-                  <span className="text-xs text-slate-500 mt-2 capitalize block">{skill.category}</span>
-                </div>
-              ))}
-            </div>
-          </GlassCard>
+        {/* Skill Gap Analysis */}
+        {selectedTargetRole && skills.length > 0 && (
+          <div className="mb-8">
+            <SkillGapAnalysis 
+              userSkills={skillNames}
+              targetSkills={selectedTargetRole.requiredSkills}
+            />
+          </div>
         )}
 
         {/* Job Matches */}
@@ -189,7 +201,7 @@ export function StudentDashboard() {
           
           {jobsLoading ? (
             <div className="text-center py-8">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-400" />
+              <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto" />
             </div>
           ) : (
             <div className="space-y-4">
@@ -228,14 +240,12 @@ export function StudentDashboard() {
                           </span>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <button
-                          onClick={() => setExpandedJob(expandedJob === job.id ? null : job.id)}
-                          className="text-sm text-indigo-400 hover:underline"
-                        >
-                          {expandedJob === job.id ? 'Less' : 'More'}
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => setExpandedJob(expandedJob === job.id ? null : job.id)}
+                        className="text-sm text-indigo-400 hover:underline"
+                      >
+                        {expandedJob === job.id ? 'Less' : 'More'}
+                      </button>
                     </div>
 
                     {expandedJob === job.id && (
@@ -254,10 +264,7 @@ export function StudentDashboard() {
                         )}
 
                         <div className="flex gap-2 flex-wrap">
-                          <GlassButton 
-                            size="sm"
-                            disabled={hasApplied}
-                          >
+                          <GlassButton size="sm" disabled={hasApplied}>
                             {hasApplied ? 'Applied' : 'Apply Now'}
                           </GlassButton>
                           <GlassButton variant="secondary" size="sm">
@@ -283,7 +290,7 @@ export function StudentDashboard() {
           
           {coursesLoading ? (
             <div className="text-center py-8">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto text-cyan-400" />
+              <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto" />
             </div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -323,6 +330,9 @@ export function StudentDashboard() {
           )}
         </GlassCard>
       </div>
+
+      {/* AI Career Chatbot */}
+      <CareerChatbot />
     </div>
   );
 }

@@ -63,6 +63,14 @@ export interface StudentProfile {
   skillGaps: string[];
   appliedJobs: string[];
   savedCourses: string[];
+  targetRole?: string;
+  skillGapPriorities?: SkillGapPriority[];
+}
+
+export interface SkillGapPriority {
+  skill: string;
+  priority: number;
+  reason: string;
 }
 
 export interface Job {
@@ -157,6 +165,30 @@ export interface ActivityLog {
   details: string;
   timestamp: string;
   metadata?: Record<string, unknown>;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: 'job_match' | 'course_recommendation' | 'application_update' | 'system';
+  title: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+}
+
+export interface TargetRole {
+  id: string;
+  name: string;
+  requiredSkills: string[];
+  category: string;
 }
 
 // Demo data
