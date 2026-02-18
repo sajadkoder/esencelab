@@ -5,8 +5,7 @@ import { supabase } from '../config/supabase.js';
 import { User, AuthResponse } from '../types/index.js';
 import { SignupInput, LoginInput } from '../validators/auth.validator.js';
 
-const JWT_SECRET = process.env.JWT_SECRET!;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+const JWT_SECRET = process.env.JWT_SECRET || 'esencelab-secret-key';
 
 export class AuthService {
   static async signup(input: SignupInput): Promise<AuthResponse> {
@@ -59,7 +58,7 @@ export class AuthService {
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN }
+      { expiresIn: '7d' }
     );
 
     return { user, token };
@@ -96,7 +95,7 @@ export class AuthService {
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN }
+      { expiresIn: '7d' }
     );
 
     return { user: user as User, token };
