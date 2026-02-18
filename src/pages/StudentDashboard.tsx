@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useCareerChatbot } from '@/hooks/useChatbot';
 import { Header } from '@/components/layout/Header';
 import { TargetRoleSelector } from '@/components/profile/TargetRoleSelector';
+import { aiService } from '@/lib/api';
 import { toast } from 'sonner';
 import type { TargetRole, ResumeData, AppliedJob, SavedJob, CourseResource } from '@/types';
 import { 
@@ -11,45 +12,6 @@ import {
   Bot, Send, X, 
   CheckCircle, Loader2, Sparkles, ExternalLink, Play, Youtube, FileText, Bookmark, Search, Filter
 } from 'lucide-react';
-
-const SKILL_ONTOLOGY: Record<string, string[]> = {
-  'Python': ['python', 'py', 'pandas', 'numpy', 'django', 'flask', 'fastapi'],
-  'JavaScript': ['javascript', 'js', 'es6', 'nodejs', 'node', 'express'],
-  'TypeScript': ['typescript', 'ts', 'tsx'],
-  'React': ['react', 'reactjs', 'jsx', 'nextjs', 'next'],
-  'SQL': ['sql', 'mysql', 'postgresql', 'postgres', 'sqlite'],
-  'Git': ['git', 'github', 'gitlab', 'version control'],
-  'Machine Learning': ['machine learning', 'ml', 'scikit-learn', 'sklearn', 'pytorch', 'tensorflow'],
-  'Data Analysis': ['data analysis', 'analytics', 'data science', 'statistics'],
-  'AWS': ['aws', 'amazon web services', 'ec2', 's3', 'lambda'],
-  'Docker': ['docker', 'containerization', 'kubernetes', 'k8s'],
-  'Java': ['java', 'spring', 'springboot'],
-  'Go': ['go', 'golang', 'gin'],
-  'C++': ['c++', 'cpp'],
-  'Rust': ['rust'],
-  'DevOps': ['devops', 'ci/cd', 'jenkins'],
-  'DSA': ['data structures', 'algorithms', 'dsa', 'competitive programming'],
-};
-
-function parseResumeWithML(text: string): ResumeData {
-  const lowerText = text.toLowerCase();
-  const extractedSkills: string[] = [];
-  
-  for (const [skill, aliases] of Object.entries(SKILL_ONTOLOGY)) {
-    if (aliases.some(alias => lowerText.includes(alias))) {
-      extractedSkills.push(skill);
-    }
-  }
-  
-  return {
-    rawText: text,
-    extractedSkills,
-    education: [],
-    experience: [],
-    projects: [],
-    parsedAt: new Date().toISOString(),
-  };
-}
 
 const INDIAN_JOBS = [
   { title: 'SDE I', company: 'Google India', location: 'Bangalore/Hyderabad', salary: '₹25-45 LPA', skills: ['DSA', 'Python', 'System Design'], posted: '2h ago', url: 'https://careers.google.com' },
@@ -138,22 +100,46 @@ export function StudentDashboard() {
     return matchesSearch && matchesLocation;
   });
 
-  const onDrop = (acceptedFiles: File[]) => {
+  const onDrop = async (acceptedFiles: File[]) => {
     if (acceptedFiles[0]) {
       setIsParsing(true);
       const file = acceptedFiles[0];
       
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const text = e.target?.result as string;
-        setTimeout(() => {
-          const parsed = parseResumeWithML(text || file.name);
-          setResumeData(parsed);
-          setIsParsing(false);
-          toast.success(`Resume parsed! Found ${parsed.extractedSkills.length} skills`);
-        }, 1500);
-      };
-      reader.readAsText(file);
+      try {
+        let result;
+        
+        if (file.name.endsWith('.pdf')) {
+          result = await aiService.parseResume(file);
+        } else {
+          const reader = new FileReader();
+          const text = await new Promise<string>((resolve) => {
+            reader.onload = (e) => resolve(e.target?.result as string);
+            reader.readAsText(file);
+          });
+          result = await aiService.parseResumeText(text);
+        }
+        
+        const parsed: ResumeData = {
+          rawText: result.summary || '',
+          extractedSkills: result.skills || [],
+          education: result.education || [],
+          experience: result.experience || [],
+          projects: [],
+          parsedAt: new Date().toISOString(),
+        };
+        
+        setResumeData(parsed);
+        toast.success(`Resume parsed with AI! Found ${parsed.extractedSkills.length} skills`);
+        
+        if (result.suggested_roles?.length > 0) {
+          toast.info(`Suggested roles: ${result.suggested_roles.slice(0, 3).join(', ')}`);
+        }
+      } catch (error) {
+        console.error('Resume parsing error:', error);
+        toast.error('Failed to parse resume. Make sure AI service is running on port 8000.');
+      } finally {
+        setIsParsing(false);
+      }
     }
   };
 

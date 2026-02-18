@@ -1,17 +1,15 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
 import type { ChatMessage } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
-
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+import { aiService } from '@/lib/api';
 
 function createInitialGreeting(userName?: string): ChatMessage {
   return {
     id: 'welcome',
     role: 'assistant',
-    content: `Hi${userName ? `, ${userName.split(' ')[0]}` : ''}! I'm your career guidance assistant. I can help you with:\n\n• Resume tips and improvements\n• Career path advice\n• Interview preparation\n• Skill development suggestions\n• Job search strategies\n\nWhat would you like to know?`,
+    content: `Hi${userName ? `, ${userName.split(' ')[0]}` : ''}! I'm your career guidance assistant powered by AI. I can help you with:\n\n• Resume tips and improvements\n• Career path advice for Indian tech industry\n• Interview preparation (DSA, System Design)\n• Skill development suggestions\n• Job search strategies for campus placements\n\nWhat would you like to know?`,
     timestamp: new Date().toISOString(),
   };
 }
@@ -24,7 +22,7 @@ export function useCareerChatbot() {
 
   const initialGreeting = useMemo(() => createInitialGreeting(user?.name), [user?.name]);
 
-  const sendMessage = async (content: string) => {
+  const sendMessage = useCallback(async (content: string) => {
     const userMessage: ChatMessage = {
       id: uuidv4(),
       role: 'user',
@@ -36,63 +34,44 @@ export function useCareerChatbot() {
     setIsLoading(true);
 
     try {
-      const context = buildContext();
-      const prompt = `You are Esencelab's career guidance AI assistant. You help students with career advice, resume tips, interview preparation, and skill development. 
+      const context = {
+        name: user?.name,
+        role: user?.role,
+        email: user?.email,
+      };
 
-Current user context:
-${context}
+      const history = messages.slice(-5).map(m => ({
+        role: m.role,
+        content: m.content,
+      }));
 
-User's question: ${content}
+      const response = await aiService.chat(content, context, history);
 
-Respond in a helpful, conversational manner. Keep responses concise but informative. If giving advice, provide specific actionable steps.`;
-
-      const response = await fetch(GEMINI_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 512,
-          },
-        }),
-      });
-
-      if (!response.ok) throw new Error('Failed to get response');
-
-      const data = await response.json();
       const assistantMessage: ChatMessage = {
         id: uuidv4(),
         role: 'assistant',
-        content: data.candidates?.[0]?.content?.parts?.[0]?.text || 
-          'I apologize, but I had trouble generating a response. Please try again.',
+        content: response || 'I apologize, but I had trouble generating a response. Please try again.',
         timestamp: new Date().toISOString(),
       };
 
       setMessages(prev => [...prev, assistantMessage]);
-    } catch {
+    } catch (error) {
       toast.error('Failed to get response from AI');
       const errorMessage: ChatMessage = {
         id: uuidv4(),
         role: 'assistant',
-        content: 'I apologize, but I encountered an error. Please try again.',
+        content: 'I apologize, but I encountered an error. Please make sure the AI service is running on port 8000.',
         timestamp: new Date().toISOString(),
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, messages]);
 
-  const buildContext = () => {
-    return `User: ${user?.name || 'Unknown'}
-Role: ${user?.role || 'student'}
-Email: ${user?.email || 'Not provided'}`;
-  };
-
-  const clearChat = () => {
+  const clearChat = useCallback(() => {
     setMessages([initialGreeting]);
-  };
+  }, [initialGreeting]);
 
   return {
     messages,

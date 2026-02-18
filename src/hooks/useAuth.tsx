@@ -1,7 +1,7 @@
 import { useState, createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import type { Profile, UserRole } from '@/types';
+import { api } from '@/lib/api';
 
 interface AuthUser {
   id: string;
@@ -22,37 +22,14 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const USERS_KEY = 'esencelab_users';
 const CURRENT_USER_KEY = 'esencelab_current_user';
-
-interface StoredUser {
-  password: string;
-  name: string;
-  role: UserRole;
-}
-
-function getUsers(): Record<string, StoredUser> {
-  const stored = localStorage.getItem(USERS_KEY);
-  return stored ? JSON.parse(stored) : {};
-}
-
-function saveUsers(users: Record<string, StoredUser>) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-}
-
-function getStoredUser(email: string): StoredUser | null {
-  const users = getUsers();
-  return users[email] || null;
-}
-
-function saveUser(email: string, data: StoredUser) {
-  const users = getUsers();
-  users[email] = data;
-  saveUsers(users);
-}
 
 function getInitialUser(): AuthUser | null {
   if (typeof window === 'undefined') return null;
+  
+  const token = localStorage.getItem('esencelab_token');
+  if (!token) return null;
+  
   const stored = localStorage.getItem(CURRENT_USER_KEY);
   if (!stored) return null;
   try {
@@ -65,53 +42,52 @@ function getInitialUser(): AuthUser | null {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(getInitialUser);
 
-  const signIn = async (email: string, password: string) => {
-    const userData = getStoredUser(email);
+  const signUp = async (email: string, password: string, name: string, role: UserRole) => {
+    const result = await api.signup(email, password, name, role);
     
-    if (!userData) {
-      return { error: new Error('No account found. Please sign up first.') };
+    if (result.error) {
+      return { error: new Error(result.message || result.error) };
     }
 
-    if (userData.password !== password) {
-      return { error: new Error('Incorrect password') };
+    if (result.data) {
+      api.setToken(result.data.token);
+      const authUser: AuthUser = {
+        id: result.data.user.id,
+        email: result.data.user.email,
+        name: result.data.user.name,
+        role: result.data.user.role,
+      };
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(authUser));
+      setUser(authUser);
     }
-
-    const authUser: AuthUser = {
-      id: uuidv4(),
-      email,
-      name: userData.name,
-      role: userData.role,
-    };
-
-    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(authUser));
-    setUser(authUser);
 
     return { error: null };
   };
 
-  const signUp = async (email: string, password: string, name: string, role: UserRole) => {
-    const existing = getStoredUser(email);
+  const signIn = async (email: string, password: string) => {
+    const result = await api.login(email, password);
     
-    if (existing) {
-      return { error: new Error('Account already exists. Please sign in.') };
+    if (result.error) {
+      return { error: new Error(result.message || result.error) };
     }
 
-    saveUser(email, { password, name, role });
-
-    const authUser: AuthUser = {
-      id: uuidv4(),
-      email,
-      name,
-      role,
-    };
-
-    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(authUser));
-    setUser(authUser);
+    if (result.data) {
+      api.setToken(result.data.token);
+      const authUser: AuthUser = {
+        id: result.data.user.id,
+        email: result.data.user.email,
+        name: result.data.user.name,
+        role: result.data.user.role,
+      };
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(authUser));
+      setUser(authUser);
+    }
 
     return { error: null };
   };
 
   const signOut = async () => {
+    api.setToken(null);
     localStorage.removeItem(CURRENT_USER_KEY);
     setUser(null);
   };
@@ -119,11 +95,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateProfile = async (updates: Partial<Profile>) => {
     if (!user) {
       return { error: new Error('Not authenticated') };
-    }
-
-    const userData = getStoredUser(user.email);
-    if (userData) {
-      saveUser(user.email, { ...userData, ...updates });
     }
 
     const updatedUser: AuthUser = { 
