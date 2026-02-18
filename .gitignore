@@ -4,3 +4,21 @@ dist
 .env.local
 *.log
 .DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+
+# Server build
+server/dist/
+
+# IDE
+.vscode/
+.idea/
