@@ -1,220 +1,315 @@
-# Esencelab - Campus Recruitment Platform
+# Esencelab - AI-Powered Campus Recruitment Platform
 
-A modern, AI-powered campus recruitment platform built with React, Supabase, and Gemini AI. Connect students with job opportunities through intelligent resume parsing and job matching.
+<div align="center">
 
-![Esencelab](https://img.shields.io/badge/Esencelab-Campus%20Recruitment-blue)
-![React](https://img.shields.io/badge/React-19-blue)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)
-![Vite](https://img.shields.io/badge/Vite-7-purple)
-![License](https://img.shields.io/badge/License-MIT-green)
+![Esencelab Logo](https://img.shields.io/badge/Esencelab-Campus%20Recruitment-black?style=for-the-badge)
+
+**A comprehensive campus recruitment platform connecting students with opportunities through AI-powered resume parsing, intelligent job matching, and personalized course recommendations.**
+
+![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat-square&logo=typescript)
+![Vite](https://img.shields.io/badge/Vite-7-646CFF?style=flat-square&logo=vite)
+![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=flat-square&logo=supabase)
+![Gemini](https://img.shields.io/badge/Google%20Gemini-AI-4285F4?style=flat-square&logo=google)
+
+[Features](#features) • [Architecture](#architecture) • [Installation](#installation) • [Team](#team)
+
+</div>
 
 ---
 
 ## Table of Contents
 
-1. [Features](#features)
-2. [Tech Stack](#tech-stack)
-3. [Architecture](#architecture)
-4. [Getting Started](#getting-started)
-5. [Supabase Setup](#supabase-setup)
-6. [Environment Variables](#environment-variables)
-7. [Project Structure](#project-structure)
-8. [Deployment](#deployment)
-9. [API Integration](#api-integration)
-10. [Features Breakdown](#features-breakdown)
-11. [Contributing](#contributing)
-12. [License](#license)
+- [Overview](#overview)
+- [Features](#features)
+- [Technology Stack](#technology-stack)
+- [System Architecture](#system-architecture)
+- [Database Schema](#database-schema)
+- [Installation](#installation)
+- [Environment Variables](#environment-variables)
+- [Project Structure](#project-structure)
+- [API Documentation](#api-documentation)
+- [Team Members](#team-members)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## Overview
+
+Esencelab is a modern campus recruitment platform designed specifically for Indian students and colleges. It leverages AI to:
+
+- Parse resumes and extract skills automatically
+- Match candidates with relevant job opportunities
+- Recommend courses to bridge skill gaps
+- Provide real-time analytics for administrators
+
+The platform features a Y Combinator-inspired minimalist design with a pure black and white aesthetic, ensuring a clean and professional user experience.
 
 ---
 
 ## Features
 
 ### For Students
-- **AI Resume Parsing**: Upload resumes and let Gemini AI extract skills, education, and experience
-- **Job Matching**: Get personalized job recommendations based on your skills
-- **Course Recommendations**: Discover courses to bridge skill gaps
-- **Application Tracking**: Track your job applications in one place
+| Feature | Description |
+|---------|-------------|
+| AI Resume Parser | Upload PDF/text resumes and extract skills using ML-based keyword ontology |
+| Job Search | Browse jobs from top Indian companies with search and location filters |
+| Application Tracking | Track applied jobs with status updates (Applied → Under Review → Interview → Offer) |
+| Saved Jobs | Bookmark interesting jobs for later review |
+| Course Recommendations | Discover YouTube courses, Indian platforms (GFG, Scaler, Coding Ninjas) |
+| Practice Platforms | Links to LeetCode, Codeforces, HackerRank, CodeChef, Striver SDE Sheet |
+| Career Chatbot | AI-powered assistant for career guidance using Google Gemini |
 
 ### For Recruiters
-- **Job Posting**: Post and manage job openings
-- **Candidate Search**: Browse and filter candidates by skills
-- **Hiring Pipeline**: Manage candidates through stages (new → screening → interview → hired)
-- **Match Scores**: View candidate-job compatibility scores
+| Feature | Description |
+|---------|-------------|
+| Candidate Pipeline | Manage candidates through hiring stages (New → Screening → Interview → Hired) |
+| Job Postings | Create and manage job listings |
+| Candidate Search | Filter candidates by skills, college, experience |
+| Match Scores | View candidate-job compatibility scores |
 
-### For Admins
-- **Analytics Dashboard**: View system statistics and trends
-- **User Management**: Monitor all users and activities
-- **Activity Logs**: Track all platform activities in real-time
-
----
-
-## Tech Stack
-
-| Category | Technology |
-|----------|------------|
-| **Frontend** | React 19, TypeScript, Vite |
-| **UI Components** | Radix UI, Tailwind CSS, Framer Motion |
-| **State Management** | Zustand, TanStack Query |
-| **Backend** | Supabase (PostgreSQL, Auth, Realtime) |
-| **AI** | Google Gemini API |
-| **Routing** | React Router DOM |
-| **Forms** | React Hook Form, Zod |
-| **Icons** | Lucide React |
+### For Administrators
+| Feature | Description |
+|---------|-------------|
+| Analytics Dashboard | View platform statistics and trends |
+| User Management | Monitor all users, roles, and activities |
+| Activity Logs | Track platform activities in real-time |
+| Location Analytics | View user distribution across Indian cities |
 
 ---
 
-## Architecture
+## Technology Stack
+
+### Frontend
+| Technology | Purpose |
+|------------|---------|
+| React 19 | UI Library |
+| TypeScript | Type Safety |
+| Vite 7 | Build Tool & Dev Server |
+| Tailwind CSS | Styling |
+| Radix UI | Accessible Component Primitives |
+| Framer Motion | Animations |
+| React Router DOM | Routing |
+| React Hook Form + Zod | Form Handling & Validation |
+| TanStack Query | Server State Management |
+| Zustand | Client State Management |
+| Lucide React | Icons |
+
+### Backend & Database
+| Technology | Purpose |
+|------------|---------|
+| Supabase | Backend-as-a-Service (PostgreSQL + Auth + Realtime) |
+| PostgreSQL | Relational Database |
+| Row Level Security | Database Security |
+
+### AI & ML
+| Technology | Purpose |
+|------------|---------|
+| Google Gemini API | Career Chatbot |
+| Custom Skill Ontology | Resume Skill Extraction (ML-based keyword matching) |
+
+### Development Tools
+| Tool | Purpose |
+|------|---------|
+| Git & GitHub | Version Control |
+| ESLint | Code Linting |
+| TypeScript ESLint | TypeScript Linting |
+| Vercel | Deployment (Recommended) |
+
+---
+
+## System Architecture
+
+### High-Level Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                              CLIENT LAYER                                │
+│  ┌──────────────────────────────────────────────────────────────────┐   │
+│  │                     React Application (Vite)                      │   │
+│  │  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌───────────┐  │   │
+│  │  │  Student   │  │ Recruiter  │  │   Admin    │  │   Auth    │  │   │
+│  │  │ Dashboard  │  │ Dashboard  │  │ Dashboard  │  │   Pages   │  │   │
+│  │  └────────────┘  └────────────┘  └────────────┘  └───────────┘  │   │
+│  └──────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                            INTEGRATION LAYER                             │
+│  ┌────────────────┐  ┌────────────────┐  ┌────────────────────────────┐│
+│  │   Supabase     │  │  Gemini AI     │  │     LocalStorage           ││
+│  │  - PostgreSQL  │  │  - Chatbot     │  │  - Auth (Demo Mode)        ││
+│  │  - Realtime    │  │  - AI Features │  │  - Saved Jobs/Applications ││
+│  └────────────────┘  └────────────────┘  └────────────────────────────┘│
+└─────────────────────────────────────────────────────────────────────────┘
+```
 
 ### Frontend Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        App Layer                             │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │              React Router (Routes)                   │    │
-│  │  / → Login    /dashboard → Role-based Dashboard     │    │
-│  │  /jobs → Jobs  /profile → Student Profile           │    │
-│  └─────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────┘
-                              │
-┌─────────────────────────────────────────────────────────────┐
-│                    Component Layer                           │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
-│  │  Layout    │  │   Pages     │  │    UI      │        │
-│  │  - Header │  │  - Student  │  │  - Buttons │        │
-│  │  - Sidebar │  │  - Recruiter│  │  - Cards   │        │
-│  │  - Footer  │  │  - Admin    │  │  - Forms   │        │
-│  └─────────────┘  └─────────────┘  └─────────────┘        │
-└─────────────────────────────────────────────────────────────┘
-                              │
-┌─────────────────────────────────────────────────────────────┐
-│                    Data Layer                               │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
-│  │  Zustand   │  │   TanStack  │  │   Hooks     │        │
-│  │  (UI State)│  │   Query     │  │  - useAuth  │        │
-│  │             │  │  (Server)   │  │  - useJobs  │        │
-│  └─────────────┘  └─────────────┘  └─────────────┘        │
-└─────────────────────────────────────────────────────────────┘
-                              │
-┌─────────────────────────────────────────────────────────────┐
-│                   Integration Layer                         │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
-│  │  Supabase  │  │   Gemini    │  │   Storage  │        │
-│  │  (Database)│  │   (AI)      │  │  (Resumes) │        │
-│  └─────────────┘  └─────────────┘  └─────────────┘        │
-└─────────────────────────────────────────────────────────────┘
+src/
+├── components/
+│   ├── layout/           # Layout components
+│   │   ├── Header.tsx    # Top navigation with user menu
+│   │   └── Sidebar.tsx   # Role-based sidebar navigation
+│   ├── profile/          # Profile components
+│   │   └── TargetRoleSelector.tsx
+│   └── ui/               # 50+ reusable UI components
+├── hooks/                # Custom React hooks
+│   ├── useAuth.tsx       # Authentication (localStorage-based)
+│   ├── useChatbot.ts     # Gemini AI integration
+│   ├── useJobs.ts        # Job CRUD (Supabase)
+│   ├── useCandidates.ts  # Candidate management
+│   └── useCourses.ts     # Course recommendations
+├── pages/                # Page components
+│   ├── auth/LoginPage.tsx
+│   ├── StudentDashboard.tsx
+│   ├── RecruiterDashboard.tsx
+│   └── AdminDashboard.tsx
+├── lib/                  # Core libraries
+│   ├── supabase.ts       # Supabase client & types
+│   └── constants.ts      # App constants
+├── store/                # State management
+│   └── appStore.ts       # Zustand store
+└── types/                # TypeScript definitions
+    └── index.ts
 ```
 
-### Database Schema
+### Authentication Flow
 
-```sql
--- Core Tables
-profiles       -- User profiles (extends auth.users)
-jobs           -- Job postings
-candidates     -- Candidate information
-applications   -- Job applications
-courses        -- Course recommendations
-activity_logs  -- System activity tracking
+```
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│   Login/     │     │   Validate   │     │   Store in   │
+│   Signup     │────▶│   & Create   │────▶│ LocalStorage │
+│   Form       │     │   User       │     │              │
+└──────────────┘     └──────────────┘     └──────────────┘
+                                                  │
+                                                  ▼
+                           ┌──────────────┐     ┌──────────────┐
+                           │   Redirect   │◀────│   Check      │
+                           │   to         │     │   Role       │
+                           │   Dashboard  │     │              │
+                           └──────────────┘     └──────────────┘
 ```
 
 ---
 
-## Getting Started
+## Database Schema
+
+### Entity Relationship Diagram
+
+```
+┌─────────────┐       ┌─────────────┐       ┌─────────────┐
+│  profiles   │       │    jobs     │       │ candidates  │
+├─────────────┤       ├─────────────┤       ├─────────────┤
+│ id (PK)     │◀──────│ employer_id │       │ id (PK)     │
+│ email       │       │ title       │       │ user_id (FK)│
+│ name        │       │ company     │       │ name        │
+│ role        │       │ location    │       │ email       │
+│ avatar_url  │       │ skills[]    │       │ skills[]    │
+│ created_at  │       │ salary_min  │       │ match_score │
+│ updated_at  │       │ salary_max  │       │ status      │
+└─────────────┘       │ status      │       └──────┬──────┘
+                      └──────┬──────┘              │
+                             │                     │
+                             ▼                     ▼
+                      ┌─────────────────────────────────┐
+                      │         applications            │
+                      ├─────────────────────────────────┤
+                      │ id (PK)                         │
+                      │ job_id (FK) ──────────────────┐ │
+                      │ candidate_id (FK) ──────────┐ │ │
+                      │ status                      │ │ │
+                      │ applied_at                  │ │ │
+                      └─────────────────────────────┴─┴─┘
+
+┌─────────────┐       ┌─────────────────┐
+│   courses   │       │  activity_logs  │
+├─────────────┤       ├─────────────────┤
+│ id (PK)     │       │ id (PK)         │
+│ title       │       │ user_id (FK)    │
+│ provider    │       │ action          │
+│ skills[]    │       │ details         │
+│ level       │       │ metadata        │
+│ rating      │       │ timestamp       │
+└─────────────┘       └─────────────────┘
+```
+
+### Tables
+
+| Table | Description | Key Fields |
+|-------|-------------|------------|
+| `profiles` | User profiles extending Supabase auth | id, email, name, role |
+| `jobs` | Job postings by recruiters | title, company, skills[], status |
+| `candidates` | Candidate profiles | name, skills[], match_score, status |
+| `applications` | Job applications | job_id, candidate_id, status |
+| `courses` | Course recommendations | title, provider, skills[], level |
+| `activity_logs` | System activity tracking | user_id, action, timestamp |
+
+---
+
+## Installation
 
 ### Prerequisites
 
-Before you begin, ensure you have:
+- Node.js 18+
+- npm or yarn
+- Git
+- Supabase account (free tier)
+- Google Gemini API key (optional, for AI features)
 
-- **Node.js** 18+ installed
-- **npm** or **yarn** package manager
-- **Git** for version control
-- **Supabase account** (free tier works)
-- **Google Gemini API key** (free tier available)
+### Quick Start
 
-### Installation
-
-1. **Clone the repository**
 ```bash
+# 1. Clone the repository
 git clone https://github.com/sajadkoder/esencelab.git
 cd esencelab
-```
 
-2. **Install dependencies**
-```bash
+# 2. Install dependencies
 npm install
-```
 
-3. **Set up environment variables**
-```bash
-# Create .env file
+# 3. Create environment file
 cp .env.example .env
-
 # Edit .env with your credentials
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_anon_key
-VITE_GEMINI_API_KEY=your_gemini_api_key
-```
 
-4. **Start development server**
-```bash
+# 4. Start development server
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173`
+The application will be available at `http://localhost:5173`
 
----
+### Supabase Setup
 
-## Supabase Setup
-
-### Step 1: Create a Supabase Project
-
-1. Go to [supabase.com](https://supabase.com)
-2. Click "New Project"
-3. Fill in your project details:
-   - **Name**: esencelab
-   - **Database Password**: (remember this)
-   - **Region**: Choose closest to you
-
-### Step 2: Run the Setup SQL
-
-1. In your Supabase dashboard, go to **SQL Editor**
-2. Copy the contents of `supabase-setup.sql`
-3. Click **Run** to execute
-
-The SQL script will:
-- Create all necessary tables
-- Set up enum types
-- Enable real-time subscriptions
-- Configure Row Level Security (RLS) policies
-- Insert sample data (jobs, courses, candidates)
-- Create auto-profile creation trigger
-
-### Step 3: Get Your Credentials
-
-1. Go to **Settings** → **API**
-2. Copy the **Project URL** (for `VITE_SUPABASE_URL`)
-3. Copy the **anon public** key (for `VITE_SUPABASE_ANON_KEY`)
+1. Create a new project at [supabase.com](https://supabase.com)
+2. Navigate to SQL Editor
+3. Run the contents of `supabase-setup.sql`
+4. Get credentials from Settings → API:
+   - Project URL → `VITE_SUPABASE_URL`
+   - anon public key → `VITE_SUPABASE_ANON_KEY`
 
 ---
 
 ## Environment Variables
 
-Create a `.env` file in the root directory:
+Create a `.env` file in the project root:
 
 ```env
-# Supabase Configuration
+# Supabase Configuration (Required)
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 
-# Gemini AI Configuration
+# Gemini AI Configuration (Optional - for chatbot)
 VITE_GEMINI_API_KEY=your-gemini-api-key
 ```
 
-### Getting Gemini API Key
+### Getting API Keys
 
-1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Create a new API key
-3. Copy it to your environment variables
+| Service | How to Get |
+|---------|-----------|
+| Supabase | Dashboard → Settings → API |
+| Gemini | [Google AI Studio](https://makersuite.google.com/app/apikey) |
 
 ---
 
@@ -224,50 +319,42 @@ VITE_GEMINI_API_KEY=your-gemini-api-key
 esencelab/
 ├── src/
 │   ├── components/
-│   │   ├── layout/          # Layout components
-│   │   │   ├── Header.tsx   # Main header
-│   │   │   └── Sidebar.tsx  # Navigation sidebar
-│   │   ├── ui/              # Reusable UI components
-│   │   │   ├── Glass.tsx    # Glassmorphism components
-│   │   │   ├── Button.tsx   # Button variants
-│   │   │   ├── Card.tsx     # Card component
-│   │   │   └── ...          # 50+ more UI components
-│   │   └── AuthModal.tsx    # Authentication modal
-│   │
-│   ├── hooks/               # Custom React hooks
-│   │   ├── useAuth.tsx     # Authentication hook
-│   │   ├── useJobs.ts      # Job CRUD operations
-│   │   ├── useCandidates.ts # Candidate management
-│   │   ├── useCourses.ts   # Course data
-│   │   ├── useApplications.ts # Applications
-│   │   ├── useActivity.ts  # Activity logs
-│   │   └── useRealtime.ts  # Real-time subscriptions
-│   │
-│   ├── lib/                 # Core libraries
-│   │   ├── supabase.ts    # Supabase client
-│   │   ├── queryClient.ts  # React Query setup
-│   │   ├── gemini.ts       # Gemini AI integration
-│   │   └── utils.ts       # Utility functions
-│   │
-│   ├── pages/               # Page components
+│   │   ├── layout/
+│   │   │   ├── Header.tsx          # Top navigation bar
+│   │   │   └── Sidebar.tsx         # Role-based sidebar
+│   │   ├── profile/
+│   │   │   └── TargetRoleSelector.tsx
+│   │   └── ui/                     # 50+ UI components
+│   │       ├── button.tsx
+│   │       ├── card.tsx
+│   │       ├── dialog.tsx
+│   │       └── ...
+│   ├── hooks/
+│   │   ├── useAuth.tsx             # Authentication hook
+│   │   ├── useChatbot.ts           # Gemini AI chat
+│   │   ├── useJobs.ts              # Job operations
+│   │   ├── useCandidates.ts        # Candidate management
+│   │   ├── useCourses.ts           # Course data
+│   │   ├── useApplications.ts      # Applications
+│   │   └── useNotifications.ts     # Notifications
+│   ├── lib/
+│   │   ├── supabase.ts             # Supabase client & types
+│   │   └── constants.ts            # App constants
+│   ├── pages/
 │   │   ├── auth/
 │   │   │   └── LoginPage.tsx
 │   │   ├── StudentDashboard.tsx
 │   │   ├── RecruiterDashboard.tsx
 │   │   └── AdminDashboard.tsx
-│   │
-│   ├── store/              # State management
-│   │   └── appStore.ts    # Zustand store
-│   │
-│   ├── types/              # TypeScript types
-│   │   └── index.ts
-│   │
-│   ├── App.tsx            # Main app component
-│   ├── main.tsx          # Entry point
-│   └── index.css         # Global styles
-│
-├── public/                 # Static assets
-├── supabase-setup.sql     # Database setup script
+│   ├── store/
+│   │   └── appStore.ts             # Zustand store
+│   ├── types/
+│   │   └── index.ts                # TypeScript types
+│   ├── App.tsx                     # Main app component
+│   ├── main.tsx                    # Entry point
+│   └── index.css                   # Global styles
+├── public/
+├── supabase-setup.sql              # Database schema
 ├── package.json
 ├── vite.config.ts
 ├── tailwind.config.js
@@ -276,193 +363,99 @@ esencelab/
 
 ---
 
-## Deployment
+## API Documentation
 
-### Deploying to Vercel (Recommended)
-
-1. **Push to GitHub**
-```bash
-git add .
-git commit -m "Your commit message"
-git push origin main
-```
-
-2. **Import to Vercel**
-   - Go to [vercel.com](https://vercel.com)
-   - Click "Add New..." → "Project"
-   - Import your GitHub repository
-
-3. **Configure Environment Variables**
-   In Vercel project settings, add:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-   - `VITE_GEMINI_API_KEY`
-
-4. **Deploy**
-   - Click "Deploy"
-   - Wait for build to complete
-
-Your app will be live at `https://your-project.vercel.app`
-
-### Alternative: Netlify
-
-1. Connect your GitHub repository to Netlify
-2. Set build command: `npm run build`
-3. Set publish directory: `dist`
-4. Add environment variables
-5. Deploy
-
----
-
-## API Integration
-
-### Supabase Client
-
-The Supabase client is configured in `src/lib/supabase.ts`:
+### Authentication API (localStorage-based)
 
 ```typescript
-import { createClient } from '@supabase/supabase-js'
+// Sign Up
+signUp(email: string, password: string, name: string, role: UserRole)
+// Returns: { error: Error | null }
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+// Sign In
+signIn(email: string, password: string)
+// Returns: { error: Error | null }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Sign Out
+signOut()
+// Returns: Promise<void>
+
+// Get Current User
+useAuth().user
+// Returns: AuthUser | null
 ```
 
-### Gemini AI Integration
-
-Resume parsing is handled in `src/lib/gemini.ts`:
+### Supabase Hooks
 
 ```typescript
-import { parseResumeWithGemini } from '@/lib/gemini'
+// Jobs
+useJobs()           // Fetch all jobs
+useJob(id)          // Fetch single job
+useCreateJob()      // Create job mutation
+useUpdateJob()      // Update job mutation
 
-// Usage
-const parsed = await parseResumeWithGemini(resumeText)
-// Returns: { skills, education, experience, summary }
+// Candidates
+useCandidates()     // Fetch all candidates
+useCandidate(id)    // Fetch single candidate
+useUpdateCandidate() // Update candidate mutation
+
+// Courses
+useCourses()        // Fetch recommended courses
+useCourse(id)       // Fetch single course
+
+// Applications
+useApplications()   // Fetch applications
+useCreateApplication() // Apply to job
 ```
 
 ---
 
-## Features Breakdown
+## Team Members
 
-### Authentication Flow
+<div align="center">
 
-1. User opens the app
-2. If not authenticated → Redirect to Login
-3. User signs up/signs in
-4. Profile created in `profiles` table
-5. User redirected to role-based dashboard
+| Member | Role | Responsibilities |
+|--------|------|------------------|
+| **Sajad** | Lead Developer & Project Manager | Architecture, Core Features, Integration |
+| **Harikrishnan K** | Frontend & UX Developer | UI Components, Dashboard Design, Animations |
+| **Adwaith PC** | Backend & Documentation | Database Design, API Development, Documentation |
+| **Jishnu MR** | Testing & Research | QA Testing, Research, Analytics Implementation |
 
-### Job Matching Algorithm
+</div>
 
-1. Student uploads resume
-2. Gemini AI extracts skills
-3. Skills stored in candidate profile
-4. Job matching uses skill overlap:
-   ```
-   matchScore = (matchingSkills / totalRequiredSkills) * 100
-   ```
+### Detailed Role Breakdown
 
-### Real-time Updates
+#### Sajad - Lead Developer & Project Manager
+- System architecture design and implementation
+- Core feature development (authentication, job matching)
+- Third-party integrations (Supabase, Gemini AI)
+- Code review and quality assurance
+- Project planning and coordination
 
-Supabase Realtime enables:
-- Live candidate status changes
-- New job notifications
-- Activity feed updates
+#### Harikrishnan K - Frontend & UX Developer
+- User interface design and implementation
+- Component library development
+- Responsive design implementation
+- Framer Motion animations
+- User experience optimization
 
-```typescript
-// Example: Listening to job changes
-supabase
-  .channel('jobs')
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'jobs' }, 
-    (payload) => console.log(payload)
-  )
-  .subscribe()
-```
+#### Adwaith PC - Backend & Documentation
+- Database schema design
+- Supabase configuration and RLS policies
+- API hook development
+- Technical documentation
+- Deployment configuration
 
-### UI Components
-
-The app uses a glassmorphism design system:
-
-```typescript
-// Glass Card Component
-<GlassCard className="p-6">
-  <h2>Content</h2>
-</GlassCard>
-
-// Gradient Text
-<p className="gradient-text">Hello World</p>
-
-// Animated Stat Card
-<StatCard 
-  label="Total Users" 
-  value={150} 
-  icon={Users} 
-  color="indigo" 
-/>
-```
+#### Jishnu MR - Testing & Research
+- Quality assurance testing
+- Feature testing and bug reporting
+- Market research for Indian recruitment platforms
+- Analytics dashboard implementation
+- Performance optimization
 
 ---
 
-## Contributing
-
-1. **Fork the repository**
-2. **Create a feature branch**
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
-3. **Commit your changes**
-   ```bash
-   git commit -m 'Add amazing feature'
-   ```
-4. **Push to the branch**
-   ```bash
-   git push origin feature/amazing-feature
-   ```
-5. **Open a Pull Request**
-
----
-
-## License
-
-This project is licensed under the MIT License.
-
----
-
-## Support
-
-If you encounter any issues:
-
-1. Check the [Issues](https://github.com/sajadkoder/esencelab/issues) page
-2. Create a new issue with detailed description
-3. Include error messages and steps to reproduce
-
----
-
-## Acknowledgments
-
-### Technology Credits
-
-- [React](https://react.dev) - UI library
-- [Supabase](https://supabase.com) - Backend-as-a-Service
-- [Google Gemini](https://gemini.google.com) - AI capabilities
-- [Radix UI](https://radix-ui.com) - Accessible components
-- [Tailwind CSS](https://tailwindcss.com) - Styling
-- [Framer Motion](https://www.framer.com/motion/) - Animations
-- [Lucide](https://lucide.dev) - Icons
-
-### Team Members
-
-This project was built by an amazing team:
-
-- **Sajad** - Lead Developer
-- **Harikrishnan K** - Frontend & UX Developer
-- **Adwaith PC** - Documentation & Backend Support
-- **Jishnu MR** - Testing, Research & Analytics
-
----
-
-## Quick Reference
+## Scripts
 
 | Command | Description |
 |---------|-------------|
@@ -473,4 +466,59 @@ This project was built by an amazing team:
 
 ---
 
+## Deployment
+
+### Vercel (Recommended)
+
+```bash
+# 1. Push to GitHub
+git push origin main
+
+# 2. Import project in Vercel
+# 3. Add environment variables
+# 4. Deploy
+```
+
+### Manual Build
+
+```bash
+npm run build
+# Serve the 'dist' folder
+```
+
+---
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## License
+
+This project is licensed under the MIT License.
+
+---
+
+## Acknowledgments
+
+- [React](https://react.dev) - UI Library
+- [Supabase](https://supabase.com) - Backend-as-a-Service
+- [Google Gemini](https://gemini.google.com) - AI Capabilities
+- [Radix UI](https://radix-ui.com) - Accessible Components
+- [Tailwind CSS](https://tailwindcss.com) - Styling
+- [Framer Motion](https://www.framer.com/motion/) - Animations
+
+---
+
+<div align="center">
+
 **Built with ❤️ by Esencelab Team**
+
+[Report Bug](https://github.com/sajadkoder/esencelab/issues) · [Request Feature](https://github.com/sajadkoder/esencelab/issues)
+
+</div>

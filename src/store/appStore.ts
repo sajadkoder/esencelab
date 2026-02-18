@@ -200,7 +200,7 @@ export const useAppStore = create<StoreState>()(
           get().calculateJobMatches();
           get().calculateCourseRecommendations();
           
-        } catch (error) {
+        } catch {
           set({ isParsing: false, parseError: 'Failed to parse resume' });
         }
       },

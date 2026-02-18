@@ -1,6 +1,6 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
-import { supabase } from '@/lib/supabase';
+import { v4 as uuidv4 } from 'uuid';
 import type { Profile, UserRole } from '@/types';
 
 interface AuthUser {
@@ -22,134 +22,132 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const USERS_KEY = 'esencelab_users';
+const CURRENT_USER_KEY = 'esencelab_current_user';
+
+interface StoredUser {
+  password: string;
+  name: string;
+  role: UserRole;
+}
+
+function getUsers(): Record<string, StoredUser> {
+  const stored = localStorage.getItem(USERS_KEY);
+  return stored ? JSON.parse(stored) : {};
+}
+
+function saveUsers(users: Record<string, StoredUser>) {
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+}
+
+function getStoredUser(email: string): StoredUser | null {
+  const users = getUsers();
+  return users[email] || null;
+}
+
+function saveUser(email: string, data: StoredUser) {
+  const users = getUsers();
+  users[email] = data;
+  saveUsers(users);
+}
+
+function getInitialUser(): AuthUser | null {
+  if (typeof window === 'undefined') return null;
+  const stored = localStorage.getItem(CURRENT_USER_KEY);
+  if (!stored) return null;
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<AuthUser | null>(getInitialUser);
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        setUser(null);
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  async function fetchProfile(userId: string) {
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
-    if (error) {
-      console.error('Error fetching profile:', error);
-      setLoading(false);
-      return;
+  const signIn = async (email: string, password: string) => {
+    const userData = getStoredUser(email);
+    
+    if (!userData) {
+      return { error: new Error('No account found. Please sign up first.') };
     }
 
-    if (profile) {
-      setUser({
-        id: profile.id,
-        email: profile.email,
-        name: profile.name,
-        role: profile.role,
-        avatar_url: profile.avatar_url || undefined,
-      });
+    if (userData.password !== password) {
+      return { error: new Error('Incorrect password') };
     }
-    setLoading(false);
-  }
 
-  async function signIn(email: string, password: string) {
-    const { error } = await supabase.auth.signInWithPassword({
+    const authUser: AuthUser = {
+      id: uuidv4(),
       email,
-      password,
-    });
+      name: userData.name,
+      role: userData.role,
+    };
 
-    if (error) {
-      return { error };
-    }
+    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(authUser));
+    setUser(authUser);
 
     return { error: null };
-  }
+  };
 
-  async function signUp(email: string, password: string, name: string, role: UserRole) {
-    const { data, error } = await supabase.auth.signUp({
+  const signUp = async (email: string, password: string, name: string, role: UserRole) => {
+    const existing = getStoredUser(email);
+    
+    if (existing) {
+      return { error: new Error('Account already exists. Please sign in.') };
+    }
+
+    saveUser(email, { password, name, role });
+
+    const authUser: AuthUser = {
+      id: uuidv4(),
       email,
-      password,
-      options: {
-        data: {
-          name,
-          role,
-        },
-      },
-    });
+      name,
+      role,
+    };
 
-    if (error) {
-      return { error };
-    }
-
-    if (data.user) {
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: data.user.id,
-        email,
-        name,
-        role,
-      });
-
-      if (profileError) {
-        return { error: profileError };
-      }
-    }
+    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(authUser));
+    setUser(authUser);
 
     return { error: null };
-  }
+  };
 
-  async function signOut() {
-    await supabase.auth.signOut();
+  const signOut = async () => {
+    localStorage.removeItem(CURRENT_USER_KEY);
     setUser(null);
-  }
+  };
 
-  async function updateProfile(updates: Partial<Profile>) {
+  const updateProfile = async (updates: Partial<Profile>) => {
     if (!user) {
       return { error: new Error('Not authenticated') };
     }
 
-    const { error } = await supabase
-      .from('profiles')
-      .update(updates)
-      .eq('id', user.id);
-
-    if (!error && updates.name) {
-      setUser({ ...user, name: updates.name });
+    const userData = getStoredUser(user.email);
+    if (userData) {
+      saveUser(user.email, { ...userData, ...updates });
     }
 
-    return { error: error || null };
-  }
+    const updatedUser: AuthUser = { 
+      ...user, 
+      ...updates,
+      avatar_url: updates.avatar_url || undefined 
+    };
+    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updatedUser));
+    setUser(updatedUser);
+
+    return { error: null };
+  };
+
+  const value: AuthContextType = {
+    user,
+    loading: false,
+    signIn,
+    signUp,
+    signOut,
+    updateProfile,
+  };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        signIn,
-        signUp,
-        signOut,
-        updateProfile,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

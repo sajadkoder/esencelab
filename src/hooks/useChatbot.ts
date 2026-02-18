@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
 import type { ChatMessage } from '@/types';
@@ -7,24 +7,22 @@ import { useAuth } from '@/hooks/useAuth';
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
+function createInitialGreeting(userName?: string): ChatMessage {
+  return {
+    id: 'welcome',
+    role: 'assistant',
+    content: `Hi${userName ? `, ${userName.split(' ')[0]}` : ''}! I'm your career guidance assistant. I can help you with:\n\n• Resume tips and improvements\n• Career path advice\n• Interview preparation\n• Skill development suggestions\n• Job search strategies\n\nWhat would you like to know?`,
+    timestamp: new Date().toISOString(),
+  };
+}
+
 export function useCareerChatbot() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [createInitialGreeting()]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
 
-  const initialGreeting: ChatMessage = {
-    id: 'welcome',
-    role: 'assistant',
-    content: `Hi${user?.name ? `, ${user.name.split(' ')[0]}` : ''}! I'm your career guidance assistant. I can help you with:\n\n• Resume tips and improvements\n• Career path advice\n• Interview preparation\n• Skill development suggestions\n• Job search strategies\n\nWhat would you like to know?`,
-    timestamp: new Date().toISOString(),
-  };
-
-  useEffect(() => {
-    if (messages.length === 0) {
-      setMessages([initialGreeting]);
-    }
-  }, []);
+  const initialGreeting = useMemo(() => createInitialGreeting(user?.name), [user?.name]);
 
   const sendMessage = async (content: string) => {
     const userMessage: ChatMessage = {
@@ -72,7 +70,7 @@ Respond in a helpful, conversational manner. Keep responses concise but informat
       };
 
       setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
+    } catch {
       toast.error('Failed to get response from AI');
       const errorMessage: ChatMessage = {
         id: uuidv4(),

@@ -4,63 +4,26 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 239 84% 67%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 239 84% 67%;
-    --radius: 0.625rem;
-    
-    /* Glassmorphism colors for dark theme */
-    --glass-bg: rgba(30, 41, 59, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --glass-hover: rgba(30, 41, 59, 0.9);
-    
-    /* Modern tech accent colors */
-    --accent-cyan: 187 94% 53%;
-    --accent-indigo: 239 84% 67%;
-    --gradient-start: 239 84% 67%;
-    --gradient-end: 187 94% 53%;
-  }
-
-  .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 14%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 14%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 239 84% 67%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 187 94% 53%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 217 33% 25%;
-    --input: 217 33% 25%;
-    --ring: 239 84% 67%;
-    
-    --glass-bg: rgba(30, 41, 59, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --glass-hover: rgba(30, 41, 59, 0.9);
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 3%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 3%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 8%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 8%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 0 0% 8%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 0 0% 100%;
+    --radius: 0.25rem;
   }
 }
 
@@ -74,118 +37,46 @@
   }
 }
 
-/* Glassmorphism utilities */
 @layer utilities {
-  .glass {
-    @apply bg-slate-800/70 backdrop-blur-xl border border-white/10;
+  .yc-btn {
+    @apply bg-white text-black px-4 py-2 font-semibold rounded hover:bg-gray-200 transition-colors disabled:opacity-50;
   }
   
-  .glass-card {
-    @apply glass rounded-2xl transition-all duration-300;
+  .yc-btn-outline {
+    @apply bg-transparent border border-white text-white px-4 py-2 font-semibold rounded hover:bg-white/10 transition-colors;
   }
   
-  .glass-card:hover {
-    @apply bg-slate-800/90 border-white/20 shadow-lg;
-    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.15);
+  .yc-input {
+    @apply w-full bg-transparent border border-[#333] rounded px-3 py-2 text-white placeholder:text-gray-500 focus:outline-none focus:border-white transition-colors;
   }
   
-  .gradient-text {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(var(--gradient-start)) 0%, hsl(var(--gradient-end)) 100%);
+  .yc-card {
+    @apply bg-[#0a0a0a] border border-[#222] rounded p-4;
   }
   
-  .gradient-bg {
-    background: linear-gradient(135deg, hsl(var(--gradient-start)) 0%, hsl(var(--gradient-end)) 100%);
+  .yc-sidebar-item {
+    @apply flex items-center gap-3 px-3 py-2 rounded hover:bg-[#111] text-gray-300 hover:text-white transition-colors cursor-pointer;
   }
   
-  .glow {
-    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
-  }
-  
-  .glow-cyan {
-    box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
+  .yc-sidebar-item.active {
+    @apply bg-white text-black;
   }
 }
 
-/* Animations */
-@layer utilities {
-  .animate-fade-in {
-    animation: fadeIn 0.3s ease-out;
-  }
-  
-  .animate-slide-up {
-    animation: slideUp 0.3s ease-out;
-  }
-  
-  .animate-slide-down {
-    animation: slideDown 0.3s ease-out;
-  }
-  
-  .animate-scale-in {
-    animation: scaleIn 0.2s ease-out;
-  }
-  
-  .animate-pulse-slow {
-    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-  
-  .animate-count {
-    animation: countUp 1s ease-out;
-  }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from { 
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to { 
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideDown {
-  from { 
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to { 
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes scaleIn {
-  from { 
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to { 
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-slate-800;
+  background: #000;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-600 rounded-full;
+  background: #333;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-slate-500;
+  background: #555;
 }

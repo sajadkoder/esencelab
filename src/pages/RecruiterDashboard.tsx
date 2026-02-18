@@ -1,284 +1,176 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
-import { useJobs } from '@/hooks/useJobs';
-import { useCandidates } from '@/hooks/useCandidates';
-import { useApplications } from '@/hooks/useApplications';
 import { Header } from '@/components/layout/Header';
-import { GlassCard, GlassBadge, GlassButton, GlassInput, GlassTextarea, GlassSelect } from '@/components/ui/Glass';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { toast } from 'sonner';
-import { 
-  Search, Users, Briefcase, Filter, Plus, Mail, Clock
-} from 'lucide-react';
+import { Search, Users, Briefcase, MapPin, Mail, Phone, Plus } from 'lucide-react';
+
+interface Candidate {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  college: string;
+  skills: string[];
+  matchScore: number;
+  status: string;
+  experience: string;
+  location: string;
+}
+
+interface Job {
+  id: string;
+  title: string;
+  applicants: number;
+  views: number;
+  status: string;
+}
+
+const INDIAN_CANDIDATES: Candidate[] = [
+  { id: '1', name: 'Rahul Sharma', email: 'rahul.sharma@email.com', phone: '+91 9876543210', role: 'SDE', college: 'IIT Bombay', skills: ['Python', 'DSA', 'ML'], matchScore: 94, status: 'new', experience: 'Fresher', location: 'Mumbai' },
+  { id: '2', name: 'Priya Patel', email: 'priya.patel@email.com', phone: '+91 9876543211', role: 'Frontend Developer', college: 'NIT Trichy', skills: ['React', 'TypeScript', 'CSS'], matchScore: 89, status: 'screening', experience: '1 year', location: 'Chennai' },
+  { id: '3', name: 'Amit Kumar', email: 'amit.kumar@email.com', phone: '+91 9876543212', role: 'Backend Developer', college: 'IIIT Bangalore', skills: ['Java', 'Spring', 'PostgreSQL'], matchScore: 91, status: 'interview', experience: '2 years', location: 'Bangalore' },
+  { id: '4', name: 'Sneha Reddy', email: 'sneha.reddy@email.com', phone: '+91 9876543213', role: 'Data Analyst', college: 'IIT Delhi', skills: ['Python', 'SQL', 'Tableau'], matchScore: 87, status: 'new', experience: 'Fresher', location: 'Delhi' },
+  { id: '5', name: 'Vikram Singh', email: 'vikram.singh@email.com', phone: '+91 9876543214', role: 'Full Stack Developer', college: 'BITS Pilani', skills: ['Node.js', 'React', 'MongoDB'], matchScore: 92, status: 'hired', experience: '3 years', location: 'Hyderabad' },
+];
+
+const MY_JOBS: Job[] = [
+  { id: '1', title: 'SDE I', applicants: 45, views: 234, status: 'active' },
+  { id: '2', title: 'Frontend Developer', applicants: 28, views: 156, status: 'active' },
+  { id: '3', title: 'Backend Developer', applicants: 32, views: 189, status: 'closed' },
+];
 
 export function RecruiterDashboard() {
   const { user } = useAuth();
-  const { data: candidates = [], isLoading: candidatesLoading } = useCandidates();
-  const { data: jobs = [] } = useJobs();
-  const { data: applications = [] } = useApplications();
-  
   const [searchQuery, setSearchQuery] = useState('');
-  const [skillFilter, setSkillFilter] = useState('');
-  const [expandedCandidate, setExpandedCandidate] = useState<string | null>(null);
-  const [showPostJob, setShowPostJob] = useState(false);
-  
-  const [newJob, setNewJob] = useState({
-    title: '',
-    location: '',
-    type: 'full-time',
-    description: '',
-    skills: '',
-  });
 
-  const filteredCandidates = candidates.filter((c) => {
+  const filteredCandidates = INDIAN_CANDIDATES.filter((c: Candidate) => {
     const matchesSearch = !searchQuery || 
       c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.role?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesSkill = !skillFilter ||
-      c.skills?.some((s: { name: string }) => s.name.toLowerCase().includes(skillFilter.toLowerCase()));
-    
-    return matchesSearch && matchesSkill;
+      c.role.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
   });
 
-  const avgMatchScore = candidates.length > 0 
-    ? Math.round(candidates.reduce((acc: number, c) => acc + (c.matchScore || 0), 0) / candidates.length)
-    : 0;
-
-  const statusColors: Record<string, 'default' | 'info' | 'warning' | 'success' | 'error'> = {
-    new: 'info',
-    screening: 'warning',
-    interview: 'default',
-    hired: 'success',
-    rejected: 'error',
+  const statusColors: Record<string, string> = {
+    new: '#888',
+    screening: '#666',
+    interview: '#666',
+    hired: '#fff',
+    rejected: '#444',
   };
 
   return (
-    <div className="min-h-screen bg-slate-900">
-      <Header 
-        title={`Welcome, ${user?.name?.split(' ')[0] || 'Recruiter'}`} 
-        subtitle="Manage your job postings and candidates"
-      />
+    <div className="min-h-screen">
+      <Header title={`Hi, ${user?.name?.split(' ')[0] || 'Recruiter'}`} />
       
-      <div className="p-6 lg:p-8">
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <GlassCard className="p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-400">Total Candidates</p>
-                <p className="text-2xl font-bold gradient-text">{candidates.length}</p>
-              </div>
-              <div className="p-3 rounded-xl bg-indigo-500/20">
-                <Users className="w-5 h-5 text-indigo-400" />
-              </div>
-            </div>
-          </GlassCard>
-          
-          <GlassCard className="p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-400">Active Jobs</p>
-                <p className="text-2xl font-bold gradient-text">{jobs.length}</p>
-              </div>
-              <div className="p-3 rounded-xl bg-cyan-500/20">
-                <Briefcase className="w-5 h-5 text-cyan-400" />
-              </div>
-            </div>
-          </GlassCard>
-          
-          <GlassCard className="p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-400">Avg Match Score</p>
-                <p className="text-2xl font-bold gradient-text">{avgMatchScore}%</p>
-              </div>
-              <div className="p-3 rounded-xl bg-emerald-500/20">
-                <Users className="w-5 h-5 text-emerald-400" />
-              </div>
-            </div>
-          </GlassCard>
+      <div className="p-3 sm:p-4 md:p-6 space-y-4">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
+            <p className="text-[10px] sm:text-xs text-gray-500">Applicants</p>
+            <p className="text-lg sm:text-xl font-bold text-white">{INDIAN_CANDIDATES.length}</p>
+          </div>
+          <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
+            <p className="text-[10px] sm:text-xs text-gray-500">Active Jobs</p>
+            <p className="text-lg sm:text-xl font-bold text-white">{MY_JOBS.filter(j => j.status === 'active').length}</p>
+          </div>
+          <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
+            <p className="text-[10px] sm:text-xs text-gray-500">Hired</p>
+            <p className="text-lg sm:text-xl font-bold text-white">{INDIAN_CANDIDATES.filter(c => c.status === 'hired').length}</p>
+          </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search candidates..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500/50"
-            />
-          </div>
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Filter by skill..."
-              value={skillFilter}
-              onChange={(e) => setSkillFilter(e.target.value)}
-              className="w-full sm:w-64 pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500/50"
-            />
-          </div>
-          <Dialog open={showPostJob} onOpenChange={setShowPostJob}>
-            <DialogTrigger asChild>
-              <GlassButton>
-                <Plus className="w-4 h-4 mr-2" />
-                Post Job
-              </GlassButton>
-            </DialogTrigger>
-            <DialogContent className="bg-slate-800 border border-white/10 rounded-2xl max-w-lg">
-              <DialogHeader>
-                <DialogTitle className="text-white">Post a New Job</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 mt-4">
-                <GlassInput
-                  label="Job Title"
-                  value={newJob.title}
-                  onChange={(e) => setNewJob({ ...newJob, title: e.target.value })}
-                  placeholder="e.g. Software Engineer"
-                />
-                <GlassInput
-                  label="Location"
-                  value={newJob.location}
-                  onChange={(e) => setNewJob({ ...newJob, location: e.target.value })}
-                  placeholder="e.g. San Francisco, CA"
-                />
-                <GlassSelect
-                  label="Job Type"
-                  value={newJob.type}
-                  onChange={(e) => setNewJob({ ...newJob, type: e.target.value })}
-                  options={[
-                    { value: 'full-time', label: 'Full-time' },
-                    { value: 'part-time', label: 'Part-time' },
-                    { value: 'internship', label: 'Internship' },
-                  ]}
-                />
-                <GlassTextarea
-                  label="Description"
-                  value={newJob.description}
-                  onChange={(e) => setNewJob({ ...newJob, description: e.target.value })}
-                  placeholder="Job description..."
-                  rows={4}
-                />
-                <GlassInput
-                  label="Skills (comma-separated)"
-                  value={newJob.skills}
-                  onChange={(e) => setNewJob({ ...newJob, skills: e.target.value })}
-                  placeholder="e.g. React, TypeScript, Node.js"
-                />
-                <div className="flex gap-2 pt-4">
-                  <GlassButton onClick={() => {
-                    toast.success('Job posted successfully!');
-                    setShowPostJob(false);
-                  }} className="flex-1">
-                    Post Job
-                  </GlassButton>
-                  <GlassButton variant="secondary" onClick={() => setShowPostJob(false)}>
-                    Cancel
-                  </GlassButton>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        {/* Candidates List */}
-        <GlassCard className="p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <Users className="w-5 h-5 text-indigo-400" />
-            <h2 className="font-semibold text-white">Candidates</h2>
-            <span className="text-sm text-slate-400 ml-auto">{filteredCandidates.length} found</span>
+        <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Briefcase className="w-4 h-4 text-white" />
+              <h2 className="font-medium text-white text-sm">Job Postings</h2>
+            </div>
+            <button className="bg-white text-black text-xs px-3 py-1.5 rounded font-medium flex items-center gap-1">
+              <Plus className="w-3 h-3" /> Post
+            </button>
           </div>
           
-          {candidatesLoading ? (
-            <div className="text-center py-8">
-              <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto" />
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredCandidates.map((candidate) => {
-                const isExpanded = expandedCandidate === candidate.id;
-                const candidateApplications = applications.filter(a => a.candidate_id === candidate.id);
-                
-                return (
-                  <motion.div
-                    key={candidate.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <h3 className="font-medium text-white">{candidate.name}</h3>
-                          <GlassBadge variant={statusColors[candidate.status || 'new']}>
-                            {candidate.status || 'new'}
-                          </GlassBadge>
-                        </div>
-                        <p className="text-sm text-slate-400">{candidate.role}</p>
-                        <div className="flex items-center gap-4 mt-2 text-sm text-slate-500 flex-wrap">
-                          <span className="flex items-center gap-1">
-                            <Mail className="w-4 h-4" />
-                            {candidate.email}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {MY_JOBS.map((job: Job) => (
+              <div key={job.id} className="p-3 bg-[#111] rounded-lg">
+                <h3 className="font-medium text-white text-sm">{job.title}</h3>
+                <p className="text-xs text-gray-500">{job.applicants} applicants</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search candidates..."
+            className="w-full bg-[#111] border border-[#222] rounded-lg py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-white"
+          />
+        </div>
+
+        <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Users className="w-4 h-4 text-white" />
+            <h2 className="font-medium text-white text-sm">Candidates</h2>
+            <span className="text-xs text-gray-500 ml-auto">{filteredCandidates.length}</span>
+          </div>
+          
+          <div className="space-y-2">
+            {filteredCandidates.map((candidate: Candidate) => (
+              <motion.div
+                key={candidate.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="p-3 bg-[#111] rounded-lg"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white flex items-center justify-center text-black text-sm font-bold shrink-0">
+                      {candidate.name.split(' ').map((n: string) => n[0]).join('')}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-medium text-white text-sm">{candidate.name}</h3>
+                      <p className="text-xs text-gray-500">{candidate.role} • {candidate.experience}</p>
+                      <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                        <MapPin className="w-3 h-3" /> {candidate.college}
+                      </p>
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {candidate.skills.map((skill: string) => (
+                          <span key={skill} className="px-2 py-0.5 bg-[#222] text-gray-400 text-[10px] rounded">
+                            {skill}
                           </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            Applied {candidateApplications.length} jobs
-                          </span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="mb-2">
-                          <span className="text-2xl font-semibold gradient-text">{candidate.matchScore || 0}%</span>
-                          <p className="text-xs text-slate-500">match</p>
-                        </div>
-                        <button
-                          onClick={() => setExpandedCandidate(isExpanded ? null : candidate.id)}
-                          className="text-sm text-indigo-400 hover:underline"
-                        >
-                          {isExpanded ? 'Less' : 'More'}
-                        </button>
+                        ))}
                       </div>
                     </div>
+                  </div>
+                  <div className="flex sm:flex-col items-center gap-2 sm:items-end">
+                    <span 
+                      className="px-2 py-0.5 text-[10px] rounded capitalize"
+                      style={{ backgroundColor: `${statusColors[candidate.status]}20`, color: statusColors[candidate.status] }}
+                    >
+                      {candidate.status}
+                    </span>
+                    <span className="px-2 py-0.5 text-[10px] bg-white text-black rounded font-medium">
+                      {candidate.matchScore}%
+                    </span>
+                  </div>
+                </div>
 
-                    {isExpanded && (
-                      <div className="mt-4 pt-4 border-t border-white/10">
-                        {candidate.skills && candidate.skills.length > 0 && (
-                          <div className="mb-4">
-                            <p className="text-sm text-slate-400 mb-2">Skills:</p>
-                            <div className="flex flex-wrap gap-2">
-                              {candidate.skills.map((skill: { name: string; score: number }) => (
-                                <GlassBadge key={skill.name} variant="info">
-                                  {skill.name} ({skill.score}%)
-                                </GlassBadge>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        
-                        <div className="flex gap-2 flex-wrap">
-                          <GlassButton size="sm">
-                            Move to Screening
-                          </GlassButton>
-                          <GlassButton variant="secondary" size="sm">
-                            Schedule Interview
-                          </GlassButton>
-                          <GlassButton variant="ghost" size="sm">
-                            Reject
-                          </GlassButton>
-                        </div>
-                      </div>
-                    )}
-                  </motion.div>
-                );
-              })}
-            </div>
-          )}
-        </GlassCard>
+                <div className="flex gap-3 mt-3 pt-3 border-t border-[#222]">
+                  <button className="flex items-center gap-1 text-xs text-white hover:text-gray-300">
+                    <Mail className="w-3 h-3" /> Email
+                  </button>
+                  <button className="flex items-center gap-1 text-xs text-white hover:text-gray-300">
+                    <Phone className="w-3 h-3" /> Call
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

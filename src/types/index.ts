@@ -191,6 +191,50 @@ export interface TargetRole {
   category: string;
 }
 
+export interface IndianJob {
+  title: string;
+  company: string;
+  location: string;
+  salary: string;
+  skills: string[];
+  posted: string;
+  url: string;
+}
+
+export interface CourseResource {
+  id: string;
+  title: string;
+  provider: string;
+  type: 'youtube' | 'course' | 'book' | 'practice';
+  url: string;
+  duration?: string;
+  rating?: number;
+  price?: string;
+  language?: string;
+}
+
+export interface AppliedJob {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  salary: string;
+  appliedAt: string;
+  status: 'applied' | 'under_review' | 'interview' | 'offer' | 'rejected';
+  url: string;
+}
+
+export interface SavedJob {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  salary: string;
+  skills: string[];
+  savedAt: string;
+  url: string;
+}
+
 // Demo data
 export const DEMO_USERS: { email: string; password: string; name: string; role: UserRole }[] = [
   { email: 'student@demo.com', password: 'demo', name: 'Alex Chen', role: 'student' },

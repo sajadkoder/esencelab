@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, 
@@ -7,18 +6,14 @@ import {
   Users, 
   BookOpen, 
   LogOut,
-  Menu,
-  X,
   GraduationCap,
-  BarChart3,
-  UserCircle
+  BarChart3
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 const studentLinks = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/jobs', icon: Briefcase, label: 'Jobs' },
-  { to: '/profile', icon: UserCircle, label: 'Profile' },
   { to: '/courses', icon: BookOpen, label: 'Courses' },
 ];
 
@@ -34,9 +29,14 @@ const adminLinks = [
   { to: '/users', icon: Users, label: 'Users' },
 ];
 
-export function Sidebar() {
-  const [isOpen, setIsOpen] = useState(false);
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, signOut } = useAuth();
 
   const links = user?.role === 'student' 
@@ -47,99 +47,82 @@ export function Sidebar() {
 
   const handleSignOut = async () => {
     await signOut();
+    onClose();
+    navigate('/');
   };
 
   return (
     <>
-      {/* Mobile menu button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-slate-800 text-white"
-      >
-        {isOpen ? <X size={24} /> : <Menu size={24} />}
-      </button>
-
-      {/* Overlay */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setIsOpen(false)}
-            className="lg:hidden fixed inset-0 bg-black/50 z-40"
+            onClick={onClose}
+            className="lg:hidden fixed inset-0 bg-black/80 z-40"
           />
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
       <motion.aside
         initial={false}
         animate={{
           x: isOpen ? 0 : -280,
         }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="fixed left-0 top-0 h-screen w-[280px] glass z-50 flex flex-col lg:translate-x-0"
+        className="fixed left-0 top-0 h-screen w-[220px] bg-black border-r border-[#222] z-50 flex flex-col"
       >
         {/* Logo */}
-        <div className="p-6 border-b border-white/10">
-          <Link to="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center">
-              <GraduationCap className="w-6 h-6 text-white" />
+        <div className="p-4 border-b border-[#222]">
+          <Link to="/" className="flex items-center gap-2" onClick={onClose}>
+            <div className="w-8 h-8 rounded bg-white flex items-center justify-center">
+              <GraduationCap className="w-4 h-4 text-black" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold gradient-text">Esencelab</h1>
-              <p className="text-xs text-slate-400">Campus Recruitment</p>
-            </div>
+            <span className="text-lg font-bold text-white">Esencelab</span>
           </Link>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+        <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
           {links.map((link) => {
             const isActive = location.pathname === link.to;
             return (
               <Link
                 key={link.to}
                 to={link.to}
-                onClick={() => setIsOpen(false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                onClick={onClose}
+                className={`flex items-center gap-3 px-3 py-2 rounded text-sm transition-colors ${
                   isActive
-                    ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
-                    : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                    ? 'bg-white text-black font-medium'
+                    : 'text-gray-400 hover:text-white hover:bg-[#111]'
                 }`}
               >
-                <link.icon className={`w-5 h-5 ${isActive ? 'text-indigo-400' : ''}`} />
-                <span className="font-medium">{link.label}</span>
-                {isActive && (
-                  <motion.div
-                    layoutId="activeIndicator"
-                    className="ml-auto w-2 h-2 rounded-full bg-indigo-400"
-                  />
-                )}
+                <link.icon className="w-4 h-4" />
+                <span>{link.label}</span>
               </Link>
             );
           })}
         </nav>
 
         {/* User section */}
-        <div className="p-4 border-t border-white/10">
-          <div className="flex items-center gap-3 px-4 py-3 mb-4 rounded-xl bg-white/5">
-            <div className="w-10 h-10 rounded-full gradient-bg flex items-center justify-center text-white font-semibold">
+        <div className="p-3 border-t border-[#222]">
+          <div className="flex items-center gap-2 px-2 py-2 mb-2">
+            <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center text-black text-xs font-bold">
               {user?.name?.charAt(0) || 'U'}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-white truncate">{user?.name}</p>
-              <p className="text-xs text-slate-400 capitalize">{user?.role}</p>
+              <p className="text-sm text-white truncate">{user?.name}</p>
+              <p className="text-xs text-gray-500 capitalize">@{user?.role}</p>
             </div>
           </div>
           
           <button
             onClick={handleSignOut}
-            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-slate-300 hover:bg-red-500/10 hover:text-red-400 transition-colors"
+            className="flex items-center gap-3 w-full px-3 py-2 rounded text-sm text-gray-400 hover:text-white hover:bg-[#111] transition-colors"
           >
-            <LogOut className="w-5 h-5" />
-            <span className="font-medium">Sign Out</span>
+            <LogOut className="w-4 h-4" />
+            <span>Log out</span>
           </button>
         </div>
       </motion.aside>

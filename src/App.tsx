@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -11,8 +12,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -41,13 +42,26 @@ function DashboardRouter() {
   }
 }
 
+function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-black">
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <div className="lg:ml-[220px]">
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const { user, loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -60,12 +74,9 @@ function App() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <div className="min-h-screen bg-slate-900">
-                <Sidebar />
-                <div className="lg:ml-[280px]">
-                  <DashboardRouter />
-                </div>
-              </div>
+              <DashboardLayout>
+                <DashboardRouter />
+              </DashboardLayout>
             </ProtectedRoute>
           }
         />
@@ -73,25 +84,9 @@ function App() {
           path="/jobs"
           element={
             <ProtectedRoute>
-              <div className="min-h-screen bg-slate-900">
-                <Sidebar />
-                <div className="lg:ml-[280px]">
-                  <DashboardRouter />
-                </div>
-              </div>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <div className="min-h-screen bg-slate-900">
-                <Sidebar />
-                <div className="lg:ml-[280px]">
-                  <DashboardRouter />
-                </div>
-              </div>
+              <DashboardLayout>
+                <DashboardRouter />
+              </DashboardLayout>
             </ProtectedRoute>
           }
         />
@@ -99,12 +94,9 @@ function App() {
           path="/courses"
           element={
             <ProtectedRoute>
-              <div className="min-h-screen bg-slate-900">
-                <Sidebar />
-                <div className="lg:ml-[280px]">
-                  <DashboardRouter />
-                </div>
-              </div>
+              <DashboardLayout>
+                <DashboardRouter />
+              </DashboardLayout>
             </ProtectedRoute>
           }
         />
@@ -112,12 +104,9 @@ function App() {
           path="/candidates"
           element={
             <ProtectedRoute>
-              <div className="min-h-screen bg-slate-900">
-                <Sidebar />
-                <div className="lg:ml-[280px]">
-                  <DashboardRouter />
-                </div>
-              </div>
+              <DashboardLayout>
+                <DashboardRouter />
+              </DashboardLayout>
             </ProtectedRoute>
           }
         />
@@ -125,12 +114,9 @@ function App() {
           path="/analytics"
           element={
             <ProtectedRoute>
-              <div className="min-h-screen bg-slate-900">
-                <Sidebar />
-                <div className="lg:ml-[280px]">
-                  <DashboardRouter />
-                </div>
-              </div>
+              <DashboardLayout>
+                <DashboardRouter />
+              </DashboardLayout>
             </ProtectedRoute>
           }
         />
@@ -138,12 +124,9 @@ function App() {
           path="/users"
           element={
             <ProtectedRoute>
-              <div className="min-h-screen bg-slate-900">
-                <Sidebar />
-                <div className="lg:ml-[280px]">
-                  <DashboardRouter />
-                </div>
-              </div>
+              <DashboardLayout>
+                <DashboardRouter />
+              </DashboardLayout>
             </ProtectedRoute>
           }
         />
