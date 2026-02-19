@@ -1,0 +1,111 @@
+'use client';
+
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { User, AuthState, LoginCredentials, RegisterData } from '@/types';
+import api from '@/lib/api';
+
+interface AuthContextType extends AuthState {
+  login: (credentials: LoginCredentials) => Promise<void>;
+  register: (data: RegisterData) => Promise<void>;
+  logout: () => void;
+  updateUser: (user: User) => void;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [state, setState] = useState<AuthState>({
+    user: null,
+    token: null,
+    isLoading: true,
+    isAuthenticated: false,
+  });
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        setState({
+          token,
+          user,
+          isLoading: false,
+          isAuthenticated: true,
+        });
+      } catch {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setState({
+          user: null,
+          token: null,
+          isLoading: false,
+          isAuthenticated: false,
+        });
+      }
+    } else {
+      setState(prev => ({ ...prev, isLoading: false }));
+    }
+  }, []);
+
+  const login = async (credentials: LoginCredentials) => {
+    const response = await api.post('/auth/login', credentials);
+    const { token, user } = response.data;
+    
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+    
+    setState({
+      token,
+      user,
+      isLoading: false,
+      isAuthenticated: true,
+    });
+  };
+
+  const register = async (data: RegisterData) => {
+    const response = await api.post('/auth/register', data);
+    const { token, user } = response.data;
+    
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+    
+    setState({
+      token,
+      user,
+      isLoading: false,
+      isAuthenticated: true,
+    });
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setState({
+      user: null,
+      token: null,
+      isLoading: false,
+      isAuthenticated: false,
+    });
+  };
+
+  const updateUser = (user: User) => {
+    localStorage.setItem('user', JSON.stringify(user));
+    setState(prev => ({ ...prev, user }));
+  };
+
+  return (
+    <AuthContext.Provider value={{ ...state, login, register, logout, updateUser }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}

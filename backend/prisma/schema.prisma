@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  student
+  recruiter
+  admin
+}
+
+enum JobType {
+  full_time
+  part_time
+  internship
+  contract
+}
+
+enum JobStatus {
+  active
+  closed
+}
+
+enum ApplicationStatus {
+  pending
+  shortlisted
+  rejected
+  interview
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  name         String
+  role         UserRole  @default(student)
+  avatarUrl    String?   @map("avatar_url")
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  resumes         Resume[]
+  jobs            Job[]
+  applications    Application[]
+  savedJobs       SavedJob[]
+
+  @@map("users")
+}
+
+model Resume {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  fileUrl     String   @map("file_url")
+  fileName    String   @map("file_name")
+  parsedData  Json?    @map("parsed_data")
+  skills      String[]
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications Application[]
+
+  @@map("resumes")
+}
+
+model Job {
+  id           String     @id @default(uuid())
+  title        String
+  company      String
+  description  String
+  requirements String?
+  location     String
+  salaryMin    Int?       @map("salary_min")
+  salaryMax    Int?       @map("salary_max")
+  jobType      JobType    @map("job_type") @default(full_time)
+  status       JobStatus  @default(active)
+  recruiterId  String     @map("recruiter_id")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  recruiter    User          @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+  applications Application[]
+  savedJobs    SavedJob[]
+
+  @@map("jobs")
+}
+
+model Application {
+  id          String             @id @default(uuid())
+  jobId       String             @map("job_id")
+  studentId  String             @map("student_id")
+  resumeId    String             @map("resume_id")
+  status      ApplicationStatus @default(pending)
+  matchScore Float?             @map("match_score")
+  coverLetter String?           @map("cover_letter")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  job     Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  student User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  resume  Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, studentId])
+  @@map("applications")
+}
+
+model Course {
+  id           String   @id @default(uuid())
+  title        String
+  description  String
+  instructor   String
+  url          String
+  thumbnailUrl String?  @map("thumbnail_url")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("courses")
+}
+
+model SavedJob {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  jobId     String   @map("job_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@map("saved_jobs")
+}
