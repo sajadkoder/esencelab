@@ -1,9 +1,4 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://qpigvrkmxqrchszfgvwx.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwaWd2cmtteHFyY2hzemZndnd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMzY4OTgsImV4cCI6MjA4NjcxMjg5OH0.N4nH1-h6xxNiFm6VtYpRnAZfEB8zFSqBUZYL4-AmCX0';
-
-export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+import { supabase } from './supabase';
 
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 export const AI_SERVICE_URL = import.meta.env.VITE_AI_SERVICE_URL || 'http://localhost:8000';
@@ -15,203 +10,259 @@ export interface ApiResponse<T> {
 }
 
 class ApiService {
-  private token: string | null = null;
-
-  setToken(token: string | null) {
-    this.token = token;
-    if (token) {
-      localStorage.setItem('esencelab_token', token);
-    } else {
-      localStorage.removeItem('esencelab_token');
-    }
-  }
-
-  getToken(): string | null {
-    if (!this.token) {
-      this.token = localStorage.getItem('esencelab_token');
-    }
-    return this.token;
-  }
-
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<ApiResponse<T>> {
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    };
-
-    const token = this.getToken();
-    if (token) {
-      (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
-    }
-
-    try {
-      const response = await fetch(`${API_URL}${endpoint}`, {
-        ...options,
-        headers,
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return { error: data.error || 'Request failed', message: data.message };
-      }
-
-      return { data };
-    } catch (error) {
-      return { error: 'Network error', message: String(error) };
-    }
-  }
-
-  async login(email: string, password: string) {
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (authError) {
-      return { error: authError.message };
-    }
-
-    if (authData.user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', authData.user.id)
-        .single();
-
-      const token = authData.session.access_token;
-      this.setToken(token);
-
-      return { 
-        data: { 
-          user: profile || { 
-            id: authData.user.id, 
-            email: authData.user.email,
-            name: authData.user.user_metadata?.name || email.split('@')[0],
-            role: authData.user.user_metadata?.role || 'student'
-          }, 
-          token 
-        } 
-      };
-    }
-
-    return { error: 'Login failed' };
-  }
-
-  async signup(email: string, password: string, name: string, role: string) {
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          name,
-          role,
-        },
-      },
-    });
-
-    if (authError) {
-      return { error: authError.message };
-    }
-
-    if (authData.user) {
-      await supabase
-        .from('profiles')
-        .insert({
-          id: authData.user.id,
-          email,
-          name,
-          role,
-        });
-
-      return this.login(email, password);
-    }
-
-    return { error: 'Signup failed' };
-  }
-
-  async getMe() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: 'Not authenticated' };
-
-    const { data: profile } = await supabase
-      .from('profiles')
+  async getJobs(filters?: { status?: string; location?: string; skills?: string[] }) {
+    let query = supabase
+      .from('jobs')
       .select('*')
-      .eq('id', user.id)
-      .single();
+      .eq('status', 'active')
+      .order('posted_at', { ascending: false });
 
-    return { data: profile };
-  }
+    if (filters?.location) {
+      query = query.ilike('location', `%${filters.location}%`);
+    }
 
-  async signOut() {
-    await supabase.auth.signOut();
-    this.setToken(null);
-  }
+    const { data, error } = await query;
 
-  async getJobs(filters?: { status?: string; location?: string }) {
-    const params = new URLSearchParams();
-    if (filters?.status) params.append('status', filters.status);
-    if (filters?.location) params.append('location', filters.location);
-    const query = params.toString() ? `?${params.toString()}` : '';
-    return this.request<any[]>('/jobs' + query);
+    if (error) return { error: error.message };
+    return { data };
   }
 
   async getJob(id: string) {
-    return this.request<any>(`/jobs/${id}`);
+    const { data, error } = await supabase
+      .from('jobs')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) return { error: error.message };
+    return { data };
   }
 
-  async createJob(data: any) {
-    return this.request<any>('/jobs', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+  async createJob(jobData: {
+    title: string;
+    company: string;
+    location?: string;
+    description?: string;
+    requirements?: string[];
+    skills?: string[];
+    salary_min?: number;
+    salary_max?: number;
+    job_type?: 'full-time' | 'part-time' | 'internship';
+    employer_id: string;
+  }) {
+    const { data, error } = await supabase
+      .from('jobs')
+      .insert({
+        ...jobData,
+        status: 'active',
+        posted_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (error) return { error: error.message };
+    return { data };
   }
 
-  async getCandidates(filters?: { status?: string }) {
-    const params = new URLSearchParams();
-    if (filters?.status) params.append('status', filters.status);
-    const query = params.toString() ? `?${params.toString()}` : '';
-    return this.request<any[]>('/candidates' + query);
+  async updateJob(id: string, jobData: Partial<{
+    title: string;
+    company: string;
+    location: string;
+    description: string;
+    requirements: string[];
+    skills: string[];
+    salary_min: number;
+    salary_max: number;
+    job_type: 'full-time' | 'part-time' | 'internship';
+    status: 'active' | 'closed' | 'draft';
+  }>) {
+    const { data, error } = await supabase
+      .from('jobs')
+      .update(jobData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) return { error: error.message };
+    return { data };
   }
 
-  async getCandidateProfile() {
-    return this.request<any>('/candidates/me');
+  async deleteJob(id: string) {
+    const { error } = await supabase
+      .from('jobs')
+      .delete()
+      .eq('id', id);
+
+    if (error) return { error: error.message };
+    return { success: true };
   }
 
-  async updateCandidateProfile(data: any) {
-    return this.request<any>('/candidates/me', {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
+  async getCandidateByClerkId(clerkUserId: string) {
+    const { data, error } = await supabase
+      .from('candidates')
+      .select('*')
+      .eq('clerk_user_id', clerkUserId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') return { error: error.message };
+    return { data };
   }
 
-  async updateCandidateStatus(id: string, status: string) {
-    return this.request<any>(`/candidates/${id}/status`, {
-      method: 'PUT',
-      body: JSON.stringify({ status }),
-    });
+  async updateCandidateProfile(clerkUserId: string, profileData: {
+    name?: string;
+    email?: string;
+    role?: string;
+    skills?: Record<string, unknown>[];
+    education?: Record<string, unknown>[];
+    experience?: Record<string, unknown>[];
+    resume_url?: string;
+    resume_text?: string;
+  }) {
+    const { data: existing } = await supabase
+      .from('candidates')
+      .select('id')
+      .eq('clerk_user_id', clerkUserId)
+      .single();
+
+    if (existing) {
+      const { data, error } = await supabase
+        .from('candidates')
+        .update({
+          ...profileData,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('clerk_user_id', clerkUserId)
+        .select()
+        .single();
+
+      if (error) return { error: error.message };
+      return { data };
+    } else {
+      const { data, error } = await supabase
+        .from('candidates')
+        .insert({
+          clerk_user_id: clerkUserId,
+          ...profileData,
+          name: profileData.name || '',
+          email: profileData.email || '',
+          status: 'new',
+          match_score: 0,
+        })
+        .select()
+        .single();
+
+      if (error) return { error: error.message };
+      return { data };
+    }
   }
 
-  async getApplications() {
-    return this.request<any[]>('/applications/user');
+  async getCandidates(filters?: { status?: string; skills?: string[] }) {
+    let query = supabase
+      .from('candidates')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (filters?.status) {
+      query = query.eq('status', filters.status);
+    }
+
+    const { data, error } = await query;
+
+    if (error) return { error: error.message };
+    return { data };
   }
 
-  async applyToJob(jobId: string) {
-    return this.request<any>('/applications', {
-      method: 'POST',
-      body: JSON.stringify({ jobId }),
-    });
+  async updateCandidateStatus(id: string, status: 'new' | 'screening' | 'interview' | 'hired' | 'rejected') {
+    const { data, error } = await supabase
+      .from('candidates')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) return { error: error.message };
+    return { data };
+  }
+
+  async getApplicationsByCandidate(candidateId: string) {
+    const { data, error } = await supabase
+      .from('applications')
+      .select(`
+        *,
+        jobs (*)
+      `)
+      .eq('candidate_id', candidateId)
+      .order('applied_at', { ascending: false });
+
+    if (error) return { error: error.message };
+    return { data };
+  }
+
+  async applyToJob(jobId: string, candidateId: string) {
+    const { data, error } = await supabase
+      .from('applications')
+      .insert({
+        job_id: jobId,
+        candidate_id: candidateId,
+        status: 'pending',
+      })
+      .select()
+      .single();
+
+    if (error) return { error: error.message };
+    return { data };
+  }
+
+  async updateApplicationStatus(id: string, status: 'pending' | 'reviewed' | 'accepted' | 'rejected') {
+    const { data, error } = await supabase
+      .from('applications')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) return { error: error.message };
+    return { data };
   }
 
   async getCourses(filters?: { level?: string; skill?: string }) {
-    const params = new URLSearchParams();
-    if (filters?.level) params.append('level', filters.level);
-    if (filters?.skill) params.append('skill', filters.skill);
-    const query = params.toString() ? `?${params.toString()}` : '';
-    return this.request<any[]>('/courses' + query);
+    let query = supabase
+      .from('courses')
+      .select('*')
+      .order('rating', { ascending: false });
+
+    if (filters?.level) {
+      query = query.eq('level', filters.level);
+    }
+
+    const { data, error } = await query;
+
+    if (error) return { error: error.message };
+    return { data };
+  }
+
+  async logActivity(clerkUserId: string, action: string, details?: string, metadata?: Record<string, unknown>) {
+    const { error } = await supabase
+      .from('activity_logs')
+      .insert({
+        clerk_user_id: clerkUserId,
+        action,
+        details,
+        metadata,
+      });
+
+    if (error) console.error('Failed to log activity:', error);
+  }
+
+  async getActivityLogs(limit = 50) {
+    const { data, error } = await supabase
+      .from('activity_logs')
+      .select('*')
+      .order('timestamp', { ascending: false })
+      .limit(limit);
+
+    if (error) return { error: error.message };
+    return { data };
   }
 }
 

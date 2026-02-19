@@ -4,10 +4,18 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
+  throw new Error('Missing Supabase environment variables. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
 export type Database = {
   public: {
@@ -15,6 +23,7 @@ export type Database = {
       profiles: {
         Row: {
           id: string;
+          clerk_user_id: string;
           email: string;
           name: string;
           role: 'student' | 'employer' | 'admin';
@@ -23,7 +32,8 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
-          id: string;
+          id?: string;
+          clerk_user_id: string;
           email: string;
           name: string;
           role?: 'student' | 'employer' | 'admin';
@@ -33,6 +43,7 @@ export type Database = {
         };
         Update: {
           id?: string;
+          clerk_user_id?: string;
           email?: string;
           name?: string;
           role?: 'student' | 'employer' | 'admin';
@@ -95,44 +106,53 @@ export type Database = {
         Row: {
           id: string;
           user_id: string | null;
+          clerk_user_id: string | null;
           name: string;
           email: string;
           role: string | null;
-          skills: Record<string, unknown>[] | null;
-          education: Record<string, unknown>[] | null;
-          experience: Record<string, unknown>[] | null;
+          skills: Json | null;
+          education: Json | null;
+          experience: Json | null;
           resume_url: string | null;
+          resume_text: string | null;
           match_score: number;
           status: 'new' | 'screening' | 'interview' | 'hired' | 'rejected';
           created_at: string;
+          updated_at: string;
         };
         Insert: {
           id?: string;
           user_id?: string | null;
+          clerk_user_id?: string | null;
           name: string;
           email: string;
           role?: string | null;
-          skills?: Record<string, unknown>[] | null;
-          education?: Record<string, unknown>[] | null;
-          experience?: Record<string, unknown>[] | null;
+          skills?: Json | null;
+          education?: Json | null;
+          experience?: Json | null;
           resume_url?: string | null;
+          resume_text?: string | null;
           match_score?: number;
           status?: 'new' | 'screening' | 'interview' | 'hired' | 'rejected';
           created_at?: string;
+          updated_at?: string;
         };
         Update: {
           id?: string;
           user_id?: string | null;
+          clerk_user_id?: string | null;
           name?: string;
           email?: string;
           role?: string | null;
-          skills?: Record<string, unknown>[] | null;
-          education?: Record<string, unknown>[] | null;
-          experience?: Record<string, unknown>[] | null;
+          skills?: Json | null;
+          education?: Json | null;
+          experience?: Json | null;
           resume_url?: string | null;
+          resume_text?: string | null;
           match_score?: number;
           status?: 'new' | 'screening' | 'interview' | 'hired' | 'rejected';
           created_at?: string;
+          updated_at?: string;
         };
       };
       applications: {
@@ -203,28 +223,54 @@ export type Database = {
         Row: {
           id: string;
           user_id: string | null;
+          clerk_user_id: string | null;
           action: string;
           details: string | null;
-          metadata: Record<string, unknown> | null;
+          metadata: Json | null;
           timestamp: string;
         };
         Insert: {
           id?: string;
           user_id?: string | null;
+          clerk_user_id?: string | null;
           action: string;
           details?: string | null;
-          metadata?: Record<string, unknown> | null;
+          metadata?: Json | null;
           timestamp?: string;
         };
         Update: {
           id?: string;
           user_id?: string | null;
+          clerk_user_id?: string | null;
           action?: string;
           details?: string | null;
-          metadata?: Record<string, unknown> | null;
+          metadata?: Json | null;
           timestamp?: string;
         };
       };
     };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      user_role: 'student' | 'employer' | 'admin';
+      job_type: 'full-time' | 'part-time' | 'internship';
+      job_status: 'active' | 'closed' | 'draft';
+      candidate_status: 'new' | 'screening' | 'interview' | 'hired' | 'rejected';
+      application_status: 'pending' | 'reviewed' | 'accepted' | 'rejected';
+      course_level: 'beginner' | 'intermediate' | 'advanced';
+    };
   };
 };
+
+export type Tables<T extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][T]['Row'];
+
+export type InsertTables<T extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][T]['Insert'];
+
+export type UpdateTables<T extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][T]['Update'];

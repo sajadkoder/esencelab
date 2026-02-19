@@ -5,7 +5,11 @@
   "framework": "vite",
   "regions": ["iad1"],
   "env": {
-    "NEXT_PUBLIC_API_URL": "@api_url",
-    "NEXT_PUBLIC_AI_SERVICE_URL": "@ai_service_url"
+    "VITE_CLERK_PUBLISHABLE_KEY": "@clerk_publishable_key",
+    "VITE_SUPABASE_URL": "@supabase_url",
+    "VITE_SUPABASE_ANON_KEY": "@supabase_anon_key",
+    "VITE_API_URL": "@api_url",
+    "VITE_AI_SERVICE_URL": "@ai_service_url",
+    "VITE_GEMINI_API_KEY": "@gemini_api_key"
   }
 }

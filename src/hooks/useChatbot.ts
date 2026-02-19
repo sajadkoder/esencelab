@@ -55,7 +55,7 @@ export function useCareerChatbot() {
       };
 
       setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
+    } catch {
       toast.error('Failed to get response from AI');
       const errorMessage: ChatMessage = {
         id: uuidv4(),

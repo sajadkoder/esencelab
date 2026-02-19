@@ -1,117 +1,160 @@
-import { useState, createContext, useContext, useEffect } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
+import { useUser, useClerk } from '@clerk/clerk-react';
 import { supabase } from '@/lib/supabase';
 
-interface AuthUser {
+export type UserRole = 'student' | 'employer' | 'admin';
+
+export interface AuthUser {
   id: string;
+  clerkUserId: string;
   email: string;
   name: string;
-  role: 'student' | 'employer' | 'admin';
+  role: UserRole;
   avatar_url?: string;
 }
 
 interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, name: string, role: 'student' | 'employer' | 'admin') => Promise<{ error: Error | null }>;
+  isSignedIn: boolean;
   signOut: () => Promise<void>;
+  updateProfile: (data: Partial<AuthUser>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { user: clerkUser, isSignedIn, isLoaded } = useUser();
+  const { signOut: clerkSignOut } = useClerk();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Check current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        loadProfile(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        loadProfile(session.user.id);
-      } else {
-        setUser(null);
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const loadProfile = async (userId: string) => {
-    const { data: profile } = await supabase
+  const loadProfile = useCallback(async (clerkUserId: string) => {
+    const { data: profile, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', userId)
+      .eq('clerk_user_id', clerkUserId)
       .single();
 
-    if (profile) {
-      setUser(profile as AuthUser);
-    } else {
-      // Get from auth user
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (authUser) {
-        setUser({
-          id: authUser.id,
-          email: authUser.email!,
-          name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
-          role: authUser.user_metadata?.role || 'student',
-        });
-      }
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error loading profile:', error);
+      return null;
     }
-    setLoading(false);
-  };
 
-  const signUp = async (email: string, password: string, name: string, role: 'student' | 'employer' | 'admin') => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { name, role } },
-    });
+    return profile;
+  }, []);
 
-    if (error) return { error: new Error(error.message) };
-    
-    // Profile will be created by trigger
-    if (data.user) {
-      setUser({
-        id: data.user.id,
-        email: data.user.email!,
+  const createProfile = useCallback(async (
+    clerkUserId: string,
+    email: string,
+    name: string,
+    avatarUrl?: string
+  ): Promise<AuthUser | null> => {
+    const roleFromMetadata = clerkUser?.publicMetadata?.role as UserRole | undefined;
+    const role = roleFromMetadata || 'student';
+
+    const { data: newProfile, error } = await supabase
+      .from('profiles')
+      .insert({
+        clerk_user_id: clerkUserId,
+        email,
         name,
         role,
-      });
+        avatar_url: avatarUrl || null,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating profile:', error);
+      return null;
     }
 
-    return { error: null };
-  };
+    return {
+      id: newProfile.id,
+      clerkUserId: newProfile.clerk_user_id,
+      email: newProfile.email,
+      name: newProfile.name,
+      role: newProfile.role,
+      avatar_url: newProfile.avatar_url,
+    };
+  }, [clerkUser]);
 
-  const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  useEffect(() => {
+    if (!isLoaded) return;
 
-    if (error) return { error: new Error(error.message) };
+    const syncUser = async () => {
+      if (isSignedIn && clerkUser) {
+        const clerkUserId = clerkUser.id;
+        const email = clerkUser.emailAddresses[0]?.emailAddress || '';
+        const name = clerkUser.fullName || clerkUser.firstName || email.split('@')[0];
+        const avatarUrl = clerkUser.imageUrl;
 
-    if (data.user) {
-      await loadProfile(data.user.id);
-    }
+        let profile = await loadProfile(clerkUserId);
 
-    return { error: null };
-  };
+        if (!profile) {
+          profile = await createProfile(clerkUserId, email, name, avatarUrl);
+        }
+
+        if (profile) {
+          setUser({
+            id: profile.id,
+            clerkUserId: profile.clerk_user_id,
+            email: profile.email,
+            name: profile.name,
+            role: profile.role,
+            avatar_url: profile.avatar_url,
+          });
+        } else {
+          setUser({
+            id: clerkUserId,
+            clerkUserId,
+            email,
+            name,
+            role: (clerkUser.publicMetadata?.role as UserRole) || 'student',
+            avatar_url: avatarUrl,
+          });
+        }
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    };
+
+    syncUser();
+  }, [isSignedIn, isLoaded, clerkUser, loadProfile, createProfile]);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await clerkSignOut();
     setUser(null);
   };
 
+  const updateProfile = async (data: Partial<AuthUser>) => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        name: data.name,
+        avatar_url: data.avatar_url,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('clerk_user_id', user.clerkUserId);
+
+    if (!error) {
+      setUser(prev => prev ? { ...prev, ...data } : null);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      isSignedIn: !!isSignedIn,
+      signOut,
+      updateProfile,
+    }}>
       {children}
     </AuthContext.Provider>
   );
@@ -120,7 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 }
