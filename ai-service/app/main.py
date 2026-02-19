@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 
 from app.routers import resume, chatbot, matching
+from app.config import settings
+from app.services.gemini_service import gemini_service
 
 app = FastAPI(
     title="Esencelab AI Service",
@@ -48,3 +50,14 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+
+
+@app.get("/debug")
+async def debug():
+    model = gemini_service.model
+    return {
+        "gemini_key_loaded": bool(settings.GEMINI_API_KEY),
+        "gemini_key_prefix": settings.GEMINI_API_KEY[:10] + "..." if settings.GEMINI_API_KEY else "None",
+        "model_loaded": model is not None,
+        "model_name": str(model) if model else None
+    }

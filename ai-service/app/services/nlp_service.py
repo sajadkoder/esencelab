@@ -1,6 +1,11 @@
-import spacy
-from typing import List, Tuple
 import re
+from typing import List, Tuple, Optional
+
+try:
+    import spacy
+    SPACY_AVAILABLE = True
+except ImportError:
+    SPACY_AVAILABLE = False
 
 SKILL_ONTOLOGY = {
     'Python': ['python', 'py', 'pandas', 'numpy', 'django', 'flask', 'fastapi', 'scipy'],
@@ -35,17 +40,29 @@ SKILL_ONTOLOGY = {
     'Blockchain': ['blockchain', 'ethereum', 'smart contracts', 'web3', 'solidity'],
 }
 
+DEGREE_PATTERN = r'(B\.?Tech|B\.?E|M\.?Tech|M\.?E|B\.?Sc|M\.?Sc|PhD|Bachelor|Master|Diploma|B\.?A|M\.?A|MBA)'
+JOB_TITLES = [
+    'Software Engineer', 'Software Developer', 'Full Stack Developer', 'Backend Developer',
+    'Frontend Developer', 'Data Scientist', 'Data Analyst', 'ML Engineer', 'DevOps Engineer',
+    'Senior Software Engineer', 'Junior Software Engineer', 'Technical Lead', 'Engineering Manager',
+    'Product Manager', 'Project Manager', 'System Administrator', 'Database Administrator',
+    'QA Engineer', 'Test Engineer', 'Security Engineer', 'Cloud Engineer', 'Site Reliability Engineer'
+]
+
 
 class NLPService:
     def __init__(self):
-        try:
-            self.nlp = spacy.load("en_core_web_lg")
-        except OSError:
-            self.nlp = spacy.load("en_core_web_sm")
+        self.nlp: Optional[any] = None
+        if SPACY_AVAILABLE:
+            try:
+                self.nlp = spacy.load("en_core_web_lg")
+            except OSError:
+                try:
+                    self.nlp = spacy.load("en_core_web_sm")
+                except OSError:
+                    pass
     
     def extract_entities(self, text: str) -> dict:
-        doc = self.nlp(text)
-        
         entities = {
             'persons': [],
             'organizations': [],
@@ -55,15 +72,28 @@ class NLPService:
             'phones': []
         }
         
-        for ent in doc.ents:
-            if ent.label_ == 'PERSON':
-                entities['persons'].append(ent.text)
-            elif ent.label_ == 'ORG':
-                entities['organizations'].append(ent.text)
-            elif ent.label_ == 'GPE':
-                entities['locations'].append(ent.text)
-            elif ent.label_ == 'DATE':
-                entities['dates'].append(ent.text)
+        if self.nlp:
+            doc = self.nlp(text)
+            for ent in doc.ents:
+                if ent.label_ == 'PERSON':
+                    entities['persons'].append(ent.text)
+                elif ent.label_ == 'ORG':
+                    entities['organizations'].append(ent.text)
+                elif ent.label_ == 'GPE':
+                    entities['locations'].append(ent.text)
+                elif ent.label_ == 'DATE':
+                    entities['dates'].append(ent.text)
+        else:
+            email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+            entities['emails'] = re.findall(email_pattern, text)
+            
+            name_pattern = r'(?:Name|NAME):\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)'
+            matches = re.findall(name_pattern, text)
+            entities['persons'] = matches
+            
+            org_keywords = ['Inc', 'LLC', 'Ltd', 'Corp', 'Corporation', 'Company', 'Pvt', 'Private']
+            org_pattern = r'([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+)*(?:\s+(?:' + '|'.join(org_keywords) + r'))?)'
+            entities['organizations'] = re.findall(org_pattern, text)[:5]
         
         email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
         entities['emails'] = re.findall(email_pattern, text)
@@ -114,50 +144,44 @@ class NLPService:
     
     def extract_education(self, text: str) -> List[dict]:
         education = []
-        doc = self.nlp(text)
         
-        degree_patterns = [
-            r'(B\.?Tech|B\.?E|M\.?Tech|M\.?E|B\.?Sc|M\.?Sc|PhD|Bachelor|Master|Diploma)',
-            r'(B\.?Tech|M\.?Tech|B\.?E|M\.?E)\s*(in|of)?\s*(\w+)?'
-        ]
+        matches = re.finditer(DEGREE_PATTERN, text, re.IGNORECASE)
+        for match in matches:
+            education.append({
+                'degree': match.group(0),
+                'institution': '',
+                'field': ''
+            })
         
-        institutions = []
-        for ent in doc.ents:
-            if ent.label_ == 'ORG':
-                institutions.append(ent.text)
-        
-        for pattern in degree_patterns:
-            matches = re.finditer(pattern, text, re.IGNORECASE)
-            for match in matches:
-                education.append({
-                    'degree': match.group(0),
-                    'institution': '',
-                    'field': ''
-                })
+        if self.nlp and not education:
+            doc = self.nlp(text)
+            for ent in doc.ents:
+                if ent.label_ == 'ORG' and any(kw in ent.text for kw in ['University', 'College', 'Institute', 'IIT', 'NIT', 'BITS']):
+                    education.append({
+                        'degree': '',
+                        'institution': ent.text,
+                        'field': ''
+                    })
         
         return education
     
     def extract_experience(self, text: str) -> List[dict]:
         experience = []
-        doc = self.nlp(text)
-        
-        companies = []
-        for ent in doc.ents:
-            if ent.label_ == 'ORG':
-                companies.append(ent.text)
-        
-        job_titles = [
-            'Software Engineer', 'Developer', 'Analyst', 'Manager', 'Lead',
-            'Intern', 'Senior', 'Junior', 'Full Stack', 'Backend', 'Frontend',
-            'Data Scientist', 'ML Engineer', 'DevOps Engineer'
-        ]
-        
         found_titles = []
-        for title in job_titles:
+        
+        for title in JOB_TITLES:
             if title.lower() in text.lower():
                 found_titles.append(title)
         
-        return [{'company': c, 'title': t} for c, t in zip(companies, found_titles)]
+        if self.nlp:
+            doc = self.nlp(text)
+            companies = [ent.text for ent in doc.ents if ent.label_ == 'ORG']
+            experience = [{'company': c, 'title': t} for c, t in zip(companies, found_titles)]
+        else:
+            for title in found_titles:
+                experience.append({'company': '', 'title': title})
+        
+        return experience
     
     def calculate_experience_level(self, text: str) -> Tuple[str, int]:
         text_lower = text.lower()

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { LoginPage } from '@/pages/auth/LoginPage';
+import { HomePage } from '@/pages/HomePage';
 import { StudentDashboard } from '@/pages/StudentDashboard';
 import { RecruiterDashboard } from '@/pages/RecruiterDashboard';
 import { AdminDashboard } from '@/pages/AdminDashboard';
@@ -69,7 +70,8 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
         <Route
           path="/dashboard"
           element={

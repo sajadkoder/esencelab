@@ -51,16 +51,19 @@ export function RecruiterDashboard() {
     return matchesSearch;
   });
 
-  const statusColors: Record<string, string> = {
-    new: '#888',
-    screening: '#666',
-    interview: '#666',
-    hired: '#fff',
-    rejected: '#444',
+  const getStatusClasses = (status: string) => {
+    switch (status) {
+      case 'new': return 'bg-gray-500/20 text-gray-400';
+      case 'screening': return 'bg-gray-500/20 text-gray-400';
+      case 'interview': return 'bg-gray-500/20 text-gray-400';
+      case 'hired': return 'bg-white/20 text-white';
+      case 'rejected': return 'bg-gray-700/20 text-gray-500';
+      default: return 'bg-gray-500/20 text-gray-400';
+    }
   };
 
   return (
-    <div className="min-h-screen">
+    <div>
       <Header title={`Hi, ${user?.name?.split(' ')[0] || 'Recruiter'}`} />
       
       <div className="p-3 sm:p-4 md:p-6 space-y-4">
@@ -147,10 +150,7 @@ export function RecruiterDashboard() {
                     </div>
                   </div>
                   <div className="flex sm:flex-col items-center gap-2 sm:items-end">
-                    <span 
-                      className="px-2 py-0.5 text-[10px] rounded capitalize"
-                      style={{ backgroundColor: `${statusColors[candidate.status]}20`, color: statusColors[candidate.status] }}
-                    >
+                    <span className={`px-2 py-0.5 text-[10px] rounded capitalize ${getStatusClasses(candidate.status)}`}>
                       {candidate.status}
                     </span>
                     <span className="px-2 py-0.5 text-[10px] bg-white text-black rounded font-medium">

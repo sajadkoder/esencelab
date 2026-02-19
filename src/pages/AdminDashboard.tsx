@@ -60,7 +60,7 @@ export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'analytics'>('overview');
 
   return (
-    <div className="min-h-screen">
+    <div>
       <Header title="Admin Dashboard" />
       
       <div className="p-3 sm:p-4 md:p-6 space-y-4">

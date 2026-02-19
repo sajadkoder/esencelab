@@ -37,8 +37,8 @@ class ResumeParseRequest(BaseModel):
 
 class ResumeParseResponse(BaseModel):
     skills: List[str]
-    education: List[Education]
-    experience: List[Experience]
+    education: List[dict]
+    experience: List[dict]
     summary: str
     experience_level: str
     suggested_roles: List[str]
