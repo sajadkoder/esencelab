@@ -87,7 +87,7 @@ export default function LoginPage() {
 
         <div className="mt-6 text-center text-sm text-slate-500">
           <p>Demo accounts:</p>
-          <p>student@demo.com / recruiter@demo.com / admin@demo.com</p>
+          <p>student@esencelab.com / recruiter@esencelab.com / admin@esencelab.com</p>
           <p>Password: demo123</p>
         </div>
       </div>

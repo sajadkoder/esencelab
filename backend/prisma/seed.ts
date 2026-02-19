@@ -9,10 +9,10 @@ async function main() {
   const passwordHash = await bcrypt.hash('demo123', 10);
 
   const student = await prisma.user.upsert({
-    where: { email: 'student@demo.com' },
+    where: { email: 'student@esencelab.com' },
     update: {},
     create: {
-      email: 'student@demo.com',
+      email: 'student@esencelab.com',
       passwordHash,
       name: 'John Student',
       role: 'student',
@@ -20,10 +20,10 @@ async function main() {
   });
 
   const recruiter = await prisma.user.upsert({
-    where: { email: 'recruiter@demo.com' },
+    where: { email: 'recruiter@esencelab.com' },
     update: {},
     create: {
-      email: 'recruiter@demo.com',
+      email: 'recruiter@esencelab.com',
       passwordHash,
       name: 'Jane Recruiter',
       role: 'recruiter',
@@ -31,10 +31,10 @@ async function main() {
   });
 
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@demo.com' },
+    where: { email: 'admin@esencelab.com' },
     update: {},
     create: {
-      email: 'admin@demo.com',
+      email: 'admin@esencelab.com',
       passwordHash,
       name: 'Admin User',
       role: 'admin',
@@ -122,9 +122,9 @@ async function main() {
 
   console.log('Seeding completed!');
   console.log('Created demo accounts:');
-  console.log('- student@demo.com / demo123');
-  console.log('- recruiter@demo.com / demo123');
-  console.log('- admin@demo.com / demo123');
+  console.log('- student@esencelab.com / demo123');
+  console.log('- recruiter@esencelab.com / demo123');
+  console.log('- admin@esencelab.com / demo123');
 }
 
 main()
