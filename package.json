@@ -5,12 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:all": "concurrently \"npm run dev\" \"cd server && npm run dev\"",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "npm run dev",
-    "ai:start": "cd ai-service && python -m uvicorn app.main:app --host 127.0.0.1 --port 8000"
+    "start": "npm run dev"
   },
   "dependencies": {
     "@clerk/backend": "^2.31.2",

@@ -37,7 +37,6 @@ env/
 venv/
 .venv/
 *.egg-info/
-ai-service/.env
 
 # Server build
 server/dist/

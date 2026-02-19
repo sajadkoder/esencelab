@@ -1,13 +1,22 @@
-import { useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { SignedIn, SignedOut, SignIn, SignUp } from '@clerk/clerk-react';
 import { useAuth } from '@/hooks/useAuth';
 import type { UserRole } from '@/hooks/useAuth';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { HomePage } from '@/pages/HomePage';
-import { StudentDashboard } from '@/pages/StudentDashboard';
-import { RecruiterDashboard } from '@/pages/RecruiterDashboard';
-import { AdminDashboard } from '@/pages/AdminDashboard';
+
+const HomePage = lazy(() =>
+  import('@/pages/HomePage').then((module) => ({ default: module.HomePage })),
+);
+const StudentDashboard = lazy(() =>
+  import('@/pages/StudentDashboard').then((module) => ({ default: module.StudentDashboard })),
+);
+const RecruiterDashboard = lazy(() =>
+  import('@/pages/RecruiterDashboard').then((module) => ({ default: module.RecruiterDashboard })),
+);
+const AdminDashboard = lazy(() =>
+  import('@/pages/AdminDashboard').then((module) => ({ default: module.AdminDashboard })),
+);
 
 function LoadingScreen() {
   return (
@@ -221,85 +230,86 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route
-          path="/login"
-          element={(
-            <>
-              <SignedIn>
-                <Navigate to="/dashboard" replace />
-              </SignedIn>
-              <SignedOut>
-                <LoginPage />
-              </SignedOut>
-            </>
-          )}
-        />
-        <Route
-          path="/dashboard"
-          element={(
-            <ProtectedRoute>
-              <DashboardLayout>
-                <DashboardRouter />
-              </DashboardLayout>
-            </ProtectedRoute>
-          )}
-        />
-        <Route
-          path="/jobs"
-          element={(
-            <ProtectedRoute>
-              <DashboardLayout>
-                <DashboardRouter />
-              </DashboardLayout>
-            </ProtectedRoute>
-          )}
-        />
-        <Route
-          path="/courses"
-          element={(
-            <ProtectedRoute>
-              <DashboardLayout>
-                <DashboardRouter />
-              </DashboardLayout>
-            </ProtectedRoute>
-          )}
-        />
-        <Route
-          path="/candidates"
-          element={(
-            <ProtectedRoute>
-              <DashboardLayout>
-                <DashboardRouter />
-              </DashboardLayout>
-            </ProtectedRoute>
-          )}
-        />
-        <Route
-          path="/analytics"
-          element={(
-            <ProtectedRoute>
-              <DashboardLayout>
-                <DashboardRouter />
-              </DashboardLayout>
-            </ProtectedRoute>
-          )}
-        />
-        <Route
-          path="/users"
-          element={(
-            <ProtectedRoute>
-              <DashboardLayout>
-                <DashboardRouter />
-              </DashboardLayout>
-            </ProtectedRoute>
-          )}
-        />
-      </Routes>
+      <Suspense fallback={<LoadingScreen />}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route
+            path="/login"
+            element={(
+              <>
+                <SignedIn>
+                  <Navigate to="/dashboard" replace />
+                </SignedIn>
+                <SignedOut>
+                  <LoginPage />
+                </SignedOut>
+              </>
+            )}
+          />
+          <Route
+            path="/dashboard"
+            element={(
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <DashboardRouter />
+                </DashboardLayout>
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/jobs"
+            element={(
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <DashboardRouter />
+                </DashboardLayout>
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/courses"
+            element={(
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <DashboardRouter />
+                </DashboardLayout>
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/candidates"
+            element={(
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <DashboardRouter />
+                </DashboardLayout>
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/analytics"
+            element={(
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <DashboardRouter />
+                </DashboardLayout>
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/users"
+            element={(
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <DashboardRouter />
+                </DashboardLayout>
+              </ProtectedRoute>
+            )}
+          />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }
 
 export default App;
-

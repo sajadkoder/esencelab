@@ -101,5 +101,4 @@ Already configured for Vercel with `vercel.json`:
 
 ## Notes
 
-- Legacy Python AI service remains in `ai-service/` for reference only. Production flow uses Node.js serverless API.
-
+- AI functionality is implemented through Node.js serverless endpoints in `api/ai/*`.
