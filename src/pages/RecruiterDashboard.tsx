@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Briefcase, Filter, Loader2, Mail, MapPin, Plus, Search, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { Header } from '@/components/layout/Header';
@@ -18,6 +18,19 @@ type RankedCandidate = {
   match_score?: number;
   matched_skills?: string[];
   missing_skills?: string[];
+};
+
+type RecruiterApplication = {
+  id: string;
+  status: 'pending' | 'reviewed' | 'accepted' | 'rejected';
+  applied_at: string;
+  candidates?: {
+    id?: string;
+    name?: string;
+    email?: string;
+    role?: string;
+    skills?: { name?: string }[] | string[];
+  };
 };
 
 function extractSkillNames(rawSkills: unknown): string[] {
@@ -45,6 +58,14 @@ function parseSkillsInput(input: string): string[] {
     .filter(Boolean);
 }
 
+function formatDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  return date.toLocaleDateString();
+}
+
 export function RecruiterDashboard() {
   const { user, getToken } = useAuth();
   const { data: candidates = [], isLoading: loadingCandidates } = useCandidates();
@@ -55,6 +76,9 @@ export function RecruiterDashboard() {
   const [selectedJobId, setSelectedJobId] = useState('');
   const [rankedCandidates, setRankedCandidates] = useState<RankedCandidate[]>([]);
   const [rankingInProgress, setRankingInProgress] = useState(false);
+
+  const [jobApplications, setJobApplications] = useState<RecruiterApplication[]>([]);
+  const [loadingApplications, setLoadingApplications] = useState(false);
 
   const [showJobForm, setShowJobForm] = useState(false);
   const [jobTitle, setJobTitle] = useState('');
@@ -96,6 +120,30 @@ export function RecruiterDashboard() {
     }
     return filteredCandidates as unknown as RankedCandidate[];
   }, [rankedCandidates, filteredCandidates, selectedJobId]);
+
+  useEffect(() => {
+    if (!selectedJobId) {
+      setJobApplications([]);
+      return;
+    }
+
+    const loadApplications = async () => {
+      setLoadingApplications(true);
+      try {
+        const response = await api.getApplicationsByJob(selectedJobId);
+        if (response.error) {
+          toast.error(response.error);
+          return;
+        }
+
+        setJobApplications((response.data || []) as RecruiterApplication[]);
+      } finally {
+        setLoadingApplications(false);
+      }
+    };
+
+    loadApplications();
+  }, [selectedJobId]);
 
   const runMatching = async () => {
     if (!selectedJob) {
@@ -176,7 +224,7 @@ export function RecruiterDashboard() {
     <div>
       <Header
         title={`Recruiter Workspace${user?.name ? ` - ${user.name.split(' ')[0]}` : ''}`}
-        subtitle="Post opportunities, search candidates, and review AI match scores"
+        subtitle="Post live jobs, view applicants, search candidates, and run matching"
       />
 
       <div className="p-4 md:p-6 space-y-4">
@@ -190,8 +238,8 @@ export function RecruiterDashboard() {
             <p className="text-2xl text-white font-bold mt-1">{employerJobs.length}</p>
           </div>
           <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
-            <p className="text-xs text-gray-500">Filtered Candidates</p>
-            <p className="text-2xl text-white font-bold mt-1">{visibleCandidates.length}</p>
+            <p className="text-xs text-gray-500">Applicants (selected job)</p>
+            <p className="text-2xl text-white font-bold mt-1">{jobApplications.length}</p>
           </div>
         </div>
 
@@ -199,7 +247,7 @@ export function RecruiterDashboard() {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Briefcase className="w-4 h-4 text-white" />
-              <h2 className="text-sm text-white font-medium">Job Management</h2>
+              <h2 className="text-sm text-white font-medium">Live Job Management</h2>
             </div>
             <button
               onClick={() => setShowJobForm((prev) => !prev)}
@@ -260,7 +308,10 @@ export function RecruiterDashboard() {
             {employerJobs.map((job) => (
               <button
                 key={job.id}
-                onClick={() => setSelectedJobId(String(job.id))}
+                onClick={() => {
+                  setSelectedJobId(String(job.id));
+                  setRankedCandidates([]);
+                }}
                 className={`text-left p-3 rounded border ${
                   selectedJobId === String(job.id) ? 'border-white bg-[#111]' : 'border-[#222] bg-[#111] hover:border-[#555]'
                 }`}
@@ -271,6 +322,57 @@ export function RecruiterDashboard() {
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-white" />
+              <h2 className="text-sm text-white font-medium">Applicants for Selected Job</h2>
+            </div>
+            {loadingApplications && <Loader2 className="w-4 h-4 animate-spin text-gray-500" />}
+          </div>
+
+          {!selectedJob && (
+            <p className="text-xs text-gray-400">Select a job to view students who applied.</p>
+          )}
+
+          {selectedJob && !loadingApplications && jobApplications.length === 0 && (
+            <p className="text-xs text-gray-400">No applicants yet for this job.</p>
+          )}
+
+          {selectedJob && jobApplications.length > 0 && (
+            <div className="space-y-2">
+              {jobApplications.map((application) => {
+                const candidate = application.candidates;
+                const skills = extractSkillNames(candidate?.skills);
+
+                return (
+                  <div key={application.id} className="bg-[#111] border border-[#222] rounded-lg p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <p className="text-sm text-white font-medium">{candidate?.name || 'Candidate'}</p>
+                        <p className="text-xs text-gray-500">{candidate?.email || 'No email'}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[11px] text-gray-400 capitalize">{application.status}</p>
+                        <p className="text-[11px] text-gray-500">{formatDate(application.applied_at)}</p>
+                      </div>
+                    </div>
+                    {skills.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {skills.slice(0, 8).map((skill) => (
+                          <span key={`${application.id}-${skill}`} className="px-2 py-0.5 rounded bg-[#222] text-gray-300 text-[11px]">
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
@@ -395,3 +497,4 @@ export function RecruiterDashboard() {
     </div>
   );
 }
+

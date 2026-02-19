@@ -352,6 +352,20 @@ class ApiService {
     return { data: data || [] };
   }
 
+  async getApplicationsByJob(jobId: string) {
+    const { data, error } = await supabase
+      .from('applications')
+      .select('*, candidates(*), jobs(*)')
+      .eq('job_id', jobId)
+      .order('applied_at', { ascending: false });
+
+    if (error) {
+      return { error: normalizeSupabaseError(error) };
+    }
+
+    return { data: data || [] };
+  }
+
   async getApplications() {
     const { data, error } = await supabase
       .from('applications')
