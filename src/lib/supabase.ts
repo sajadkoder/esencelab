@@ -2,12 +2,32 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const clerkSupabaseTemplate = import.meta.env.VITE_CLERK_SUPABASE_TEMPLATE || 'supabase';
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+async function getClerkToken() {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  const clerk = (window as Window & { Clerk?: { session?: { getToken: (options?: { template?: string }) => Promise<string | null> } } }).Clerk;
+  if (!clerk?.session?.getToken) {
+    return null;
+  }
+
+  try {
+    return await clerk.session.getToken({ template: clerkSupabaseTemplate });
+  } catch {
+    return null;
+  }
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  accessToken: getClerkToken,
+});
 
 export type Json =
   | string

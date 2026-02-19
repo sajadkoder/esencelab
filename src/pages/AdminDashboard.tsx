@@ -1,223 +1,526 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { BarChart3, BookOpen, Briefcase, Download, Loader2, Shield, Users } from 'lucide-react';
+import { toast } from 'sonner';
+import { useLocation } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
-import { Users, Briefcase, BookOpen, BarChart3, TrendingUp, MapPin, Shield } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { api } from '@/lib/api';
 
-interface User {
+type ProfileRow = {
   id: string;
   name: string;
   email: string;
-  role: string;
-  college?: string;
-  location: string;
-  status: string;
-  joinedAt: string;
-}
-
-interface Stats {
-  totalUsers: number;
-  students: number;
-  recruiters: number;
-  jobs: number;
-  applications: number;
-  courses: number;
-}
-
-const INDIAN_USERS: User[] = [
-  { id: '1', name: 'Rahul Sharma', email: 'rahul@iitb.ac.in', role: 'student', college: 'IIT Bombay', location: 'Mumbai', status: 'active', joinedAt: '2024-01-15' },
-  { id: '2', name: 'Priya Patel', email: 'priya@nitt.edu', role: 'student', college: 'NIT Trichy', location: 'Chennai', status: 'active', joinedAt: '2024-01-18' },
-  { id: '3', name: 'TechCorp India', email: 'hr@techcorp.in', role: 'recruiter', location: 'Bangalore', status: 'active', joinedAt: '2024-01-10' },
-  { id: '4', name: 'Amit Kumar', email: 'amit@iiitb.ac.in', role: 'student', college: 'IIIT Bangalore', location: 'Bangalore', status: 'active', joinedAt: '2024-01-20' },
-  { id: '5', name: 'Flipkart', email: 'careers@flipkart.com', role: 'recruiter', location: 'Bangalore', status: 'active', joinedAt: '2024-01-05' },
-  { id: '6', name: 'Sneha Reddy', email: 'sneha@iitd.ac.in', role: 'student', college: 'IIT Delhi', location: 'Delhi', status: 'active', joinedAt: '2024-01-22' },
-];
-
-const STATS: Stats = {
-  totalUsers: 1250,
-  students: 1100,
-  recruiters: 150,
-  jobs: 85,
-  applications: 3450,
-  courses: 42,
+  role: 'student' | 'employer' | 'admin';
+  created_at?: string;
 };
 
-const TOP_COLLEGES = [
-  { name: 'IIT Bombay', users: 120 },
-  { name: 'IIT Delhi', users: 98 },
-  { name: 'NIT Trichy', users: 85 },
-  { name: 'BITS Pilani', users: 72 },
-  { name: 'IIIT Bangalore', users: 65 },
-];
+type JobRow = {
+  id: string;
+  title: string;
+  company: string;
+  location?: string;
+  status?: 'active' | 'closed' | 'draft';
+  posted_at?: string;
+};
 
-const TOP_LOCATIONS = [
-  { name: 'Bangalore', count: 450 },
-  { name: 'Delhi NCR', count: 320 },
-  { name: 'Mumbai', count: 280 },
-  { name: 'Chennai', count: 180 },
-  { name: 'Hyderabad', count: 150 },
-];
+type CourseRow = {
+  id: string;
+  title: string;
+  provider?: string;
+  url?: string;
+  skills?: string[];
+  level?: 'beginner' | 'intermediate' | 'advanced';
+  rating?: number;
+};
+
+type CandidateRow = {
+  skills?: { name?: string }[] | string[];
+};
+
+type ApplicationRow = {
+  id: string;
+  status: string;
+  applied_at?: string;
+  jobs?: { title?: string; company?: string };
+  candidates?: { name?: string; email?: string };
+};
+
+type ActivityLogRow = {
+  id: string;
+  action: string;
+  details?: string;
+  timestamp?: string;
+  clerk_user_id?: string;
+};
+
+function toCsv(rows: Record<string, unknown>[]) {
+  if (!rows.length) {
+    return '';
+  }
+
+  const headers = Object.keys(rows[0]);
+  const escape = (value: unknown) => `"${String(value ?? '').replaceAll('"', '""')}"`;
+
+  const csvRows = [
+    headers.join(','),
+    ...rows.map((row) => headers.map((header) => escape(row[header])).join(',')),
+  ];
+
+  return csvRows.join('\n');
+}
+
+function downloadCsvFile(filename: string, rows: Record<string, unknown>[]) {
+  const csv = toCsv(rows);
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename);
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function extractSkillNames(rawSkills: unknown): string[] {
+  if (!Array.isArray(rawSkills)) {
+    return [];
+  }
+
+  return rawSkills
+    .map((skill) => {
+      if (typeof skill === 'string') {
+        return skill;
+      }
+      if (skill && typeof skill === 'object' && 'name' in skill) {
+        return String(skill.name || '');
+      }
+      return '';
+    })
+    .filter(Boolean);
+}
 
 export function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'analytics'>('overview');
+  const { user } = useAuth();
+  const location = useLocation();
+
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'content' | 'usage'>('overview');
+  const [loading, setLoading] = useState(true);
+
+  const [profiles, setProfiles] = useState<ProfileRow[]>([]);
+  const [jobs, setJobs] = useState<JobRow[]>([]);
+  const [courses, setCourses] = useState<CourseRow[]>([]);
+  const [candidates, setCandidates] = useState<CandidateRow[]>([]);
+  const [applications, setApplications] = useState<ApplicationRow[]>([]);
+  const [activityLogs, setActivityLogs] = useState<ActivityLogRow[]>([]);
+
+  const [newCourseTitle, setNewCourseTitle] = useState('');
+  const [newCourseProvider, setNewCourseProvider] = useState('');
+  const [newCourseUrl, setNewCourseUrl] = useState('');
+  const [newCourseSkills, setNewCourseSkills] = useState('');
+  const [creatingCourse, setCreatingCourse] = useState(false);
+
+  const refreshAll = async () => {
+    setLoading(true);
+    try {
+      const [profilesRes, jobsRes, coursesRes, candidatesRes, applicationsRes, activityRes] = await Promise.all([
+        api.getProfiles(),
+        api.getJobs(),
+        api.getCourses(),
+        api.getCandidates(),
+        api.getApplications(),
+        api.getActivityLogs(200),
+      ]);
+
+      if (!profilesRes.error) {
+        setProfiles((profilesRes.data || []) as ProfileRow[]);
+      }
+      if (!jobsRes.error) {
+        setJobs((jobsRes.data || []) as JobRow[]);
+      }
+      if (!coursesRes.error) {
+        setCourses((coursesRes.data || []) as CourseRow[]);
+      }
+      if (!candidatesRes.error) {
+        setCandidates((candidatesRes.data || []) as CandidateRow[]);
+      }
+      if (!applicationsRes.error) {
+        setApplications((applicationsRes.data || []) as ApplicationRow[]);
+      }
+      if (!activityRes.error) {
+        setActivityLogs((activityRes.data || []) as ActivityLogRow[]);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshAll();
+  }, []);
+
+  useEffect(() => {
+    if (location.pathname === '/users') {
+      setActiveTab('users');
+      return;
+    }
+    if (location.pathname === '/jobs' || location.pathname === '/courses') {
+      setActiveTab('content');
+      return;
+    }
+    if (location.pathname === '/analytics') {
+      setActiveTab('usage');
+      return;
+    }
+    setActiveTab('overview');
+  }, [location.pathname]);
+
+  const topSkills = useMemo(() => {
+    const counts = new Map<string, number>();
+    candidates.forEach((candidate) => {
+      extractSkillNames(candidate.skills).forEach((skill) => {
+        counts.set(skill, (counts.get(skill) || 0) + 1);
+      });
+    });
+
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8);
+  }, [candidates]);
+
+  const stats = useMemo(() => {
+    const students = profiles.filter((profile) => profile.role === 'student').length;
+    const recruiters = profiles.filter((profile) => profile.role === 'employer').length;
+
+    return {
+      totalUsers: profiles.length,
+      students,
+      recruiters,
+      jobs: jobs.length,
+      courses: courses.length,
+      applications: applications.length,
+    };
+  }, [profiles, jobs, courses, applications]);
+
+  const updateUserRole = async (profileId: string, role: 'student' | 'employer' | 'admin') => {
+    const result = await api.updateProfileRole(profileId, role);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+
+    setProfiles((prev) => prev.map((profile) => (profile.id === profileId ? { ...profile, role } : profile)));
+    await api.logActivity(user?.clerkUserId || '', 'user_role_updated', 'Admin updated user role', { profile_id: profileId, role });
+    toast.success('Role updated');
+  };
+
+  const updateJobStatus = async (jobId: string, status: 'active' | 'closed' | 'draft') => {
+    const result = await api.updateJob(jobId, { status });
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+
+    setJobs((prev) => prev.map((job) => (job.id === jobId ? { ...job, status } : job)));
+    await api.logActivity(user?.clerkUserId || '', 'job_status_updated', 'Admin updated job status', { job_id: jobId, status });
+  };
+
+  const removeJob = async (jobId: string) => {
+    const result = await api.deleteJob(jobId);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+
+    setJobs((prev) => prev.filter((job) => job.id !== jobId));
+    await api.logActivity(user?.clerkUserId || '', 'job_deleted', 'Admin deleted job', { job_id: jobId });
+    toast.success('Job deleted');
+  };
+
+  const addCourse = async () => {
+    if (!newCourseTitle.trim()) {
+      toast.error('Course title is required');
+      return;
+    }
+
+    setCreatingCourse(true);
+    try {
+      const result = await api.createCourse({
+        title: newCourseTitle.trim(),
+        provider: newCourseProvider.trim() || undefined,
+        url: newCourseUrl.trim() || undefined,
+        skills: newCourseSkills.split(',').map((skill) => skill.trim()).filter(Boolean),
+        level: 'intermediate',
+      });
+
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      setCourses((prev) => [result.data as CourseRow, ...prev]);
+      setNewCourseTitle('');
+      setNewCourseProvider('');
+      setNewCourseUrl('');
+      setNewCourseSkills('');
+      await api.logActivity(user?.clerkUserId || '', 'course_created', 'Admin added a course', {
+        course_title: newCourseTitle.trim(),
+      });
+      toast.success('Course added');
+    } finally {
+      setCreatingCourse(false);
+    }
+  };
+
+  const removeCourse = async (courseId: string) => {
+    const result = await api.deleteCourse(courseId);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+
+    setCourses((prev) => prev.filter((course) => course.id !== courseId));
+    await api.logActivity(user?.clerkUserId || '', 'course_deleted', 'Admin deleted a course', { course_id: courseId });
+  };
+
+  const exportUsersReport = () => {
+    downloadCsvFile('users-report.csv', profiles.map((profile) => ({
+      name: profile.name,
+      email: profile.email,
+      role: profile.role,
+      created_at: profile.created_at || '',
+    })));
+  };
+
+  const exportJobsReport = () => {
+    downloadCsvFile('jobs-report.csv', jobs.map((job) => ({
+      title: job.title,
+      company: job.company,
+      location: job.location || '',
+      status: job.status || '',
+      posted_at: job.posted_at || '',
+    })));
+  };
+
+  const exportUsageReport = () => {
+    downloadCsvFile('usage-report.csv', activityLogs.map((log) => ({
+      action: log.action,
+      details: log.details || '',
+      timestamp: log.timestamp || '',
+      clerk_user_id: log.clerk_user_id || '',
+    })));
+  };
 
   return (
     <div>
-      <Header title="Admin Dashboard" />
-      
-      <div className="p-3 sm:p-4 md:p-6 space-y-4">
-        <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
-          {(['overview', 'users', 'analytics'] as const).map((tab) => (
+      <Header title="Admin Console" subtitle="Platform governance, analytics, and reporting" />
+
+      <div className="p-4 md:p-6 space-y-4">
+        <div className="flex gap-2 overflow-x-auto">
+          {(['overview', 'users', 'content', 'usage'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-colors ${
-                activeTab === tab
-                  ? 'bg-white text-black'
-                  : 'bg-[#111] text-gray-400 hover:text-white'
+              className={`px-4 py-2 rounded text-sm font-medium ${
+                activeTab === tab ? 'bg-white text-black' : 'bg-[#111] text-gray-300'
               }`}
             >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab[0].toUpperCase() + tab.slice(1)}
             </button>
           ))}
+          <button
+            onClick={refreshAll}
+            className="px-4 py-2 rounded text-sm font-medium bg-[#111] text-gray-300"
+          >
+            Refresh
+          </button>
         </div>
 
-        {activeTab === 'overview' && (
+        {loading && (
+          <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-6 flex items-center justify-center">
+            <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+          </div>
+        )}
+
+        {!loading && activeTab === 'overview' && (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
-              <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <Users className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-                  <p className="text-[10px] sm:text-xs text-gray-500">Users</p>
-                </div>
-                <p className="text-lg sm:text-xl font-bold text-white">{STATS.totalUsers}</p>
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+              <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3">
+                <div className="flex items-center gap-2 text-gray-400 text-xs"><Users className="w-3 h-3" />Users</div>
+                <p className="text-xl text-white font-bold mt-1">{stats.totalUsers}</p>
               </div>
-              <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <Briefcase className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-                  <p className="text-[10px] sm:text-xs text-gray-500">Jobs</p>
-                </div>
-                <p className="text-lg sm:text-xl font-bold text-white">{STATS.jobs}</p>
+              <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3">
+                <div className="flex items-center gap-2 text-gray-400 text-xs"><Shield className="w-3 h-3" />Students</div>
+                <p className="text-xl text-white font-bold mt-1">{stats.students}</p>
               </div>
-              <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <BookOpen className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-                  <p className="text-[10px] sm:text-xs text-gray-500">Courses</p>
-                </div>
-                <p className="text-lg sm:text-xl font-bold text-white">{STATS.courses}</p>
+              <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3">
+                <div className="flex items-center gap-2 text-gray-400 text-xs"><Briefcase className="w-3 h-3" />Recruiters</div>
+                <p className="text-xl text-white font-bold mt-1">{stats.recruiters}</p>
               </div>
-              <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-                  <p className="text-[10px] sm:text-xs text-gray-500">Applications</p>
-                </div>
-                <p className="text-lg sm:text-xl font-bold text-white">{STATS.applications}</p>
+              <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3">
+                <div className="flex items-center gap-2 text-gray-400 text-xs"><Briefcase className="w-3 h-3" />Jobs</div>
+                <p className="text-xl text-white font-bold mt-1">{stats.jobs}</p>
               </div>
-              <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-                  <p className="text-[10px] sm:text-xs text-gray-500">Students</p>
-                </div>
-                <p className="text-lg sm:text-xl font-bold text-white">{STATS.students}</p>
+              <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3">
+                <div className="flex items-center gap-2 text-gray-400 text-xs"><BookOpen className="w-3 h-3" />Courses</div>
+                <p className="text-xl text-white font-bold mt-1">{stats.courses}</p>
               </div>
-              <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <Shield className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-                  <p className="text-[10px] sm:text-xs text-gray-500">Recruiters</p>
-                </div>
-                <p className="text-lg sm:text-xl font-bold text-white">{STATS.recruiters}</p>
+              <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3">
+                <div className="flex items-center gap-2 text-gray-400 text-xs"><BarChart3 className="w-3 h-3" />Applications</div>
+                <p className="text-xl text-white font-bold mt-1">{stats.applications}</p>
               </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
-              <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
-                <h3 className="font-medium text-white text-sm mb-3">Top Colleges</h3>
+              <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
+                <h3 className="text-white text-sm font-medium mb-3">Top Skills Across Candidates</h3>
                 <div className="space-y-2">
-                  {TOP_COLLEGES.map((college, idx) => (
-                    <div key={college.name} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500">{idx + 1}</span>
-                        <span className="text-xs sm:text-sm text-white">{college.name}</span>
-                      </div>
-                      <span className="text-xs text-gray-500">{college.users} users</span>
+                  {topSkills.map(([skill, count]) => (
+                    <div key={skill} className="flex items-center justify-between text-sm">
+                      <span className="text-gray-300">{skill}</span>
+                      <span className="text-gray-500">{count}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
-                <h3 className="font-medium text-white text-sm mb-3">Top Locations</h3>
+              <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
+                <h3 className="text-white text-sm font-medium mb-3">Reports</h3>
                 <div className="space-y-2">
-                  {TOP_LOCATIONS.map((loc) => (
-                    <div key={loc.name} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-3 h-3 text-gray-500" />
-                        <span className="text-xs sm:text-sm text-white">{loc.name}</span>
-                      </div>
-                      <span className="text-xs text-gray-500">{loc.count}</span>
-                    </div>
-                  ))}
+                  <button onClick={exportUsersReport} className="w-full bg-[#111] border border-[#222] rounded px-3 py-2 text-sm text-gray-300 flex items-center justify-between">
+                    Users Report
+                    <Download className="w-4 h-4" />
+                  </button>
+                  <button onClick={exportJobsReport} className="w-full bg-[#111] border border-[#222] rounded px-3 py-2 text-sm text-gray-300 flex items-center justify-between">
+                    Jobs Report
+                    <Download className="w-4 h-4" />
+                  </button>
+                  <button onClick={exportUsageReport} className="w-full bg-[#111] border border-[#222] rounded px-3 py-2 text-sm text-gray-300 flex items-center justify-between">
+                    Usage Report
+                    <Download className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             </div>
           </>
         )}
 
-        {activeTab === 'users' && (
-          <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-medium text-white text-sm">Recent Users</h3>
-              <span className="text-xs text-gray-500">{INDIAN_USERS.length}</span>
-            </div>
+        {!loading && activeTab === 'users' && (
+          <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
+            <h3 className="text-white text-sm font-medium mb-3">Manage Users</h3>
             <div className="space-y-2">
-              {INDIAN_USERS.map((user) => (
-                <div key={user.id} className="p-3 bg-[#111] rounded-lg">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white flex items-center justify-center text-black text-xs font-bold">
-                        {user.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                      </div>
-                      <div>
-                        <h4 className="text-sm text-white font-medium">{user.name}</h4>
-                        <p className="text-xs text-gray-500">{user.email}</p>
-                        {user.college && <p className="text-[10px] text-gray-500">{user.college}</p>}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 ml-11 sm:ml-0">
-                      <span className={`text-[10px] px-2 py-0.5 rounded ${user.role === 'recruiter' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'}`}>
-                        {user.role}
-                      </span>
-                      <span className="text-[10px] text-gray-500">{user.location}</span>
-                    </div>
+              {profiles.map((profile) => (
+                <div key={profile.id} className="bg-[#111] border border-[#222] rounded-lg p-3 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm text-white">{profile.name}</p>
+                    <p className="text-xs text-gray-500">{profile.email}</p>
                   </div>
+                  <select
+                    value={profile.role}
+                    onChange={(event) => updateUserRole(profile.id, event.target.value as 'student' | 'employer' | 'admin')}
+                    className="bg-black border border-[#222] rounded px-2 py-1.5 text-xs text-white"
+                  >
+                    <option value="student">student</option>
+                    <option value="employer">employer</option>
+                    <option value="admin">admin</option>
+                  </select>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {activeTab === 'analytics' && (
-          <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
-            <h3 className="font-medium text-white text-sm mb-4">Platform Analytics</h3>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="p-4 bg-[#111] rounded-lg">
-                <p className="text-xs text-gray-500 mb-1">Monthly Active Users</p>
-                <p className="text-2xl font-bold text-white">892</p>
-                <p className="text-xs text-green-500 mt-1">+12% from last month</p>
+        {!loading && activeTab === 'content' && (
+          <div className="grid lg:grid-cols-2 gap-4">
+            <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
+              <h3 className="text-white text-sm font-medium mb-3">Manage Jobs</h3>
+              <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
+                {jobs.map((job) => (
+                  <div key={job.id} className="bg-[#111] border border-[#222] rounded-lg p-3">
+                    <p className="text-sm text-white">{job.title}</p>
+                    <p className="text-xs text-gray-500">{job.company} - {job.location || 'N/A'}</p>
+                    <div className="flex gap-2 mt-3">
+                      <select
+                        value={job.status || 'active'}
+                        onChange={(event) => updateJobStatus(job.id, event.target.value as 'active' | 'closed' | 'draft')}
+                        className="bg-black border border-[#222] rounded px-2 py-1 text-xs text-white"
+                      >
+                        <option value="active">active</option>
+                        <option value="draft">draft</option>
+                        <option value="closed">closed</option>
+                      </select>
+                      <button onClick={() => removeJob(job.id)} className="bg-red-600/20 text-red-300 px-2 py-1 rounded text-xs">
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="p-4 bg-[#111] rounded-lg">
-                <p className="text-xs text-gray-500 mb-1">Job Applications</p>
-                <p className="text-2xl font-bold text-white">3,450</p>
-                <p className="text-xs text-green-500 mt-1">+8% from last month</p>
+            </div>
+
+            <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
+              <h3 className="text-white text-sm font-medium mb-3">Manage Courses</h3>
+              <div className="bg-[#111] border border-[#222] rounded-lg p-3 mb-3 space-y-2">
+                <input
+                  value={newCourseTitle}
+                  onChange={(event) => setNewCourseTitle(event.target.value)}
+                  placeholder="Course title"
+                  className="w-full bg-black border border-[#222] rounded px-3 py-2 text-xs text-white"
+                />
+                <input
+                  value={newCourseProvider}
+                  onChange={(event) => setNewCourseProvider(event.target.value)}
+                  placeholder="Provider"
+                  className="w-full bg-black border border-[#222] rounded px-3 py-2 text-xs text-white"
+                />
+                <input
+                  value={newCourseUrl}
+                  onChange={(event) => setNewCourseUrl(event.target.value)}
+                  placeholder="URL"
+                  className="w-full bg-black border border-[#222] rounded px-3 py-2 text-xs text-white"
+                />
+                <input
+                  value={newCourseSkills}
+                  onChange={(event) => setNewCourseSkills(event.target.value)}
+                  placeholder="Skills (comma-separated)"
+                  className="w-full bg-black border border-[#222] rounded px-3 py-2 text-xs text-white"
+                />
+                <button
+                  onClick={addCourse}
+                  disabled={creatingCourse}
+                  className="bg-white text-black rounded px-3 py-2 text-xs font-medium inline-flex items-center gap-2"
+                >
+                  {creatingCourse && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Add Course
+                </button>
               </div>
-              <div className="p-4 bg-[#111] rounded-lg">
-                <p className="text-xs text-gray-500 mb-1">Successful Placements</p>
-                <p className="text-2xl font-bold text-white">156</p>
-                <p className="text-xs text-green-500 mt-1">+15% from last month</p>
+
+              <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1">
+                {courses.map((course) => (
+                  <div key={course.id} className="bg-[#111] border border-[#222] rounded-lg p-3 flex items-center justify-between gap-2">
+                    <div>
+                      <p className="text-sm text-white">{course.title}</p>
+                      <p className="text-xs text-gray-500">{course.provider || 'Unknown provider'}</p>
+                    </div>
+                    <button onClick={() => removeCourse(course.id)} className="bg-red-600/20 text-red-300 px-2 py-1 rounded text-xs">
+                      Delete
+                    </button>
+                  </div>
+                ))}
               </div>
-              <div className="p-4 bg-[#111] rounded-lg">
-                <p className="text-xs text-gray-500 mb-1">Course Completions</p>
-                <p className="text-2xl font-bold text-white">2,340</p>
-                <p className="text-xs text-green-500 mt-1">+20% from last month</p>
-              </div>
+            </div>
+          </div>
+        )}
+
+        {!loading && activeTab === 'usage' && (
+          <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
+            <h3 className="text-white text-sm font-medium mb-3">System Usage Monitor</h3>
+            <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
+              {activityLogs.map((log) => (
+                <div key={log.id} className="bg-[#111] border border-[#222] rounded-lg p-3">
+                  <p className="text-sm text-white">{log.action}</p>
+                  <p className="text-xs text-gray-400 mt-1">{log.details || 'No details'}</p>
+                  <p className="text-[11px] text-gray-500 mt-1">{log.timestamp || ''}</p>
+                </div>
+              ))}
             </div>
           </div>
         )}

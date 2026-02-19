@@ -6,10 +6,14 @@
   "regions": ["iad1"],
   "env": {
     "VITE_CLERK_PUBLISHABLE_KEY": "@clerk_publishable_key",
+    "CLERK_SECRET_KEY": "@clerk_secret_key",
     "VITE_SUPABASE_URL": "@supabase_url",
     "VITE_SUPABASE_ANON_KEY": "@supabase_anon_key",
-    "VITE_API_URL": "@api_url",
+    "SUPABASE_URL": "@supabase_url",
+    "SUPABASE_ANON_KEY": "@supabase_anon_key",
+    "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key",
     "VITE_AI_SERVICE_URL": "@ai_service_url",
-    "VITE_GEMINI_API_KEY": "@gemini_api_key"
+    "GEMINI_API_KEY": "@gemini_api_key",
+    "VITE_CLERK_SUPABASE_TEMPLATE": "supabase"
   }
 }

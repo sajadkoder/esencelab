@@ -1,316 +1,105 @@
-# Esencelab - AI-Powered Campus Recruitment Platform
+# Esencelab
 
-<div align="center">
+AI-powered campus recruitment platform with:
+- Clerk authentication + role metadata (`student`, `employer`, `admin`)
+- Supabase database + row-level security (RLS)
+- Serverless AI API on Vercel (`/api/ai/*`) in Node.js
 
-![Esencelab Logo](https://img.shields.io/badge/Esencelab-Campus%20Recruitment-black?style=for-the-badge)
+## Feature Coverage
 
-**A comprehensive campus recruitment platform connecting students with opportunities through AI-powered resume parsing, intelligent job matching, and personalized course recommendations.**
+### Core AI
+- Resume parsing + structured extraction (skills, education, experience, contact details)
+- NER-style entity extraction
+- Custom skill ontology matching
+- TF-IDF + cosine similarity skill-gap and matching engine
+- Job recommendation ranking
+- Course recommendation ranking
+- Resume summarization (Gemini)
+- Recommendation explanation generation
+- Career chatbot assistance
 
-![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react)
-![Node.js](https://img.shields.io/badge/Node.js-Express-339933?style=flat-square&logo=node.js)
-![Python](https://img.shields.io/badge/Python-FastAPI-3776AB?style=flat-square&logo=python)
-![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=flat-square&logo=supabase)
-![Gemini](https://img.shields.io/badge/Google%20Gemini-AI-4285F4?style=flat-square&logo=google)
+### Student
+- Register / login
+- Resume upload (PDF/TXT)
+- Parsed profile view
+- Skill-gap analysis
+- Top job recommendations
+- Course suggestions
+- Resume summary
+- AI chatbot
 
-[Features](#features) • [Architecture](#architecture) • [Installation](#installation) • [Team](#team)
+### Recruiter
+- Register / login
+- Post jobs
+- Search/filter candidates by skills
+- View structured candidate profile insights
+- AI candidate ranking and match results
 
-</div>
+### Admin
+- Manage users (roles)
+- Manage jobs and courses
+- Analytics overview
+- Usage/activity monitoring
+- CSV report generation
 
----
+### Security
+- JWT-based auth (Clerk tokens)
+- Role-based authorization (frontend + serverless API)
+- Supabase RLS policies
+- Authenticated REST API communication
 
-## Architecture Overview
+## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              PRESENTATION LAYER                              │
-│                         Frontend: React + Vite + TypeScript                 │
-│                              Port: 5173 / 3000                               │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                      │
-                    ┌─────────────────┴─────────────────┐
-                    ▼                                   ▼
-┌───────────────────────────────────┐  ┌─────────────────────────────────────┐
-│       EXPRESS.JS BACKEND          │  │         FASTAPI AI SERVICE          │
-│           (Node.js)               │  │            (Python)                 │
-│           Port: 4000              │  │           Port: 8000                │
-├───────────────────────────────────┤  ├─────────────────────────────────────┤
-│  • Authentication (JWT)           │  │  • Resume Parsing (spaCy)           │
-│  • Jobs CRUD                      │  │  • AI Enhancement (Gemini)          │
-│  • Candidates Management          │  │  • Career Chatbot (Gemini)          │
-│  • Applications Tracking          │  │  • Job Matching Algorithm           │
-│  • Course Recommendations         │  │  • Skill Gap Analysis               │
-└───────────────────────────────────┘  └─────────────────────────────────────┘
-                    │                                   │
-                    └─────────────────┬─────────────────┘
-                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              DATA LAYER                                      │
-│                     Supabase (PostgreSQL + Auth + Realtime)                  │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+- Frontend: React + Vite + TypeScript
+- Auth: Clerk
+- Database: Supabase PostgreSQL
+- AI API: Vercel serverless functions in `api/ai/*`
+- AI model: Gemini (optional but recommended)
 
----
+## Environment Variables
 
-## Technology Stack
+Use `.env.example` as reference.
 
-| Layer | Technology | Purpose |
-|-------|------------|---------|
-| **Frontend** | React 19 + Vite + TypeScript | UI with Y Combinator black/white theme |
-| **Backend** | Node.js + Express | REST API with JWT authentication |
-| **AI Service** | FastAPI (Python) | ML/AI microservice |
-| **NLP** | spaCy (en_core_web_lg) | Resume parsing & entity extraction |
-| **AI** | Google Gemini API | Resume enhancement & chatbot |
-| **Database** | Supabase (PostgreSQL) | Data storage with RLS |
-| **Deployment** | Vercel + Railway | Production hosting |
+Required:
+- `VITE_CLERK_PUBLISHABLE_KEY`
+- `CLERK_SECRET_KEY`
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `GEMINI_API_KEY`
 
----
+Optional:
+- `VITE_AI_SERVICE_URL` (default: `/api/ai`)
+- `VITE_CLERK_API_TEMPLATE`
+- `VITE_CLERK_SUPABASE_TEMPLATE` (default: `supabase`)
+- `GEMINI_MODEL` (default: `gemini-2.0-flash`)
 
-## Project Structure
-
-```
-esencelab/
-├── src/                          # Frontend (React + Vite)
-│   ├── components/
-│   │   ├── layout/               # Header, Sidebar
-│   │   ├── profile/              # TargetRoleSelector
-│   │   └── ui/                   # 50+ UI components
-│   ├── pages/                    # Dashboard pages
-│   ├── hooks/                    # Custom React hooks
-│   ├── lib/                      # Utilities
-│   ├── store/                    # Zustand state
-│   └── types/                    # TypeScript types
-│
-├── server/                       # Express Backend (Node.js)
-│   ├── src/
-│   │   ├── routes/               # API routes
-│   │   ├── controllers/          # Request handlers
-│   │   ├── services/             # Business logic
-│   │   ├── middleware/           # Auth, error handling
-│   │   └── config/               # Supabase client
-│   ├── package.json
-│   └── tsconfig.json
-│
-├── ai-service/                   # FastAPI AI Service (Python)
-│   ├── app/
-│   │   ├── routers/              # API endpoints
-│   │   │   ├── resume.py         # Resume parsing
-│   │   │   ├── chatbot.py        # Career chatbot
-│   │   │   └── matching.py       # Job matching
-│   │   ├── services/
-│   │   │   ├── nlp_service.py    # spaCy processing
-│   │   │   ├── gemini_service.py # Gemini API
-│   │   │   └── matching_service.py
-│   │   └── models/               # Pydantic schemas
-│   ├── requirements.txt
-│   └── Dockerfile
-│
-├── docker-compose.yml            # Docker orchestration
-├── vercel.json                   # Vercel deployment
-└── supabase-setup.sql            # Database schema
-```
-
----
-
-## Features
-
-### For Students
-- AI Resume Parser (spaCy + Gemini)
-- Job search with filters
-- Application tracking
-- Saved jobs
-- Course recommendations (YouTube, GFG, Scaler, etc.)
-- Career chatbot (Gemini-powered)
-
-### For Recruiters
-- Candidate pipeline management
-- Status tracking (New → Screening → Interview → Hired)
-- Match scores
-
-### For Admins
-- Analytics dashboard
-- User management
-- Activity logs
-
----
-
-## Quick Start
-
-### Prerequisites
-- Node.js 18+
-- Python 3.11+
-- npm or yarn
-- Supabase account
-- Google Gemini API key
-
-### 1. Clone & Install
+## Local Setup
 
 ```bash
-git clone https://github.com/sajadkoder/esencelab.git
-cd esencelab
-
-# Install frontend dependencies
 npm install
-
-# Install backend dependencies
-cd server && npm install && cd ..
-
-# Install AI service dependencies
-cd ai-service
-pip install -r requirements.txt
-python -m spacy download en_core_web_sm
-cd ..
-```
-
-### 2. Environment Variables
-
-Create `.env` files:
-
-**Root `.env.local**:
-```env
-VITE_SUPABASE_URL=your-supabase-url
-VITE_SUPABASE_ANON_KEY=your-anon-key
-VITE_API_URL=http://localhost:4000/api
-VITE_AI_SERVICE_URL=http://localhost:8000
-VITE_GEMINI_API_KEY=your-gemini-key
-```
-
-**server/.env**:
-```env
-PORT=4000
-SUPABASE_URL=your-supabase-url
-SUPABASE_ANON_KEY=your-anon-key
-JWT_SECRET=your-jwt-secret
-AI_SERVICE_URL=http://localhost:8000
-```
-
-**ai-service/.env**:
-```env
-GEMINI_API_KEY=your-gemini-key
-SUPABASE_URL=your-supabase-url
-SUPABASE_ANON_KEY=your-anon-key
-```
-
-### 3. Start Services
-
-```bash
-# Terminal 1: Frontend
 npm run dev
-
-# Terminal 2: Backend
-cd server && npm run dev
-
-# Terminal 3: AI Service
-cd ai-service && uvicorn app.main:app --reload
 ```
 
-### 4. Access
+App runs at `http://localhost:5173`.
 
-| Service | URL |
-|---------|-----|
-| Frontend | http://localhost:5173 |
-| Backend API | http://localhost:4000 |
-| AI Service | http://localhost:8000 |
+## Supabase Setup
 
----
+Run `supabase-schema.sql` in Supabase SQL editor to create tables, indexes, and RLS policies.
 
-## API Documentation
-
-### Express Backend (Port 4000)
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/auth/signup` | Register new user |
-| `POST` | `/api/auth/login` | Login user |
-| `GET` | `/api/auth/me` | Get current user |
-| `GET` | `/api/jobs` | List all jobs |
-| `POST` | `/api/jobs` | Create job (employer) |
-| `GET` | `/api/candidates` | List candidates |
-| `PUT` | `/api/candidates/:id/status` | Update status |
-| `POST` | `/api/applications` | Apply to job |
-| `GET` | `/api/courses` | List courses |
-
-### FastAPI AI Service (Port 8000)
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/resume/parse` | Parse resume with spaCy + Gemini |
-| `POST` | `/resume/extract-skills` | Extract skills from text |
-| `POST` | `/chatbot/chat` | Career chatbot with Gemini |
-| `POST` | `/matching/match` | Calculate job match score |
-| `POST` | `/matching/skill-gaps` | Analyze skill gaps |
-
----
-
-## AI Features
-
-### Resume Parsing Pipeline
-
-```
-Resume Upload → PDF Extraction → spaCy NER → Gemini Enhancement → Structured Output
-```
-
-**spaCy Extracts:**
-- Named entities (PERSON, ORG, GPE, DATE)
-- Skills using custom ontology (30+ categories)
-- Education patterns
-- Experience details
-
-**Gemini Enhances:**
-- Professional summary generation
-- Skill categorization
-- Missing skill inference
-- Job role suggestions
-
----
+Important:
+- Configure Supabase to accept Clerk JWTs.
+- Ensure role metadata is present in Clerk token claims (`public_metadata.role` or equivalent).
 
 ## Deployment
 
-### Docker Compose
+Already configured for Vercel with `vercel.json`:
+- Static frontend build output from Vite
+- Serverless AI endpoints from `api/ai/*`
 
-```bash
-docker-compose up --build
-```
+## Notes
 
-### Individual Deployment
+- Legacy Python AI service remains in `ai-service/` for reference only. Production flow uses Node.js serverless API.
 
-**Frontend (Vercel)**:
-```bash
-vercel
-```
-
-**Backend (Railway)**:
-```bash
-railway init && railway up
-```
-
----
-
-## Team Members
-
-| Member | Role | Responsibilities |
-|--------|------|------------------|
-| **Sajad** | Lead Developer | Architecture, Core Features, Integration |
-| **Harikrishnan K** | Frontend Developer | UI Components, Dashboard Design |
-| **Adwaith PC** | Backend Developer | Database Design, API Development |
-| **Jishnu MR** | AI/ML Developer | spaCy Integration, Gemini API |
-
----
-
-## Scripts
-
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start frontend dev server |
-| `npm run build` | Build for production |
-| `cd server && npm run dev` | Start backend server |
-| `cd ai-service && uvicorn app.main:app --reload` | Start AI service |
-
----
-
-## License
-
-MIT License
-
----
-
-**Built with ❤️ by Esencelab Team**

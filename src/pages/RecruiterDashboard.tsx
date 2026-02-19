@@ -1,174 +1,394 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { useAuth } from '@/hooks/useAuth';
+import { useMemo, useState } from 'react';
+import { Briefcase, Filter, Loader2, Mail, MapPin, Plus, Search, Users } from 'lucide-react';
+import { toast } from 'sonner';
 import { Header } from '@/components/layout/Header';
-import { Search, Users, Briefcase, MapPin, Mail, Phone, Plus } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useCandidates } from '@/hooks/useCandidates';
+import { useEmployerJobs } from '@/hooks/useJobs';
+import { aiService, api } from '@/lib/api';
 
-interface Candidate {
+type RankedCandidate = {
   id: string;
   name: string;
   email: string;
-  phone: string;
-  role: string;
-  college: string;
-  skills: string[];
-  matchScore: number;
-  status: string;
-  experience: string;
-  location: string;
+  role?: string;
+  skills?: { name?: string }[] | string[];
+  education?: Record<string, unknown>[];
+  experience?: Record<string, unknown>[];
+  match_score?: number;
+  matched_skills?: string[];
+  missing_skills?: string[];
+};
+
+function extractSkillNames(rawSkills: unknown): string[] {
+  if (!Array.isArray(rawSkills)) {
+    return [];
+  }
+
+  return rawSkills
+    .map((skill) => {
+      if (typeof skill === 'string') {
+        return skill;
+      }
+      if (skill && typeof skill === 'object' && 'name' in skill) {
+        return String(skill.name || '');
+      }
+      return '';
+    })
+    .filter(Boolean);
 }
 
-interface Job {
-  id: string;
-  title: string;
-  applicants: number;
-  views: number;
-  status: string;
+function parseSkillsInput(input: string): string[] {
+  return input
+    .split(',')
+    .map((skill) => skill.trim())
+    .filter(Boolean);
 }
-
-const INDIAN_CANDIDATES: Candidate[] = [
-  { id: '1', name: 'Rahul Sharma', email: 'rahul.sharma@email.com', phone: '+91 9876543210', role: 'SDE', college: 'IIT Bombay', skills: ['Python', 'DSA', 'ML'], matchScore: 94, status: 'new', experience: 'Fresher', location: 'Mumbai' },
-  { id: '2', name: 'Priya Patel', email: 'priya.patel@email.com', phone: '+91 9876543211', role: 'Frontend Developer', college: 'NIT Trichy', skills: ['React', 'TypeScript', 'CSS'], matchScore: 89, status: 'screening', experience: '1 year', location: 'Chennai' },
-  { id: '3', name: 'Amit Kumar', email: 'amit.kumar@email.com', phone: '+91 9876543212', role: 'Backend Developer', college: 'IIIT Bangalore', skills: ['Java', 'Spring', 'PostgreSQL'], matchScore: 91, status: 'interview', experience: '2 years', location: 'Bangalore' },
-  { id: '4', name: 'Sneha Reddy', email: 'sneha.reddy@email.com', phone: '+91 9876543213', role: 'Data Analyst', college: 'IIT Delhi', skills: ['Python', 'SQL', 'Tableau'], matchScore: 87, status: 'new', experience: 'Fresher', location: 'Delhi' },
-  { id: '5', name: 'Vikram Singh', email: 'vikram.singh@email.com', phone: '+91 9876543214', role: 'Full Stack Developer', college: 'BITS Pilani', skills: ['Node.js', 'React', 'MongoDB'], matchScore: 92, status: 'hired', experience: '3 years', location: 'Hyderabad' },
-];
-
-const MY_JOBS: Job[] = [
-  { id: '1', title: 'SDE I', applicants: 45, views: 234, status: 'active' },
-  { id: '2', title: 'Frontend Developer', applicants: 28, views: 156, status: 'active' },
-  { id: '3', title: 'Backend Developer', applicants: 32, views: 189, status: 'closed' },
-];
 
 export function RecruiterDashboard() {
-  const { user } = useAuth();
+  const { user, getToken } = useAuth();
+  const { data: candidates = [], isLoading: loadingCandidates } = useCandidates();
+  const { data: employerJobs = [], isLoading: loadingJobs, refetch: refetchJobs } = useEmployerJobs(user?.id || '');
+
   const [searchQuery, setSearchQuery] = useState('');
+  const [skillQuery, setSkillQuery] = useState('');
+  const [selectedJobId, setSelectedJobId] = useState('');
+  const [rankedCandidates, setRankedCandidates] = useState<RankedCandidate[]>([]);
+  const [rankingInProgress, setRankingInProgress] = useState(false);
 
-  const filteredCandidates = INDIAN_CANDIDATES.filter((c: Candidate) => {
-    const matchesSearch = !searchQuery || 
-      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.role.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
+  const [showJobForm, setShowJobForm] = useState(false);
+  const [jobTitle, setJobTitle] = useState('');
+  const [jobLocation, setJobLocation] = useState('');
+  const [jobDescription, setJobDescription] = useState('');
+  const [jobRequirements, setJobRequirements] = useState('');
+  const [jobSkills, setJobSkills] = useState('');
+  const [postingJob, setPostingJob] = useState(false);
 
-  const getStatusClasses = (status: string) => {
-    switch (status) {
-      case 'new': return 'bg-gray-500/20 text-gray-400';
-      case 'screening': return 'bg-gray-500/20 text-gray-400';
-      case 'interview': return 'bg-gray-500/20 text-gray-400';
-      case 'hired': return 'bg-white/20 text-white';
-      case 'rejected': return 'bg-gray-700/20 text-gray-500';
-      default: return 'bg-gray-500/20 text-gray-400';
+  const filteredCandidates = useMemo(() => {
+    const normalizedSearch = searchQuery.toLowerCase().trim();
+    const requiredSkills = parseSkillsInput(skillQuery).map((skill) => skill.toLowerCase());
+
+    return candidates.filter((candidate) => {
+      const candidateSkills = extractSkillNames(candidate.skills);
+
+      const matchesText = !normalizedSearch
+        || candidate.name?.toLowerCase().includes(normalizedSearch)
+        || candidate.email?.toLowerCase().includes(normalizedSearch)
+        || String(candidate.role || '').toLowerCase().includes(normalizedSearch);
+
+      const matchesSkills = requiredSkills.length === 0
+        || requiredSkills.every((required) =>
+          candidateSkills.some((candidateSkill) => candidateSkill.toLowerCase().includes(required)),
+        );
+
+      return matchesText && matchesSkills;
+    });
+  }, [candidates, searchQuery, skillQuery]);
+
+  const selectedJob = useMemo(
+    () => employerJobs.find((job) => String(job.id) === selectedJobId),
+    [employerJobs, selectedJobId],
+  );
+
+  const visibleCandidates = useMemo(() => {
+    if (rankedCandidates.length > 0 && selectedJobId) {
+      return rankedCandidates;
+    }
+    return filteredCandidates as unknown as RankedCandidate[];
+  }, [rankedCandidates, filteredCandidates, selectedJobId]);
+
+  const runMatching = async () => {
+    if (!selectedJob) {
+      toast.error('Select a job first');
+      return;
+    }
+
+    const requirements = Array.isArray(selectedJob.requirements) && selectedJob.requirements.length > 0
+      ? selectedJob.requirements
+      : Array.isArray(selectedJob.skills) ? selectedJob.skills : [];
+
+    if (requirements.length === 0) {
+      toast.error('Selected job has no requirements configured');
+      return;
+    }
+
+    setRankingInProgress(true);
+    try {
+      const token = await getToken();
+      const ranking = await aiService.rankCandidates(filteredCandidates, requirements, token);
+      setRankedCandidates(ranking?.ranked_candidates || []);
+      await api.logActivity(user?.clerkUserId || '', 'candidate_ranked', 'Recruiter ranked candidates for a job', {
+        job_id: selectedJob.id,
+      });
+      toast.success('Candidate ranking generated');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to rank candidates');
+    } finally {
+      setRankingInProgress(false);
+    }
+  };
+
+  const postJob = async () => {
+    if (!user) {
+      return;
+    }
+    if (!jobTitle.trim()) {
+      toast.error('Job title is required');
+      return;
+    }
+
+    setPostingJob(true);
+    try {
+      const result = await api.createJob({
+        employer_id: user.id,
+        title: jobTitle.trim(),
+        company: user.name || 'Employer',
+        location: jobLocation.trim() || undefined,
+        description: jobDescription.trim() || undefined,
+        requirements: parseSkillsInput(jobRequirements),
+        skills: parseSkillsInput(jobSkills),
+        job_type: 'full-time',
+      });
+
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      await refetchJobs();
+      await api.logActivity(user.clerkUserId, 'job_posted', 'Recruiter posted a new job', {
+        job_title: jobTitle.trim(),
+      });
+
+      toast.success('Job posted');
+      setShowJobForm(false);
+      setJobTitle('');
+      setJobLocation('');
+      setJobDescription('');
+      setJobRequirements('');
+      setJobSkills('');
+    } finally {
+      setPostingJob(false);
     }
   };
 
   return (
     <div>
-      <Header title={`Hi, ${user?.name?.split(' ')[0] || 'Recruiter'}`} />
-      
-      <div className="p-3 sm:p-4 md:p-6 space-y-4">
-        <div className="grid grid-cols-3 gap-2 sm:gap-3">
-          <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
-            <p className="text-[10px] sm:text-xs text-gray-500">Applicants</p>
-            <p className="text-lg sm:text-xl font-bold text-white">{INDIAN_CANDIDATES.length}</p>
+      <Header
+        title={`Recruiter Workspace${user?.name ? ` - ${user.name.split(' ')[0]}` : ''}`}
+        subtitle="Post opportunities, search candidates, and review AI match scores"
+      />
+
+      <div className="p-4 md:p-6 space-y-4">
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
+            <p className="text-xs text-gray-500">Candidate Profiles</p>
+            <p className="text-2xl text-white font-bold mt-1">{candidates.length}</p>
           </div>
-          <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
-            <p className="text-[10px] sm:text-xs text-gray-500">Active Jobs</p>
-            <p className="text-lg sm:text-xl font-bold text-white">{MY_JOBS.filter(j => j.status === 'active').length}</p>
+          <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
+            <p className="text-xs text-gray-500">My Jobs</p>
+            <p className="text-2xl text-white font-bold mt-1">{employerJobs.length}</p>
           </div>
-          <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
-            <p className="text-[10px] sm:text-xs text-gray-500">Hired</p>
-            <p className="text-lg sm:text-xl font-bold text-white">{INDIAN_CANDIDATES.filter(c => c.status === 'hired').length}</p>
+          <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
+            <p className="text-xs text-gray-500">Filtered Candidates</p>
+            <p className="text-2xl text-white font-bold mt-1">{visibleCandidates.length}</p>
           </div>
         </div>
 
-        <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
+        <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Briefcase className="w-4 h-4 text-white" />
-              <h2 className="font-medium text-white text-sm">Job Postings</h2>
+              <h2 className="text-sm text-white font-medium">Job Management</h2>
             </div>
-            <button className="bg-white text-black text-xs px-3 py-1.5 rounded font-medium flex items-center gap-1">
-              <Plus className="w-3 h-3" /> Post
+            <button
+              onClick={() => setShowJobForm((prev) => !prev)}
+              className="bg-white text-black text-xs px-3 py-1.5 rounded font-medium flex items-center gap-1"
+            >
+              <Plus className="w-3 h-3" />
+              {showJobForm ? 'Close' : 'Post Job'}
             </button>
           </div>
-          
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {MY_JOBS.map((job: Job) => (
-              <div key={job.id} className="p-3 bg-[#111] rounded-lg">
-                <h3 className="font-medium text-white text-sm">{job.title}</h3>
-                <p className="text-xs text-gray-500">{job.applicants} applicants</p>
+
+          {showJobForm && (
+            <div className="grid md:grid-cols-2 gap-3 mb-4 p-3 rounded border border-[#222] bg-[#111]">
+              <input
+                value={jobTitle}
+                onChange={(event) => setJobTitle(event.target.value)}
+                placeholder="Job title"
+                className="bg-black border border-[#222] rounded px-3 py-2 text-sm text-white"
+              />
+              <input
+                value={jobLocation}
+                onChange={(event) => setJobLocation(event.target.value)}
+                placeholder="Location"
+                className="bg-black border border-[#222] rounded px-3 py-2 text-sm text-white"
+              />
+              <textarea
+                value={jobDescription}
+                onChange={(event) => setJobDescription(event.target.value)}
+                placeholder="Description"
+                rows={3}
+                className="md:col-span-2 bg-black border border-[#222] rounded px-3 py-2 text-sm text-white"
+              />
+              <input
+                value={jobRequirements}
+                onChange={(event) => setJobRequirements(event.target.value)}
+                placeholder="Requirements (comma-separated)"
+                className="bg-black border border-[#222] rounded px-3 py-2 text-sm text-white"
+              />
+              <input
+                value={jobSkills}
+                onChange={(event) => setJobSkills(event.target.value)}
+                placeholder="Skills (comma-separated)"
+                className="bg-black border border-[#222] rounded px-3 py-2 text-sm text-white"
+              />
+              <div className="md:col-span-2">
+                <button
+                  onClick={postJob}
+                  disabled={postingJob}
+                  className="bg-white text-black text-sm px-4 py-2 rounded font-medium disabled:opacity-50 inline-flex items-center gap-2"
+                >
+                  {postingJob && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Publish Job
+                </button>
               </div>
+            </div>
+          )}
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {employerJobs.map((job) => (
+              <button
+                key={job.id}
+                onClick={() => setSelectedJobId(String(job.id))}
+                className={`text-left p-3 rounded border ${
+                  selectedJobId === String(job.id) ? 'border-white bg-[#111]' : 'border-[#222] bg-[#111] hover:border-[#555]'
+                }`}
+              >
+                <p className="text-sm text-white font-medium">{job.title}</p>
+                <p className="text-xs text-gray-500 mt-1">{job.location || 'Location not specified'}</p>
+                <p className="text-[11px] text-gray-400 mt-2 capitalize">Status: {job.status}</p>
+              </button>
             ))}
           </div>
         </div>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search candidates..."
-            className="w-full bg-[#111] border border-[#222] rounded-lg py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-white"
-          />
-        </div>
-
-        <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Users className="w-4 h-4 text-white" />
-            <h2 className="font-medium text-white text-sm">Candidates</h2>
-            <span className="text-xs text-gray-500 ml-auto">{filteredCandidates.length}</span>
+        <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
+          <div className="grid md:grid-cols-3 gap-2 mb-3">
+            <div className="relative">
+              <Search className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search by name, email, role..."
+                className="w-full bg-[#111] border border-[#222] rounded py-2 pl-9 pr-3 text-sm text-white"
+              />
+            </div>
+            <div className="relative">
+              <Filter className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                value={skillQuery}
+                onChange={(event) => setSkillQuery(event.target.value)}
+                placeholder="Filter skills: React, SQL"
+                className="w-full bg-[#111] border border-[#222] rounded py-2 pl-9 pr-3 text-sm text-white"
+              />
+            </div>
+            <button
+              onClick={runMatching}
+              disabled={rankingInProgress || !selectedJob}
+              className="bg-white text-black text-sm rounded px-4 py-2 font-medium disabled:opacity-50 inline-flex items-center justify-center gap-2"
+            >
+              {rankingInProgress && <Loader2 className="w-4 h-4 animate-spin" />}
+              Run Matching
+            </button>
           </div>
-          
-          <div className="space-y-2">
-            {filteredCandidates.map((candidate: Candidate) => (
-              <motion.div
-                key={candidate.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="p-3 bg-[#111] rounded-lg"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white flex items-center justify-center text-black text-sm font-bold shrink-0">
-                      {candidate.name.split(' ').map((n: string) => n[0]).join('')}
-                    </div>
+
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-white" />
+              <h2 className="text-sm text-white font-medium">Candidate Profiles</h2>
+            </div>
+            {(loadingCandidates || loadingJobs) && <Loader2 className="w-4 h-4 animate-spin text-gray-500" />}
+          </div>
+
+          <div className="space-y-3">
+            {visibleCandidates.map((candidate) => {
+              const skillNames = extractSkillNames(candidate.skills);
+              const education = Array.isArray(candidate.education) ? candidate.education : [];
+              const experience = Array.isArray(candidate.experience) ? candidate.experience : [];
+
+              return (
+                <div key={candidate.id} className="bg-[#111] border border-[#222] rounded-lg p-3">
+                  <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <h3 className="font-medium text-white text-sm">{candidate.name}</h3>
-                      <p className="text-xs text-gray-500">{candidate.role} • {candidate.experience}</p>
-                      <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                        <MapPin className="w-3 h-3" /> {candidate.college}
-                      </p>
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {candidate.skills.map((skill: string) => (
-                          <span key={skill} className="px-2 py-0.5 bg-[#222] text-gray-400 text-[10px] rounded">
-                            {skill}
+                      <p className="text-sm text-white font-medium">{candidate.name}</p>
+                      <p className="text-xs text-gray-500">{candidate.role || 'candidate'}</p>
+                      <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+                        <span className="inline-flex items-center gap-1">
+                          <Mail className="w-3 h-3" />
+                          {candidate.email}
+                        </span>
+                        {candidate.role && (
+                          <span className="inline-flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            {candidate.role}
                           </span>
-                        ))}
+                        )}
                       </div>
                     </div>
+                    {typeof candidate.match_score === 'number' && (
+                      <span className="text-xs px-2 py-1 rounded bg-white text-black font-medium">
+                        {Math.round(candidate.match_score)}%
+                      </span>
+                    )}
                   </div>
-                  <div className="flex sm:flex-col items-center gap-2 sm:items-end">
-                    <span className={`px-2 py-0.5 text-[10px] rounded capitalize ${getStatusClasses(candidate.status)}`}>
-                      {candidate.status}
-                    </span>
-                    <span className="px-2 py-0.5 text-[10px] bg-white text-black rounded font-medium">
-                      {candidate.matchScore}%
-                    </span>
-                  </div>
-                </div>
 
-                <div className="flex gap-3 mt-3 pt-3 border-t border-[#222]">
-                  <button className="flex items-center gap-1 text-xs text-white hover:text-gray-300">
-                    <Mail className="w-3 h-3" /> Email
-                  </button>
-                  <button className="flex items-center gap-1 text-xs text-white hover:text-gray-300">
-                    <Phone className="w-3 h-3" /> Call
-                  </button>
+                  <div className="mt-3 flex flex-wrap gap-1">
+                    {skillNames.slice(0, 10).map((skill) => (
+                      <span key={`${candidate.id}-${skill}`} className="px-2 py-0.5 rounded bg-[#222] text-gray-300 text-[11px]">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+
+                  {(candidate.matched_skills || candidate.missing_skills) && (
+                    <div className="grid md:grid-cols-2 gap-2 mt-3">
+                      <div className="bg-[#0a0a0a] border border-[#222] rounded p-2">
+                        <p className="text-[11px] text-gray-500 mb-1">Matched Skills</p>
+                        <p className="text-xs text-green-400">
+                          {(candidate.matched_skills || []).slice(0, 6).join(', ') || '-'}
+                        </p>
+                      </div>
+                      <div className="bg-[#0a0a0a] border border-[#222] rounded p-2">
+                        <p className="text-[11px] text-gray-500 mb-1">Missing Skills</p>
+                        <p className="text-xs text-amber-400">
+                          {(candidate.missing_skills || []).slice(0, 6).join(', ') || '-'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid md:grid-cols-2 gap-2 mt-3">
+                    <div className="bg-[#0a0a0a] border border-[#222] rounded p-2">
+                      <p className="text-[11px] text-gray-500 mb-1">Education Insights</p>
+                      <p className="text-xs text-gray-300">
+                        {education.length > 0
+                          ? `${String(education[0]?.degree || '')} ${String(education[0]?.institution || '')}`.trim()
+                          : 'No education details yet'}
+                      </p>
+                    </div>
+                    <div className="bg-[#0a0a0a] border border-[#222] rounded p-2">
+                      <p className="text-[11px] text-gray-500 mb-1">Experience Insights</p>
+                      <p className="text-xs text-gray-300">
+                        {experience.length > 0
+                          ? `${String(experience[0]?.title || '')} ${String(experience[0]?.company || '')}`.trim()
+                          : 'No experience details yet'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </motion.div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

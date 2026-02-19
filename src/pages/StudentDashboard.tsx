@@ -1,145 +1,186 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
+import { Bot, Briefcase, FileText, GraduationCap, Loader2, Send, Sparkles, Target, Upload, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { useCareerChatbot } from '@/hooks/useChatbot';
 import { Header } from '@/components/layout/Header';
-import { TargetRoleSelector } from '@/components/profile/TargetRoleSelector';
-import { aiService } from '@/lib/api';
-import { toast } from 'sonner';
-import type { TargetRole, ResumeData, AppliedJob, SavedJob, CourseResource } from '@/types';
-import { 
-  Upload, Briefcase, GraduationCap, Target, 
-  Bot, Send, X, 
-  CheckCircle, Loader2, Sparkles, ExternalLink, Play, Youtube, FileText, Bookmark, Search, Filter
-} from 'lucide-react';
+import { TargetRoleSelector, SkillGapAnalysis } from '@/components/profile/TargetRoleSelector';
+import { useJobs } from '@/hooks/useJobs';
+import { useCourses } from '@/hooks/useCourses';
+import { api, aiService } from '@/lib/api';
+import type { TargetRole } from '@/types';
 
-const INDIAN_JOBS = [
-  { title: 'SDE I', company: 'Google India', location: 'Bangalore/Hyderabad', salary: '₹25-45 LPA', skills: ['DSA', 'Python', 'System Design'], posted: '2h ago', url: 'https://careers.google.com' },
-  { title: 'Software Engineer', company: 'Amazon', location: 'Bangalore', salary: '₹20-40 LPA', skills: ['Java', 'DSA', 'AWS'], posted: '5h ago', url: 'https://amazon.jobs' },
-  { title: 'Frontend Developer', company: 'Flipkart', location: 'Bangalore', salary: '₹15-28 LPA', skills: ['React', 'TypeScript', 'CSS'], posted: '1d ago', url: 'https://flipkartcareers.com' },
-  { title: 'Backend Developer', company: 'Cred', location: 'Bangalore', salary: '₹22-38 LPA', skills: ['Go', 'PostgreSQL', 'Redis'], posted: '3h ago', url: 'https://cred.club/careers' },
-  { title: 'Data Analyst', company: 'Droom', location: 'Gurgaon', salary: '₹8-18 LPA', skills: ['Python', 'SQL', 'Tableau'], posted: '6h ago', url: 'https://droom.in/careers' },
-  { title: 'SDE Intern', company: 'Microsoft', location: 'Bangalore/Hyderabad', salary: '₹1-1.5 L/month', skills: ['DSA', 'C++', 'Python'], posted: '12h ago', url: 'https://careers.microsoft.com' },
-  { title: 'ML Engineer', company: 'Uber', location: 'Bangalore', salary: '₹30-55 LPA', skills: ['Python', 'ML', 'Spark'], posted: '1d ago', url: 'https://uber.careers' },
-  { title: 'Full Stack Developer', company: 'Paytm', location: 'Noida', salary: '₹12-25 LPA', skills: ['React', 'Node.js', 'MongoDB'], posted: '8h ago', url: 'https://paytm.com/careers' },
-];
-
-const COURSES: CourseResource[] = [
-  // YouTube Channels & Playlists
-  { id: 'y1', title: 'DSA for Placements - Complete Course', provider: 'Apna College', type: 'youtube', url: 'https://youtube.com/playlist?list=PLh5p_2jK9jT3wBZ8c7v7vq7w8', duration: '25 hours', rating: 4.8 },
-  { id: 'y2', title: 'Full Stack Web Development', provider: 'CodeWithHarry', type: 'youtube', url: 'https://youtube.com/playlist?list=PLu0W_9lI9ah7eT1Ea3D1T', duration: '40 hours', rating: 4.7 },
-  { id: 'y3', title: 'Python Tutorial for Beginners', provider: 'Telusko', type: 'youtube', url: 'https://youtube.com/playlist?list=PLl_O5n3C3x0o4pL', duration: '15 hours', rating: 4.6 },
-  { id: 'y4', title: 'React JS Complete Tutorial', provider: 'Thapa Technical', type: 'youtube', url: 'https://youtube.com/playlist?list=PLl_Hm2', duration: '20 hours', rating: 4.8 },
-  { id: 'y5', title: 'Machine Learning for Beginners', provider: ' Krish Naik', type: 'youtube', url: 'https://youtube.com/playlist?list=PLzEwt', duration: '30 hours', rating: 4.7 },
-  { id: 'y6', title: 'SQL & Database Tutorial', provider: 'TechTFQ', type: 'youtube', url: 'https://youtube.com/playlist?list=PLbtx', duration: '8 hours', rating: 4.5 },
-  { id: 'y7', title: 'System Design Interview', provider: 'Gaurav Sen', type: 'youtube', url: 'https://youtube.com/playlist?list=PLMCXHdwGn6H_', duration: '12 hours', rating: 4.9 },
-  { id: 'y8', title: 'C++ DSA Course', provider: 'Love Babbar', type: 'youtube', url: 'https://youtube.com/playlist?list=PLKNf', duration: '35 hours', rating: 4.8 },
-  
-  // Indian Platforms
-  { id: 'c1', title: 'DSA Self Paced', provider: 'GeeksforGeeks', type: 'course', url: 'https://practice.geeksforgeeks.org/courses', duration: 'Self Paced', rating: 4.6, price: '₹999/year' },
-  { id: 'c2', title: 'Full Stack Development', provider: 'Scaler Academy', type: 'course', url: 'https://www.scaler.com/full-stack/', duration: '6 months', rating: 4.7, price: '₹3-4 L' },
-  { id: 'c3', title: 'Data Science Masters', provider: 'Newton School', type: 'course', url: 'https://www.newtonschool.co/', duration: '6 months', rating: 4.5, price: '₹2.5 L' },
-  { id: 'c4', title: 'DSA & System Design', provider: 'Coding Ninjas', type: 'course', url: 'https://www.codingninjas.com/', duration: '4 months', rating: 4.6, price: '₹2,999' },
-  { id: 'c5', title: 'Interview Preparation', provider: 'Preplaced', type: 'course', url: 'https://preplaced.io/', duration: 'Self Paced', rating: 4.4, price: '₹499/month' },
-  { id: 'c6', title: 'Python & ML Bootcamp', provider: 'iNeuron', type: 'course', url: 'https://ineuron.ai/', duration: '8 months', rating: 4.7, price: '₹12,999' },
-  
-  // Practice Platforms
-  { id: 'p1', title: 'LeetCode Problems (Top 150)', provider: 'LeetCode', type: 'practice', url: 'https://leetcode.com/problemset/', rating: 4.9 },
-  { id: 'p2', title: 'Codeforces Practice', provider: 'Codeforces', type: 'practice', url: 'https://codeforces.com/', rating: 4.8 },
-  { id: 'p3', title: 'HackerRank Practice', provider: 'HackerRank', type: 'practice', url: 'https://www.hackerrank.com/', rating: 4.6 },
-  { id: 'p4', title: 'CodeChef Practice', provider: 'CodeChef', type: 'practice', url: 'https://www.codechef.com/', rating: 4.5 },
-  { id: 'p5', title: 'Striver SDE Sheet', provider: 'TakeUForward', type: 'practice', url: 'https://takeuforward.org/interviews/striver-sde-sheet-problem-list/', rating: 4.9 },
-  { id: 'p6', title: '450 DSA Questions', provider: 'Love Babbar', type: 'practice', url: 'https://450dsa.com/', rating: 4.8 },
-  
-  // Books
-  { id: 'b1', title: 'Cracking the Coding Interview', provider: 'Amazon', type: 'book', url: 'https://amzn.in/dp/0984782850', price: '₹450' },
-  { id: 'b2', title: 'DSA through C', provider: 'Amazon', type: 'book', url: 'https://amzn.in/dp/8175151674', price: '₹350' },
-  { id: 'b3', title: 'Clean Code', provider: 'Amazon', type: 'book', url: 'https://amzn.in/dp/0132350884', price: '₹500' },
-  { id: 'b4', title: 'System Design Interview', provider: 'Amazon', type: 'book', url: 'https://amzn.in/dp/B08B3FW5RX', price: '₹400' },
-];
-
-const STORAGE_KEY_APPLIED = 'esencelab_applied_jobs';
-const STORAGE_KEY_SAVED = 'esencelab_saved_jobs';
-
-const loadFromStorage = <T,>(key: string, defaultValue: T): T => {
-  try {
-    const stored = localStorage.getItem(key);
-    return stored ? JSON.parse(stored) : defaultValue;
-  } catch {
-    return defaultValue;
-  }
+type ParsedResume = {
+  summary?: string;
+  skills?: string[];
+  education?: Record<string, unknown>[];
+  experience?: Record<string, unknown>[];
+  contact_details?: {
+    emails?: string[];
+    phones?: string[];
+    linkedin?: string[];
+    github?: string[];
+  };
+  experience_level?: string;
+  suggested_roles?: string[];
+  raw_text?: string;
 };
 
-export function StudentDashboard() {
-  const { user } = useAuth();
-  const { messages, isLoading: chatLoading, sendMessage } = useCareerChatbot();
-  
-  const [resumeData, setResumeData] = useState<ResumeData | null>(null);
-  const [isParsing, setIsParsing] = useState(false);
-  const [selectedTargetRole, setSelectedTargetRole] = useState<TargetRole | null>(null);
-  const [chatInput, setChatInput] = useState('');
-  const [showChat, setShowChat] = useState(false);
-  const [appliedJobs, setAppliedJobs] = useState<AppliedJob[]>(() => 
-    loadFromStorage(STORAGE_KEY_APPLIED, [])
-  );
-  const [savedJobs, setSavedJobs] = useState<SavedJob[]>(() => 
-    loadFromStorage(STORAGE_KEY_SAVED, [])
-  );
-  const [jobSearch, setJobSearch] = useState('');
-  const [locationFilter, setLocationFilter] = useState<string>('all');
-  const [showFilters, setShowFilters] = useState(false);
+type SkillGapResult = {
+  similarity_score?: number;
+  missing_skills?: string[];
+  matched_skills?: string[];
+  recommended_courses?: {
+    id?: string;
+    title: string;
+    provider?: string;
+    url?: string;
+    skills?: string[];
+    relevance?: number;
+  }[];
+  explanation?: string;
+};
 
-  const locations = ['all', ...new Set(INDIAN_JOBS.map(j => j.location))];
-  
-  const filteredJobs = INDIAN_JOBS.filter(job => {
-    const matchesSearch = jobSearch === '' || 
-      job.title.toLowerCase().includes(jobSearch.toLowerCase()) ||
-      job.company.toLowerCase().includes(jobSearch.toLowerCase()) ||
-      job.skills.some(s => s.toLowerCase().includes(jobSearch.toLowerCase()));
-    const matchesLocation = locationFilter === 'all' || job.location.includes(locationFilter);
-    return matchesSearch && matchesLocation;
-  });
+type JobRecommendation = {
+  id: string;
+  title: string;
+  company: string;
+  location?: string;
+  salary_min?: number;
+  salary_max?: number;
+  requirements?: string[];
+  match_score: number;
+  matched_skills?: string[];
+  missing_skills?: string[];
+};
+
+function extractSkillNames(rawSkills: unknown): string[] {
+  if (!Array.isArray(rawSkills)) {
+    return [];
+  }
+
+  return rawSkills
+    .map((skill) => {
+      if (typeof skill === 'string') {
+        return skill;
+      }
+      if (skill && typeof skill === 'object' && 'name' in skill) {
+        return String(skill.name || '');
+      }
+      return '';
+    })
+    .filter(Boolean);
+}
+
+function formatSalary(min?: number, max?: number) {
+  if (!min && !max) {
+    return 'Compensation not listed';
+  }
+
+  if (min && max) {
+    return `₹${min.toLocaleString()} - ₹${max.toLocaleString()}`;
+  }
+
+  return min ? `From ₹${min.toLocaleString()}` : `Up to ₹${(max || 0).toLocaleString()}`;
+}
+
+export function StudentDashboard() {
+  const { user, getToken } = useAuth();
+  const { data: jobs = [] } = useJobs();
+  const { data: courses = [] } = useCourses();
+  const { messages, isLoading: chatLoading, sendMessage } = useCareerChatbot();
+
+  const [resumeResult, setResumeResult] = useState<ParsedResume | null>(null);
+  const [candidateId, setCandidateId] = useState<string>('');
+  const [isParsingResume, setIsParsingResume] = useState(false);
+  const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
+  const [selectedTargetRole, setSelectedTargetRole] = useState<TargetRole | null>(null);
+  const [skillGapResult, setSkillGapResult] = useState<SkillGapResult | null>(null);
+  const [jobRecommendations, setJobRecommendations] = useState<JobRecommendation[]>([]);
+  const [courseRecommendations, setCourseRecommendations] = useState<Record<string, unknown>[]>([]);
+  const [applications, setApplications] = useState<Record<string, unknown>[]>([]);
+  const [showChat, setShowChat] = useState(false);
+  const [chatInput, setChatInput] = useState('');
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    const loadCandidate = async () => {
+      const result = await api.getCandidateByClerkId(user.clerkUserId);
+      if (result.error || !result.data) {
+        return;
+      }
+
+      setCandidateId(result.data.id);
+
+      setResumeResult((previous) => {
+        if (previous) {
+          return previous;
+        }
+
+        return {
+          skills: extractSkillNames(result.data.skills),
+          education: Array.isArray(result.data.education) ? result.data.education : [],
+          experience: Array.isArray(result.data.experience) ? result.data.experience : [],
+          raw_text: result.data.resume_text || '',
+        };
+      });
+
+      const applicationsResponse = await api.getApplicationsByCandidate(result.data.id);
+      if (!applicationsResponse.error) {
+        setApplications(applicationsResponse.data || []);
+      }
+    };
+
+    loadCandidate();
+  }, [user]);
+
+  const currentSkills = useMemo(
+    () => (resumeResult?.skills || []).filter(Boolean),
+    [resumeResult],
+  );
 
   const onDrop = async (acceptedFiles: File[]) => {
-    if (acceptedFiles[0]) {
-      setIsParsing(true);
-      const file = acceptedFiles[0];
-      
-      try {
-        let result;
-        
-        if (file.name.endsWith('.pdf')) {
-          result = await aiService.parseResume(file);
-        } else {
-          const reader = new FileReader();
-          const text = await new Promise<string>((resolve) => {
-            reader.onload = (e) => resolve(e.target?.result as string);
-            reader.readAsText(file);
-          });
-          result = await aiService.parseResumeText(text);
-        }
-        
-        const parsed: ResumeData = {
-          rawText: result.summary || '',
-          extractedSkills: result.skills || [],
-          education: result.education || [],
-          experience: result.experience || [],
-          projects: [],
-          parsedAt: new Date().toISOString(),
-        };
-        
-        setResumeData(parsed);
-        toast.success(`Resume parsed with AI! Found ${parsed.extractedSkills.length} skills`);
-        
-        if (result.suggested_roles?.length > 0) {
-          toast.info(`Suggested roles: ${result.suggested_roles.slice(0, 3).join(', ')}`);
-        }
-      } catch (error) {
-        console.error('Resume parsing error:', error);
-        toast.error('Failed to parse resume. Make sure AI service is running on port 8000.');
-      } finally {
-        setIsParsing(false);
+    if (!user || acceptedFiles.length === 0) {
+      return;
+    }
+
+    const file = acceptedFiles[0];
+    setIsParsingResume(true);
+
+    try {
+      const token = await getToken();
+      const parsed = await aiService.parseResume(file, token);
+
+      setResumeResult(parsed);
+      toast.success(`Resume parsed successfully. ${parsed.skills?.length || 0} skills detected.`);
+
+      const upsert = await api.upsertCandidateProfile({
+        clerk_user_id: user.clerkUserId,
+        name: user.name,
+        email: user.email,
+        role: 'student',
+        skills: (parsed.skills || []).map((skill: string) => ({ name: skill, score: 1, category: 'technical' })),
+        education: parsed.education || [],
+        experience: parsed.experience || [],
+        resume_text: parsed.raw_text || '',
+      });
+
+      if (upsert.error) {
+        toast.error(`Profile save failed: ${upsert.error}`);
+      } else if (upsert.data?.id) {
+        setCandidateId(upsert.data.id);
+        await api.logActivity(user.clerkUserId, 'resume_parsed', 'Student uploaded and parsed resume', {
+          skills_count: parsed.skills?.length || 0,
+        });
       }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to parse resume');
+    } finally {
+      setIsParsingResume(false);
     }
   };
 
@@ -149,434 +190,351 @@ export function StudentDashboard() {
     maxFiles: 1,
   });
 
-  const handleSendChat = () => {
-    if (chatInput.trim()) {
-      sendMessage(chatInput);
-      setChatInput('');
-    }
-  };
-
-  const handleApplyJob = (job: typeof INDIAN_JOBS[0]) => {
-    const existing = appliedJobs.find(j => j.id === `${job.company}-${job.title}`);
-    if (existing) {
-      toast.error('Already applied to this job');
+  const runSkillGapAndRecommendations = async () => {
+    if (!user) {
       return;
     }
-    
-    const newApplication: AppliedJob = {
-      id: `${job.company}-${job.title}`,
-      title: job.title,
-      company: job.company,
-      location: job.location,
-      salary: job.salary,
-      appliedAt: new Date().toISOString(),
-      status: 'applied',
-      url: job.url,
-    };
-    
-    const updated = [newApplication, ...appliedJobs];
-    setAppliedJobs(updated);
-    localStorage.setItem(STORAGE_KEY_APPLIED, JSON.stringify(updated));
-    toast.success(`Applied to ${job.title} at ${job.company}!`);
-    window.open(job.url, '_blank');
-  };
-
-  const handleSaveJob = (job: typeof INDIAN_JOBS[0]) => {
-    const existing = savedJobs.find(j => j.id === `${job.company}-${job.title}`);
-    if (existing) {
-      toast.error('Job already saved');
+    if (!selectedTargetRole) {
+      toast.error('Select a target role first');
       return;
     }
-    
-    const newSaved: SavedJob = {
-      id: `${job.company}-${job.title}`,
-      title: job.title,
-      company: job.company,
-      location: job.location,
-      salary: job.salary,
-      skills: job.skills,
-      savedAt: new Date().toISOString(),
-      url: job.url,
-    };
-    
-    const updated = [newSaved, ...savedJobs];
-    setSavedJobs(updated);
-    localStorage.setItem(STORAGE_KEY_SAVED, JSON.stringify(updated));
-    toast.success('Job saved!');
-  };
+    if (currentSkills.length === 0) {
+      toast.error('Upload and parse your resume first');
+      return;
+    }
 
-  const handleRemoveSaved = (id: string) => {
-    const updated = savedJobs.filter(j => j.id !== id);
-    setSavedJobs(updated);
-    localStorage.setItem(STORAGE_KEY_SAVED, JSON.stringify(updated));
-    toast.success('Job removed from saved');
-  };
+    setIsGeneratingInsights(true);
+    try {
+      const token = await getToken();
 
-  const getStatusColor = (status: AppliedJob['status']) => {
-    switch (status) {
-      case 'applied': return 'text-blue-400';
-      case 'under_review': return 'text-yellow-400';
-      case 'interview': return 'text-purple-400';
-      case 'offer': return 'text-green-400';
-      case 'rejected': return 'text-red-400';
-      default: return 'text-gray-400';
+      const gapResult = await aiService.analyzeSkillGaps(currentSkills, selectedTargetRole.name, token);
+      setSkillGapResult(gapResult);
+
+      const recommendedJobs = await aiService.recommendJobs(currentSkills, jobs, 6, token);
+      setJobRecommendations(recommendedJobs?.recommendations || []);
+
+      const recommendedCourses = await aiService.recommendCourses(
+        gapResult?.missing_skills || [],
+        currentSkills,
+        courses,
+        6,
+        token,
+      );
+      setCourseRecommendations(recommendedCourses?.recommendations || []);
+
+      await api.logActivity(user.clerkUserId, 'insights_generated', 'Generated skill-gap and recommendations', {
+        target_role: selectedTargetRole.name,
+      });
+
+      toast.success('AI recommendations generated');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to generate recommendations');
+    } finally {
+      setIsGeneratingInsights(false);
     }
   };
 
-  const getStatusLabel = (status: AppliedJob['status']) => {
-    switch (status) {
-      case 'applied': return 'Applied';
-      case 'under_review': return 'Under Review';
-      case 'interview': return 'Interview';
-      case 'offer': return 'Offer!';
-      case 'rejected': return 'Rejected';
-      default: return status;
+  const applyToJob = async (jobId: string) => {
+    if (!user) {
+      return;
+    }
+    if (!candidateId) {
+      toast.error('Parse and save your profile before applying');
+      return;
+    }
+
+    const result = await api.applyToJob(jobId, candidateId);
+    if (result.error) {
+      toast.error(result.error.includes('duplicate') ? 'You already applied to this job' : result.error);
+      return;
+    }
+
+    toast.success('Application submitted');
+    await api.logActivity(user.clerkUserId, 'job_applied', 'Applied to a recommended job', { job_id: jobId });
+
+    const applicationsResponse = await api.getApplicationsByCandidate(candidateId);
+    if (!applicationsResponse.error) {
+      setApplications(applicationsResponse.data || []);
     }
   };
 
-  const handleOpenResource = (resource: CourseResource) => {
-    window.open(resource.url, '_blank');
+  const sendChatMessage = () => {
+    if (!chatInput.trim()) {
+      return;
+    }
+    sendMessage(chatInput.trim());
+    setChatInput('');
   };
-
-  const youtubeCourses = COURSES.filter(c => c.type === 'youtube');
-  const platformCourses = COURSES.filter(c => c.type === 'course');
-  const practiceResources = COURSES.filter(c => c.type === 'practice');
-  const books = COURSES.filter(c => c.type === 'book');
 
   return (
     <div>
-      <Header 
-        title={`Namaste, ${user?.name?.split(' ')[0] || 'Student'}`} 
-        subtitle="Your career journey starts here"
+      <Header
+        title={`Hi, ${user?.name?.split(' ')[0] || 'Student'}`}
+        subtitle="Resume intelligence, skill-gap analysis, and personalized recommendations"
       />
-      
-      <div className="p-3 sm:p-4 md:p-6 space-y-4">
-        <div className="grid md:grid-cols-3 gap-3 sm:gap-4">
-          <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
+
+      <div className="p-4 md:p-6 space-y-4">
+        <div className="grid lg:grid-cols-3 gap-4">
+          <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
             <div className="flex items-center gap-2 mb-3">
               <Upload className="w-4 h-4 text-white" />
-              <h2 className="font-medium text-white text-sm">AI Resume Parser</h2>
-              <Sparkles className="w-3 h-3 text-gray-500" />
+              <h2 className="text-white font-medium text-sm">Resume Upload & Parsing</h2>
             </div>
-            <div 
+
+            <div
               {...getRootProps()}
-              className={`p-3 sm:p-4 border border-dashed rounded-lg cursor-pointer transition-colors ${
-                isDragActive 
-                  ? 'border-white bg-[#111]' 
-                  : 'border-[#333] hover:border-white'
+              className={`p-4 border border-dashed rounded-lg cursor-pointer transition-colors ${
+                isDragActive ? 'border-white bg-[#111]' : 'border-[#333] hover:border-[#666]'
               }`}
             >
-              {isParsing ? (
+              <input {...getInputProps()} />
+              {isParsingResume ? (
                 <div className="text-center">
-                  <Loader2 className="w-5 h-5 text-white animate-spin mx-auto mb-1" />
-                  <p className="text-xs text-gray-500">Parsing...</p>
-                </div>
-              ) : resumeData ? (
-                <div className="text-center">
-                  <CheckCircle className="w-5 h-5 text-white mx-auto mb-1" />
-                  <p className="text-xs text-white font-medium">Parsed!</p>
-                  <p className="text-xs text-gray-500">{resumeData.extractedSkills.length} skills</p>
+                  <Loader2 className="w-6 h-6 animate-spin text-white mx-auto mb-2" />
+                  <p className="text-xs text-gray-400">Parsing resume with AI...</p>
                 </div>
               ) : (
                 <div className="text-center">
-                  <p className="text-xs text-white">Drop resume PDF</p>
+                  <p className="text-sm text-white">Drop PDF or click to upload</p>
+                  <p className="text-xs text-gray-500 mt-1">NLP parsing + NER + skill extraction</p>
                 </div>
               )}
-              <input {...getInputProps()} />
             </div>
-            {resumeData?.extractedSkills && (
-              <div className="flex flex-wrap gap-1 mt-2">
-                {resumeData.extractedSkills.slice(0, 5).map(skill => (
-                  <span key={skill} className="px-2 py-0.5 bg-white text-black text-[10px] sm:text-xs rounded">
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            )}
+
+            <div className="mt-3 flex flex-wrap gap-1">
+              {currentSkills.slice(0, 10).map((skill) => (
+                <span key={skill} className="px-2 py-0.5 rounded bg-white text-black text-xs">
+                  {skill}
+                </span>
+              ))}
+            </div>
           </div>
 
-          <div className="md:col-span-2 bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
+          <div className="lg:col-span-2 bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
             <div className="flex items-center gap-2 mb-3">
               <Target className="w-4 h-4 text-white" />
-              <h2 className="font-medium text-white text-sm">Target Role</h2>
+              <h2 className="text-white font-medium text-sm">Target Role & AI Insights</h2>
             </div>
-            <TargetRoleSelector 
-              selectedRole={selectedTargetRole} 
-              onSelect={(role) => {
-                setSelectedTargetRole(role);
-                toast.success(`Target set to ${role.name}`);
-              }}
-            />
+
+            <TargetRoleSelector selectedRole={selectedTargetRole} onSelect={setSelectedTargetRole} />
+
+            <button
+              onClick={runSkillGapAndRecommendations}
+              disabled={isGeneratingInsights}
+              className="mt-4 inline-flex items-center gap-2 bg-white text-black px-4 py-2 rounded text-sm font-medium disabled:opacity-50"
+            >
+              {isGeneratingInsights ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+              {isGeneratingInsights ? 'Generating' : 'Run AI Analysis'}
+            </button>
           </div>
         </div>
 
-        {(appliedJobs.length > 0 || savedJobs.length > 0) && (
-          <div className="grid md:grid-cols-2 gap-3 sm:gap-4">
-            {appliedJobs.length > 0 && (
-              <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <FileText className="w-4 h-4 text-white" />
-                  <h2 className="font-medium text-white text-sm">My Applications</h2>
-                  <span className="text-[10px] px-1.5 py-0.5 bg-[#222] text-gray-400 rounded">{appliedJobs.length}</span>
-                </div>
-                <div className="space-y-2 max-h-40 overflow-y-auto">
-                  {appliedJobs.slice(0, 5).map((job) => (
-                    <div key={job.id} className="flex items-center justify-between p-2 bg-[#111] rounded">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs text-white font-medium truncate">{job.title}</p>
-                        <p className="text-[10px] text-gray-500">{job.company}</p>
-                      </div>
-                      <span className={`text-[10px] font-medium ${getStatusColor(job.status)}`}>
-                        {getStatusLabel(job.status)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+        {(resumeResult?.summary || resumeResult?.contact_details) && (
+          <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <FileText className="w-4 h-4 text-white" />
+              <h2 className="text-white font-medium text-sm">Parsed Profile Details</h2>
+            </div>
+
+            {resumeResult?.summary && (
+              <p className="text-sm text-gray-300 mb-4">{resumeResult.summary}</p>
             )}
 
-            {savedJobs.length > 0 && (
-              <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Bookmark className="w-4 h-4 text-white" />
-                  <h2 className="font-medium text-white text-sm">Saved Jobs</h2>
-                  <span className="text-[10px] px-1.5 py-0.5 bg-[#222] text-gray-400 rounded">{savedJobs.length}</span>
-                </div>
-                <div className="space-y-2 max-h-40 overflow-y-auto">
-                  {savedJobs.slice(0, 5).map((job) => (
-                    <div key={job.id} className="flex items-center justify-between p-2 bg-[#111] rounded">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs text-white font-medium truncate">{job.title}</p>
-                        <p className="text-[10px] text-gray-500">{job.company} • {job.salary}</p>
-                      </div>
-                      <button
-                        onClick={() => handleRemoveSaved(job.id)}
-                        className="text-[10px] text-red-400 hover:text-red-300"
-                      >
-                        Remove
-                      </button>
+            <div className="grid md:grid-cols-3 gap-4">
+              <div>
+                <p className="text-xs text-gray-500 mb-2">Education</p>
+                <div className="space-y-2">
+                  {(resumeResult?.education || []).slice(0, 3).map((education, index) => (
+                    <div key={`edu-${index}`} className="bg-[#111] rounded p-2">
+                      <p className="text-xs text-white">{String(education.degree || 'Degree')}</p>
+                      <p className="text-[11px] text-gray-500">{String(education.institution || '')}</p>
                     </div>
                   ))}
                 </div>
               </div>
-            )}
+
+              <div>
+                <p className="text-xs text-gray-500 mb-2">Experience</p>
+                <div className="space-y-2">
+                  {(resumeResult?.experience || []).slice(0, 3).map((experience, index) => (
+                    <div key={`exp-${index}`} className="bg-[#111] rounded p-2">
+                      <p className="text-xs text-white">{String(experience.title || 'Role')}</p>
+                      <p className="text-[11px] text-gray-500">{String(experience.company || '')}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs text-gray-500 mb-2">Contact Extraction</p>
+                <div className="space-y-2 bg-[#111] rounded p-2">
+                  <p className="text-[11px] text-gray-300">
+                    Email: {resumeResult?.contact_details?.emails?.[0] || 'Not found'}
+                  </p>
+                  <p className="text-[11px] text-gray-300">
+                    Phone: {resumeResult?.contact_details?.phones?.[0] || 'Not found'}
+                  </p>
+                  <p className="text-[11px] text-gray-300">
+                    LinkedIn: {resumeResult?.contact_details?.linkedin?.[0] || 'Not found'}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
-        <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Briefcase className="w-4 h-4 text-white" />
-              <h2 className="font-medium text-white text-sm">Jobs in India</h2>
-              <span className="text-[10px] sm:text-xs text-green-500 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                Live
-              </span>
-            </div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`p-1.5 rounded ${showFilters ? 'bg-[#222]' : 'hover:bg-[#111]'}`}
-            >
-              <Filter className="w-4 h-4 text-gray-400" />
-            </button>
-          </div>
-          
-          <div className="flex gap-2 mb-3">
-            <div className="flex-1 relative">
-              <Search className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={jobSearch}
-                onChange={(e) => setJobSearch(e.target.value)}
-                placeholder="Search jobs, companies, skills..."
-                className="w-full bg-[#111] border border-[#222] rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder:text-gray-500"
+        {skillGapResult && selectedTargetRole && (
+          <div className="grid lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2">
+              <SkillGapAnalysis
+                userSkills={currentSkills}
+                targetSkills={selectedTargetRole.requiredSkills}
               />
             </div>
-            {showFilters && (
-              <select
-                value={locationFilter}
-                onChange={(e) => setLocationFilter(e.target.value)}
-                className="bg-[#111] border border-[#222] rounded-lg px-3 py-2 text-sm text-white"
-              >
-                {locations.map(loc => (
-                  <option key={loc} value={loc} className="bg-[#111]">
-                    {loc === 'all' ? 'All Locations' : loc}
-                  </option>
-                ))}
-              </select>
-            )}
+            <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
+              <p className="text-xs text-gray-500 mb-2">Similarity Score</p>
+              <p className="text-2xl font-bold text-white mb-3">{Math.round(skillGapResult.similarity_score || 0)}%</p>
+              <p className="text-xs text-gray-400">{skillGapResult.explanation || 'Skill-gap analysis ready.'}</p>
+            </div>
           </div>
-          
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {filteredJobs.slice(0, 6).map((job, idx) => (
-              <div key={idx} className="p-3 bg-[#111] rounded-lg">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-white text-sm truncate">{job.title}</h3>
-                    <p className="text-[10px] sm:text-xs text-gray-500">{job.company} • {job.location}</p>
-                    <p className="text-xs text-white font-medium mt-1">{job.salary}</p>
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {job.skills.slice(0, 2).map(s => (
-                        <span key={s} className="px-1.5 py-0.5 bg-[#222] text-gray-400 text-[10px] rounded">{s}</span>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex gap-1 shrink-0 self-start sm:self-auto">
-                    <button
-                      onClick={() => handleApplyJob(job)}
-                      className="bg-white text-black text-xs px-3 py-1.5 rounded font-medium hover:bg-gray-200"
-                    >
-                      Apply
-                    </button>
-                    <button
-                      onClick={() => handleSaveJob(job)}
-                      className="border border-[#333] text-white text-xs px-2 py-1.5 rounded hover:bg-[#222]"
-                    >
-                      <Bookmark className="w-3 h-3" />
-                    </button>
-                  </div>
-                </div>
+        )}
+
+        <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Briefcase className="w-4 h-4 text-white" />
+            <h2 className="text-white font-medium text-sm">Top Job Recommendations</h2>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {(jobRecommendations.length > 0 ? jobRecommendations : jobs.slice(0, 6)).map((job) => (
+              <div key={String(job.id)} className="bg-[#111] rounded-lg p-3 border border-[#222]">
+                <p className="text-sm text-white font-medium">{String(job.title || 'Role')}</p>
+                <p className="text-xs text-gray-500">{String(job.company || 'Company')}</p>
+                <p className="text-xs text-gray-500 mt-1">{String(job.location || 'Location')}</p>
+                <p className="text-xs text-gray-300 mt-2">
+                  {formatSalary(Number(job.salary_min || 0), Number(job.salary_max || 0))}
+                </p>
+
+                {typeof (job as JobRecommendation).match_score === 'number' && (
+                  <p className="text-xs text-green-400 mt-2">Match: {Math.round((job as JobRecommendation).match_score)}%</p>
+                )}
+
+                <button
+                  onClick={() => applyToJob(String(job.id))}
+                  className="mt-3 w-full bg-white text-black rounded px-3 py-1.5 text-xs font-medium"
+                >
+                  Apply
+                </button>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Youtube className="w-4 h-4 text-red-500" />
-            <h2 className="font-medium text-white text-sm">Free YouTube Courses</h2>
-          </div>
-          
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-            {youtubeCourses.slice(0, 8).map((course) => (
-              <button
-                key={course.id}
-                onClick={() => handleOpenResource(course)}
-                className="p-2 sm:p-3 bg-[#111] rounded-lg hover:bg-[#222] transition-colors text-left"
-              >
-                <div className="flex items-center gap-1 mb-1">
-                  <Play className="w-3 h-3 text-red-500 fill-red-500" />
-                  <span className="text-[10px] text-red-400">YouTube</span>
-                </div>
-                <h3 className="font-medium text-white text-[10px] sm:text-xs mb-1 line-clamp-2">{course.title}</h3>
-                <p className="text-[10px] text-gray-500">{course.provider}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
+        <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
           <div className="flex items-center gap-2 mb-3">
             <GraduationCap className="w-4 h-4 text-white" />
-            <h2 className="font-medium text-white text-sm">Paid Courses (Indian Platforms)</h2>
+            <h2 className="text-white font-medium text-sm">Recommended Courses</h2>
           </div>
-          
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {platformCourses.map((course) => (
-              <button
-                key={course.id}
-                onClick={() => handleOpenResource(course)}
-                className="p-2 sm:p-3 bg-[#111] rounded-lg hover:bg-[#222] transition-colors text-left"
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {(courseRecommendations.length > 0 ? courseRecommendations : courses.slice(0, 6)).map((course) => (
+              <a
+                key={String(course.id)}
+                href={String(course.url || '#')}
+                target="_blank"
+                rel="noreferrer"
+                className="bg-[#111] rounded-lg p-3 border border-[#222] hover:border-[#555] transition-colors"
               >
-                <h3 className="font-medium text-white text-[10px] sm:text-xs mb-1 line-clamp-2">{course.title}</h3>
-                <p className="text-[10px] text-gray-500">{course.provider}</p>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-[10px] sm:text-xs text-white">{course.price}</span>
-                  <ExternalLink className="w-3 h-3 text-gray-500" />
-                </div>
-              </button>
+                <p className="text-sm text-white font-medium">{String(course.title || 'Course')}</p>
+                <p className="text-xs text-gray-500">{String(course.provider || 'Provider')}</p>
+                <p className="text-xs text-gray-500 mt-2">{String(course.duration || '')}</p>
+              </a>
             ))}
           </div>
         </div>
 
-        <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <CheckCircle className="w-4 h-4 text-white" />
-            <h2 className="font-medium text-white text-sm">Practice Platforms</h2>
-          </div>
-          
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-            {practiceResources.map((resource) => (
-              <button
-                key={resource.id}
-                onClick={() => handleOpenResource(resource)}
-                className="p-2 sm:p-3 bg-[#111] rounded-lg hover:bg-[#222] transition-colors text-center"
-              >
-                <h3 className="font-medium text-white text-[10px] sm:text-xs mb-1">{resource.provider}</h3>
-                <p className="text-[10px] text-gray-500 line-clamp-2">{resource.title}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 sm:p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Sparkles className="w-4 h-4 text-white" />
-            <h2 className="font-medium text-white text-sm">Best Books for Placements</h2>
-          </div>
-          
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {books.map((book) => (
-              <button
-                key={book.id}
-                onClick={() => handleOpenResource(book)}
-                className="p-2 sm:p-3 bg-[#111] rounded-lg hover:bg-[#222] transition-colors text-left"
-              >
-                <h3 className="font-medium text-white text-[10px] sm:text-xs mb-1 line-clamp-2">{book.title}</h3>
-                <p className="text-[10px] sm:text-xs text-gray-500">{book.price}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <button
-          onClick={() => setShowChat(!showChat)}
-          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 bg-white text-black px-3 py-2 sm:px-4 rounded-full font-medium text-xs sm:text-sm flex items-center gap-2 hover:bg-gray-200 transition-colors z-50"
-        >
-          <Bot className="w-4 h-4" />
-          <span className="hidden sm:inline">Career AI</span>
-        </button>
-
-        {showChat && (
-          <div className="fixed bottom-16 right-3 sm:bottom-20 sm:right-6 left-3 sm:left-auto sm:w-80 bg-[#0a0a0a] border border-[#222] rounded-lg shadow-xl z-50">
-            <div className="flex items-center justify-between p-3 border-b border-[#222]">
-              <div className="flex items-center gap-2">
-                <Bot className="w-4 h-4 text-white" />
-                <span className="font-medium text-white text-sm">Career Assistant</span>
-              </div>
-              <button onClick={() => setShowChat(false)}>
-                <X className="w-4 h-4 text-gray-500" />
-              </button>
-            </div>
-            <div className="h-48 sm:h-64 overflow-y-auto p-3 space-y-2">
-              {messages.map((msg) => (
-                <div key={msg.id} className={`text-sm ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
-                  <span className={`inline-block p-2 rounded-lg ${msg.role === 'user' ? 'bg-white text-black' : 'bg-[#222] text-white'}`}>
-                    {msg.content}
-                  </span>
-                </div>
+        {applications.length > 0 && (
+          <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
+            <h2 className="text-white font-medium text-sm mb-3">My Applications</h2>
+            <div className="space-y-2">
+              {applications.slice(0, 8).map((application) => (
+                (() => {
+                  const job = (application as { jobs?: { title?: string; company?: string } }).jobs;
+                  return (
+                    <div key={String(application.id)} className="bg-[#111] rounded-lg p-3 flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm text-white">{job?.title || 'Job'}</p>
+                        <p className="text-xs text-gray-500">{job?.company || ''}</p>
+                      </div>
+                      <span className="text-xs text-gray-300 capitalize">{String(application.status || 'pending')}</span>
+                    </div>
+                  );
+                })()
               ))}
-            </div>
-            <div className="p-2 border-t border-[#222] flex gap-2">
-              <input
-                type="text"
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
-                placeholder="Ask about careers..."
-                className="flex-1 bg-[#111] border border-[#222] rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-500"
-              />
-              <button
-                onClick={handleSendChat}
-                disabled={chatLoading}
-                className="bg-white text-black px-3 py-2 rounded-lg text-sm"
-              >
-                <Send className="w-4 h-4" />
-              </button>
             </div>
           </div>
         )}
       </div>
+
+      <button
+        onClick={() => setShowChat((prev) => !prev)}
+        className="fixed bottom-6 right-6 bg-white text-black px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 z-50"
+      >
+        <Bot className="w-4 h-4" />
+        Career Chat
+      </button>
+
+      {showChat && (
+        <div className="fixed bottom-20 right-4 left-4 sm:left-auto sm:w-[360px] bg-[#0a0a0a] border border-[#222] rounded-lg shadow-xl z-50">
+          <div className="flex items-center justify-between p-3 border-b border-[#222]">
+            <div className="flex items-center gap-2">
+              <Bot className="w-4 h-4 text-white" />
+              <span className="text-sm font-medium text-white">Career Assistant</span>
+            </div>
+            <button onClick={() => setShowChat(false)}>
+              <X className="w-4 h-4 text-gray-500" />
+            </button>
+          </div>
+
+          <div className="h-64 overflow-y-auto p-3 space-y-2">
+            {messages.map((message) => (
+              <div key={message.id} className={message.role === 'user' ? 'text-right' : 'text-left'}>
+                <span
+                  className={`inline-block px-3 py-2 rounded-lg text-xs ${
+                    message.role === 'user' ? 'bg-white text-black' : 'bg-[#222] text-white'
+                  }`}
+                >
+                  {message.content}
+                </span>
+              </div>
+            ))}
+            {chatLoading && (
+              <div className="text-left">
+                <span className="inline-block px-3 py-2 rounded-lg text-xs bg-[#222] text-white">
+                  Thinking...
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="p-2 border-t border-[#222] flex gap-2">
+            <input
+              value={chatInput}
+              onChange={(event) => setChatInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  sendChatMessage();
+                }
+              }}
+              placeholder="Ask about interviews, roadmap, resumes..."
+              className="flex-1 bg-[#111] border border-[#222] rounded px-3 py-2 text-xs text-white"
+            />
+            <button onClick={sendChatMessage} className="bg-white text-black px-3 rounded">
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -25,8 +25,9 @@ const recruiterLinks = [
 
 const adminLinks = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/analytics', icon: BarChart3, label: 'Analytics' },
   { to: '/users', icon: Users, label: 'Users' },
+  { to: '/jobs', icon: Briefcase, label: 'Jobs & Courses' },
+  { to: '/analytics', icon: BarChart3, label: 'Usage' },
 ];
 
 interface SidebarProps {

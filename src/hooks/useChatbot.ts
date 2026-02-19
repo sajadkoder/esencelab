@@ -18,7 +18,7 @@ export function useCareerChatbot() {
   const [messages, setMessages] = useState<ChatMessage[]>(() => [createInitialGreeting()]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, getToken } = useAuth();
 
   const initialGreeting = useMemo(() => createInitialGreeting(user?.name), [user?.name]);
 
@@ -45,12 +45,13 @@ export function useCareerChatbot() {
         content: m.content,
       }));
 
-      const response = await aiService.chat(content, context, history);
+      const token = await getToken();
+      const response = await aiService.chat(content, context, history, token);
 
       const assistantMessage: ChatMessage = {
         id: uuidv4(),
         role: 'assistant',
-        content: response || 'I apologize, but I had trouble generating a response. Please try again.',
+        content: response?.response || 'I apologize, but I had trouble generating a response. Please try again.',
         timestamp: new Date().toISOString(),
       };
 
@@ -67,7 +68,7 @@ export function useCareerChatbot() {
     } finally {
       setIsLoading(false);
     }
-  }, [user, messages]);
+  }, [user, messages, getToken]);
 
   const clearChat = useCallback(() => {
     setMessages([initialGreeting]);
