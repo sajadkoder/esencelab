@@ -38,47 +38,9 @@
 }
 
 @layer utilities {
-  .yc-btn {
-    @apply bg-white text-black px-4 py-2 font-semibold rounded hover:bg-gray-200 transition-colors disabled:opacity-50;
-  }
-  
-  .yc-btn-outline {
-    @apply bg-transparent border border-white text-white px-4 py-2 font-semibold rounded hover:bg-white/10 transition-colors;
-  }
-  
-  .yc-input {
-    @apply w-full bg-transparent border border-[#333] rounded px-3 py-2 text-white placeholder:text-gray-500 focus:outline-none focus:border-white transition-colors;
-  }
-  
-  .yc-card {
-    @apply bg-[#0a0a0a] border border-[#222] rounded p-4;
-  }
-  
-  .yc-sidebar-item {
-    @apply flex items-center gap-3 px-3 py-2 rounded hover:bg-[#111] text-gray-300 hover:text-white transition-colors cursor-pointer;
-  }
-  
-  .yc-sidebar-item.active {
-    @apply bg-white text-black;
-  }
-  
-  .line-clamp-1 {
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  
   .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  
-  .line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
