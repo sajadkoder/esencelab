@@ -40,6 +40,28 @@ function extractRoleFromSupabaseUser(user) {
   return normalizeRole(appRole || userRole || user.role);
 }
 
+async function extractRoleFromProfile(supabase, authUserId) {
+  if (!supabase || !authUserId) {
+    return null;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('clerk_user_id', authUserId)
+      .maybeSingle();
+
+    if (error || !data?.role) {
+      return null;
+    }
+
+    return normalizeRole(data.role);
+  } catch {
+    return null;
+  }
+}
+
 export async function readAuthContext(req) {
   const token = readBearerToken(req);
   if (!token) {
@@ -56,10 +78,13 @@ export async function readAuthContext(req) {
     return null;
   }
 
+  const roleFromProfile = await extractRoleFromProfile(supabase, data.user.id);
+  const resolvedRole = roleFromProfile || extractRoleFromSupabaseUser(data.user);
+
   return {
     token,
     userId: data.user.id,
-    role: extractRoleFromSupabaseUser(data.user),
+    role: resolvedRole,
     email: data.user.email || null,
     payload: data.user,
     verified: true,

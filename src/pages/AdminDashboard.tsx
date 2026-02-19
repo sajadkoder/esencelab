@@ -34,7 +34,16 @@ type CourseRow = {
 };
 
 type CandidateRow = {
+  id: string;
+  name: string;
+  email: string;
+  role?: string;
   skills?: { name?: string }[] | string[];
+  education?: Record<string, unknown>[];
+  experience?: Record<string, unknown>[];
+  resume_text?: string;
+  match_score?: number;
+  updated_at?: string;
 };
 
 type ApplicationRow = {
@@ -51,6 +60,7 @@ type ActivityLogRow = {
   details?: string;
   timestamp?: string;
   clerk_user_id?: string;
+  metadata?: Record<string, unknown>;
 };
 
 function toCsv(rows: Record<string, unknown>[]) {
@@ -199,6 +209,26 @@ export function AdminDashboard() {
       applications: applications.length,
     };
   }, [profiles, jobs, courses, applications]);
+
+  const resumeReviewRows = useMemo(() => (
+    candidates
+      .map((candidate) => {
+        const skills = extractSkillNames(candidate.skills);
+        const education = Array.isArray(candidate.education) ? candidate.education : [];
+        const experience = Array.isArray(candidate.experience) ? candidate.experience : [];
+        return {
+          ...candidate,
+          skillCount: skills.length,
+          educationCount: education.length,
+          experienceCount: experience.length,
+        };
+      })
+      .sort((a, b) => (new Date(b.updated_at || 0).getTime() - new Date(a.updated_at || 0).getTime()))
+  ), [candidates]);
+
+  const recommendationLogs = useMemo(() => (
+    activityLogs.filter((log) => ['resume_uploaded', 'recommendations_generated', 'candidate_ranked'].includes(log.action))
+  ), [activityLogs]);
 
   const updateUserRole = async (profileId: string, role: 'student' | 'employer' | 'admin') => {
     const result = await api.updateProfileRole(profileId, role);
@@ -513,6 +543,57 @@ export function AdminDashboard() {
         {!loading && activeTab === 'usage' && (
           <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
             <h3 className="text-white text-sm font-medium mb-3">System Usage Monitor</h3>
+            <div className="grid lg:grid-cols-2 gap-4 mb-4">
+              <div className="bg-[#111] border border-[#222] rounded-lg p-3">
+                <h4 className="text-white text-xs font-medium mb-2">Resume Uploads and Parsed Outputs</h4>
+                <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
+                  {resumeReviewRows.slice(0, 20).map((candidate) => (
+                    <div key={candidate.id} className="bg-black border border-[#222] rounded p-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <p className="text-xs text-white">{candidate.name || 'Candidate'}</p>
+                          <p className="text-[11px] text-gray-500">{candidate.email || 'No email'}</p>
+                        </div>
+                        {typeof candidate.match_score === 'number' && (
+                          <span className="text-[11px] px-2 py-0.5 rounded bg-white text-black">
+                            {Math.round(candidate.match_score)}%
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-gray-400 mt-1">
+                        Skills: {candidate.skillCount} | Education: {candidate.educationCount} | Experience: {candidate.experienceCount}
+                      </p>
+                      <p className="text-[11px] text-gray-500 mt-1 line-clamp-2">
+                        {(candidate.resume_text || '').trim() || 'No parsed resume text saved'}
+                      </p>
+                    </div>
+                  ))}
+                  {resumeReviewRows.length === 0 && (
+                    <p className="text-[11px] text-gray-500">No resume profiles found yet.</p>
+                  )}
+                </div>
+              </div>
+              <div className="bg-[#111] border border-[#222] rounded-lg p-3">
+                <h4 className="text-white text-xs font-medium mb-2">Recommendation Outputs</h4>
+                <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
+                  {recommendationLogs.map((log) => (
+                    <div key={log.id} className="bg-black border border-[#222] rounded p-2">
+                      <p className="text-xs text-white">{log.action}</p>
+                      <p className="text-[11px] text-gray-400 mt-1">{log.details || 'No details'}</p>
+                      {log.metadata && (
+                        <p className="text-[11px] text-gray-500 mt-1 line-clamp-2">
+                          {JSON.stringify(log.metadata)}
+                        </p>
+                      )}
+                      <p className="text-[11px] text-gray-500 mt-1">{log.timestamp || ''}</p>
+                    </div>
+                  ))}
+                  {recommendationLogs.length === 0 && (
+                    <p className="text-[11px] text-gray-500">No recommendation logs available yet.</p>
+                  )}
+                </div>
+              </div>
+            </div>
             <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
               {activityLogs.map((log) => (
                 <div key={log.id} className="bg-[#111] border border-[#222] rounded-lg p-3">

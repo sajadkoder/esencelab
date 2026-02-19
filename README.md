@@ -32,6 +32,7 @@ Esencelab is an AI-powered campus recruitment platform for students, recruiters,
 - Manage users and roles
 - Manage jobs and courses
 - Usage analytics and monitoring
+- Review resume upload outputs and recommendation logs
 - CSV reports
 
 ### Security

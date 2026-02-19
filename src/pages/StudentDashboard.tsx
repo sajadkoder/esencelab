@@ -19,6 +19,13 @@ type ParsedResume = {
   skills?: string[];
   education?: Record<string, unknown>[];
   experience?: Record<string, unknown>[];
+  projects?: Record<string, unknown>[];
+  named_entities?: {
+    persons?: string[];
+    organizations?: string[];
+    locations?: string[];
+    dates?: string[];
+  };
   contact_details?: { emails?: string[]; phones?: string[]; linkedin?: string[]; github?: string[] };
   raw_text?: string;
 };
@@ -233,6 +240,18 @@ export function StudentDashboard() {
       } else if (upsert.data?.id) {
         setCandidateId(upsert.data.id);
       }
+      await api.logActivity(
+        user.authUserId,
+        'resume_uploaded',
+        'Student uploaded and parsed resume',
+        {
+          skill_count: parsed.skills?.length || 0,
+          education_count: parsed.education?.length || 0,
+          experience_count: parsed.experience?.length || 0,
+          project_count: parsed.projects?.length || 0,
+        },
+        user.id,
+      );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to parse resume');
     } finally {
@@ -270,6 +289,18 @@ export function StudentDashboard() {
       setJobRecommendations((recommendedJobs?.recommendations || []).map((job: Record<string, unknown>) => normalizeJob(job)));
       const recommendedCourses = await aiService.recommendCourses(gapResult?.missing_skills || [], currentSkills, courses, 8, token);
       setCourseRecommendations(recommendedCourses?.recommendations || []);
+      await api.logActivity(
+        user.authUserId,
+        'recommendations_generated',
+        'Student generated AI skill-gap, job, and course recommendations',
+        {
+          target_role: selectedTargetRole.name,
+          missing_skills: gapResult?.missing_skills || [],
+          jobs_recommended: (recommendedJobs?.recommendations || []).length,
+          courses_recommended: (recommendedCourses?.recommendations || []).length,
+        },
+        user.id,
+      );
       toast.success('AI recommendations generated');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to generate recommendations');
@@ -317,6 +348,22 @@ export function StudentDashboard() {
         </div>
 
         {resumeResult?.summary && <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4"><div className="flex items-center gap-2 mb-2"><FileText className="w-4 h-4 text-white" /><h2 className="text-white font-medium text-sm">Resume Summary</h2></div><p className="text-sm text-gray-300">{resumeResult.summary}</p></div>}
+
+        {resumeResult?.contact_details && (
+          <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
+            <h2 className="text-white font-medium text-sm mb-3">Parsed Contact Details</h2>
+            <div className="grid md:grid-cols-2 gap-3 text-xs">
+              <div className="bg-[#111] border border-[#222] rounded p-3">
+                <p className="text-gray-500 mb-1">Emails</p>
+                <p className="text-gray-300">{(resumeResult.contact_details.emails || []).join(', ') || 'Not found'}</p>
+              </div>
+              <div className="bg-[#111] border border-[#222] rounded p-3">
+                <p className="text-gray-500 mb-1">Phones</p>
+                <p className="text-gray-300">{(resumeResult.contact_details.phones || []).join(', ') || 'Not found'}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {skillGapResult && selectedTargetRole && (
           <div className="grid lg:grid-cols-3 gap-4">
