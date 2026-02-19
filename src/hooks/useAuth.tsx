@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const result = await api.signup(email, password, name, role);
     
     if (result.error) {
-      return { error: new Error(result.message || result.error) };
+      return { error: new Error(result.error) };
     }
 
     if (result.data) {
@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const result = await api.login(email, password);
     
     if (result.error) {
-      return { error: new Error(result.message || result.error) };
+      return { error: new Error(result.error) };
     }
 
     if (result.data) {
@@ -87,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    api.setToken(null);
+    await api.signOut();
     localStorage.removeItem(CURRENT_USER_KEY);
     setUser(null);
   };

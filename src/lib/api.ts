@@ -1,5 +1,12 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
-const AI_SERVICE_URL = import.meta.env.VITE_AI_SERVICE_URL || 'http://localhost:8000';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://qpigvrkmxqrchszfgvwx.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwaWd2cmtteHFyY2hzemZndnd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMzY4OTgsImV4cCI6MjA4NjcxMjg5OH0.N4nH1-h6xxNiFm6VtYpRnAZfEB8zFSqBUZYL4-AmCX0';
+
+export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+export const AI_SERVICE_URL = import.meta.env.VITE_AI_SERVICE_URL || 'http://localhost:8000';
 
 export interface ApiResponse<T> {
   data?: T;
@@ -58,26 +65,92 @@ class ApiService {
     }
   }
 
-  // Auth endpoints
-  async signup(email: string, password: string, name: string, role: string) {
-    return this.request<{ user: any; token: string }>('/auth/signup', {
-      method: 'POST',
-      body: JSON.stringify({ email, password, name, role }),
+  async login(email: string, password: string) {
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
+
+    if (authError) {
+      return { error: authError.message };
+    }
+
+    if (authData.user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authData.user.id)
+        .single();
+
+      const token = authData.session.access_token;
+      this.setToken(token);
+
+      return { 
+        data: { 
+          user: profile || { 
+            id: authData.user.id, 
+            email: authData.user.email,
+            name: authData.user.user_metadata?.name || email.split('@')[0],
+            role: authData.user.user_metadata?.role || 'student'
+          }, 
+          token 
+        } 
+      };
+    }
+
+    return { error: 'Login failed' };
   }
 
-  async login(email: string, password: string) {
-    return this.request<{ user: any; token: string }>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
+  async signup(email: string, password: string, name: string, role: string) {
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+          role,
+        },
+      },
     });
+
+    if (authError) {
+      return { error: authError.message };
+    }
+
+    if (authData.user) {
+      await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          email,
+          name,
+          role,
+        });
+
+      return this.login(email, password);
+    }
+
+    return { error: 'Signup failed' };
   }
 
   async getMe() {
-    return this.request<any>('/auth/me');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'Not authenticated' };
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    return { data: profile };
   }
 
-  // Jobs endpoints
+  async signOut() {
+    await supabase.auth.signOut();
+    this.setToken(null);
+  }
+
   async getJobs(filters?: { status?: string; location?: string }) {
     const params = new URLSearchParams();
     if (filters?.status) params.append('status', filters.status);
@@ -97,7 +170,6 @@ class ApiService {
     });
   }
 
-  // Candidates endpoints
   async getCandidates(filters?: { status?: string }) {
     const params = new URLSearchParams();
     if (filters?.status) params.append('status', filters.status);
@@ -123,7 +195,6 @@ class ApiService {
     });
   }
 
-  // Applications endpoints
   async getApplications() {
     return this.request<any[]>('/applications/user');
   }
@@ -135,7 +206,6 @@ class ApiService {
     });
   }
 
-  // Courses endpoints
   async getCourses(filters?: { level?: string; skill?: string }) {
     const params = new URLSearchParams();
     if (filters?.level) params.append('level', filters.level);
@@ -145,7 +215,6 @@ class ApiService {
   }
 }
 
-// AI Service API
 class AIService {
   async parseResume(file: File): Promise<any> {
     const formData = new FormData();
