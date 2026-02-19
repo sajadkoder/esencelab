@@ -1,5 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { supabase } from '../config/supabase.js';
 import { User, AuthResponse } from '../types/index.js';
@@ -11,94 +9,89 @@ export class AuthService {
   static async signup(input: SignupInput): Promise<AuthResponse> {
     const { email, password, name, role } = input;
 
-    const { data: existingUser } = await supabase
+    // Use Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+          role,
+        },
+      },
+    });
+
+    if (authError) {
+      throw new Error(authError.message);
+    }
+
+    if (!authData.user) {
+      throw new Error('Signup failed');
+    }
+
+    // Get the profile (created by trigger)
+    const { data: profile } = await supabase
       .from('profiles')
-      .select('id')
-      .eq('email', email)
+      .select('*')
+      .eq('id', authData.user.id)
       .single();
-
-    if (existingUser) {
-      throw new Error('User with this email already exists');
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const userId = uuidv4();
-
-    const { data, error } = await supabase
-      .from('profiles')
-      .insert({
-        id: userId,
-        email,
-        name,
-        role,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .select()
-      .single();
-
-    if (error) {
-      throw new Error(`Failed to create user: ${error.message}`);
-    }
-
-    const user = data as User;
-    
-    const { error: credError } = await supabase
-      .from('user_credentials')
-      .insert({
-        user_id: userId,
-        password_hash: hashedPassword
-      });
-
-    if (credError) {
-      await supabase.from('profiles').delete().eq('id', userId);
-      throw new Error('Failed to create user credentials');
-    }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
+      { id: authData.user.id, email: authData.user.email!, role: role || 'student' },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    return { user, token };
+    return { 
+      user: profile || {
+        id: authData.user.id,
+        email: authData.user.email,
+        name,
+        role: role || 'student',
+      }, 
+      token 
+    };
   }
 
   static async login(input: LoginInput): Promise<AuthResponse> {
     const { email, password } = input;
 
-    const { data: user, error } = await supabase
+    // Use Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (authError) {
+      throw new Error(authError.message);
+    }
+
+    if (!authData.user) {
+      throw new Error('Login failed');
+    }
+
+    // Get the profile
+    const { data: profile } = await supabase
       .from('profiles')
       .select('*')
-      .eq('email', email)
+      .eq('id', authData.user.id)
       .single();
-
-    if (error || !user) {
-      throw new Error('Invalid email or password');
-    }
-
-    const { data: credentials } = await supabase
-      .from('user_credentials')
-      .select('password_hash')
-      .eq('user_id', user.id)
-      .single();
-
-    if (!credentials) {
-      throw new Error('Invalid credentials');
-    }
-
-    const isValid = await bcrypt.compare(password, credentials.password_hash);
-    if (!isValid) {
-      throw new Error('Invalid email or password');
-    }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
+      { id: authData.user.id, email: authData.user.email!, role: profile?.role || 'student' },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    return { user: user as User, token };
+    return { 
+      user: profile || {
+        id: authData.user.id,
+        email: authData.user.email,
+        name: authData.user.user_metadata?.name,
+        role: authData.user.user_metadata?.role || 'student',
+      }, 
+      token 
+    };
   }
 
   static async getUserById(id: string): Promise<User | null> {
