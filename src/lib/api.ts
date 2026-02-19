@@ -262,11 +262,11 @@ class ApiService {
     return { success: true };
   }
 
-  async getCandidateByClerkId(clerkUserId: string) {
+  async getCandidateByAuthUserId(authUserId: string) {
     const { data, error } = await supabase
       .from('candidates')
       .select('*')
-      .eq('clerk_user_id', clerkUserId)
+      .eq('clerk_user_id', authUserId)
       .maybeSingle();
 
     if (error) {
@@ -277,7 +277,9 @@ class ApiService {
   }
 
   async upsertCandidateProfile(input: {
-    clerk_user_id: string;
+    auth_user_id?: string;
+    clerk_user_id?: string;
+    user_id?: string;
     name: string;
     email: string;
     role?: string;
@@ -288,19 +290,29 @@ class ApiService {
     resume_url?: string;
     match_score?: number;
   }) {
-    const existing = await this.getCandidateByClerkId(input.clerk_user_id);
+    const authUserId = input.auth_user_id || input.clerk_user_id;
+    if (!authUserId) {
+      return { error: 'Missing auth user id' };
+    }
+
+    const existing = await this.getCandidateByAuthUserId(authUserId);
     if (existing.error) {
       return { error: existing.error };
     }
+
+    const payload = {
+      ...input,
+      clerk_user_id: authUserId,
+    };
 
     if (existing.data) {
       const { data, error } = await supabase
         .from('candidates')
         .update({
-          ...input,
+          ...payload,
           updated_at: new Date().toISOString(),
         })
-        .eq('clerk_user_id', input.clerk_user_id)
+        .eq('clerk_user_id', authUserId)
         .select('*')
         .single();
 
@@ -314,7 +326,7 @@ class ApiService {
     const { data, error } = await supabase
       .from('candidates')
       .insert({
-        ...input,
+        ...payload,
         status: 'new',
         match_score: input.match_score || 0,
       })
@@ -414,11 +426,12 @@ class ApiService {
     return { data: data || [] };
   }
 
-  async logActivity(clerkUserId: string, action: string, details?: string, metadata?: Record<string, unknown>) {
+  async logActivity(authUserId: string, action: string, details?: string, metadata?: Record<string, unknown>, profileId?: string) {
     const { error } = await supabase
       .from('activity_logs')
       .insert({
-        clerk_user_id: clerkUserId,
+        clerk_user_id: authUserId,
+        user_id: profileId || null,
         action,
         details: details || null,
         metadata: metadata || {},
@@ -468,12 +481,61 @@ class AIService {
   }
 
   async parseResume(file: File, token?: string | null) {
-    const fileBase64 = await toBase64(file);
-    return this.request('/resume/parse', {
-      fileBase64,
-      fileName: file.name,
-      mimeType: file.type,
-    }, token);
+    const normalizedMimeType = file.type || (file.name.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'application/octet-stream');
+
+    let response: Response;
+    try {
+      response = await fetch(`${AI_SERVICE_URL}/resume/parse`, {
+        method: 'POST',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          'Content-Type': normalizedMimeType,
+          'X-File-Name': encodeURIComponent(file.name),
+          'X-File-Mime': normalizedMimeType,
+        },
+        body: file,
+      });
+    } catch {
+      throw new Error(`Unable to reach AI service at ${AI_SERVICE_URL}. Check VITE_AI_SERVICE_URL and deployment routes.`);
+    }
+
+    if (!response.ok) {
+      let message = `AI request failed (${response.status})`;
+      let payloadError = '';
+
+      try {
+        const payload = await response.json();
+        if (payload?.error) {
+          payloadError = String(payload.error);
+          message = payloadError;
+        }
+      } catch {
+        // ignore JSON parsing failure
+      }
+
+      if (response.status === 413) {
+        throw new Error('Resume file is too large. Upload a PDF/TXT under 4 MB.');
+      }
+
+      // Compatibility fallback for older server routes that only accepted fileBase64 payloads.
+      const shouldFallbackToBase64 = response.status === 400 && (
+        payloadError.includes('fileBase64')
+        || payloadError.includes('Either text')
+      );
+
+      if (shouldFallbackToBase64) {
+        const fileBase64 = await toBase64(file);
+        return this.request('/resume/parse', {
+          fileBase64,
+          fileName: file.name,
+          mimeType: normalizedMimeType,
+        }, token);
+      }
+
+      throw new Error(message);
+    }
+
+    return response.json();
   }
 
   async parseResumeText(text: string, token?: string | null) {

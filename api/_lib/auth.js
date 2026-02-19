@@ -1,10 +1,10 @@
-import { verifyToken } from '@clerk/backend';
 import { sendJson } from './http.js';
+import { getSupabaseClient } from './supabase.js';
 
 const ROLE_ALIASES = {
   recruiter: 'employer',
-  student: 'student',
   employer: 'employer',
+  student: 'student',
   admin: 'admin',
 };
 
@@ -30,37 +30,14 @@ function readBearerToken(req) {
   return token || null;
 }
 
-function decodeJwtPayloadWithoutVerify(token) {
-  try {
-    const payloadPart = token.split('.')[1];
-    if (!payloadPart) {
-      return null;
-    }
-    const base64 = payloadPart.replace(/-/g, '+').replace(/_/g, '/');
-    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
-    const payload = Buffer.from(padded, 'base64').toString('utf8');
-    return JSON.parse(payload);
-  } catch {
-    return null;
-  }
-}
-
-function extractRole(payload) {
-  if (!payload || typeof payload !== 'object') {
+function extractRoleFromSupabaseUser(user) {
+  if (!user || typeof user !== 'object') {
     return 'student';
   }
 
-  const metadataRole =
-    payload.public_metadata?.role ||
-    payload.metadata?.role ||
-    payload.unsafe_metadata?.role ||
-    payload.unsafeMetadata?.role;
-
-  return normalizeRole(metadataRole || payload.role);
-}
-
-function extractUserId(payload) {
-  return payload?.sub || payload?.user_id || payload?.userId || null;
+  const appRole = user.app_metadata?.role;
+  const userRole = user.user_metadata?.role;
+  return normalizeRole(appRole || userRole || user.role);
 }
 
 export async function readAuthContext(req) {
@@ -69,35 +46,24 @@ export async function readAuthContext(req) {
     return null;
   }
 
-  const clerkSecretKey = process.env.CLERK_SECRET_KEY;
-
-  if (!clerkSecretKey) {
-    const payload = decodeJwtPayloadWithoutVerify(token);
-    if (!payload) {
-      return null;
-    }
-
-    return {
-      token,
-      userId: extractUserId(payload),
-      role: extractRole(payload),
-      payload,
-      verified: false,
-    };
-  }
-
-  try {
-    const payload = await verifyToken(token, { secretKey: clerkSecretKey });
-    return {
-      token,
-      userId: extractUserId(payload),
-      role: extractRole(payload),
-      payload,
-      verified: true,
-    };
-  } catch {
+  const supabase = getSupabaseClient();
+  if (!supabase) {
     return null;
   }
+
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data?.user?.id) {
+    return null;
+  }
+
+  return {
+    token,
+    userId: data.user.id,
+    role: extractRoleFromSupabaseUser(data.user),
+    email: data.user.email || null,
+    payload: data.user,
+    verified: true,
+  };
 }
 
 export async function requireAuth(req, res, allowedRoles = []) {
@@ -114,4 +80,3 @@ export async function requireAuth(req, res, allowedRoles = []) {
 
   return auth;
 }
-

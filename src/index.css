@@ -102,8 +102,4 @@
   background: #555;
 }
 
-/* Ensure Clerk auth placeholders are readable on dark backgrounds. */
-.cl-formFieldInput::placeholder {
-  color: #ffffff !important;
-  opacity: 1 !important;
-}
+/* Ensure auth form placeholders are readable on dark backgrounds. */

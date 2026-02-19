@@ -134,7 +134,7 @@ export function StudentDashboard() {
   useEffect(() => {
     if (!user) return;
     const loadCandidate = async () => {
-      const result = await api.getCandidateByClerkId(user.clerkUserId);
+      const result = await api.getCandidateByAuthUserId(user.authUserId);
       if (result.error || !result.data) return;
       setCandidateId(result.data.id);
       setResumeResult((previous) =>
@@ -211,11 +211,15 @@ export function StudentDashboard() {
     setIsParsingResume(true);
     try {
       const token = await getToken();
+      if (!token) {
+        throw new Error('Authentication token unavailable. Sign out and sign in again, then retry.');
+      }
       const parsed = await aiService.parseResume(file, token);
       setResumeResult(parsed);
       toast.success(`Resume parsed successfully. ${parsed.skills?.length || 0} skills detected.`);
       const upsert = await api.upsertCandidateProfile({
-        clerk_user_id: user.clerkUserId,
+        auth_user_id: user.authUserId,
+        user_id: user.id,
         name: user.name,
         email: user.email,
         role: 'student',
@@ -238,8 +242,19 @@ export function StudentDashboard() {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
+    onDropRejected: (rejections) => {
+      const fileTooLarge = rejections.some((rejection) =>
+        rejection.errors.some((issue) => issue.code === 'file-too-large'),
+      );
+      if (fileTooLarge) {
+        toast.error('Resume file is too large. Upload one PDF/TXT under 4 MB.');
+        return;
+      }
+      toast.error('Invalid file. Upload one PDF or TXT file.');
+    },
     accept: { 'application/pdf': ['.pdf'], 'text/plain': ['.txt'] },
     maxFiles: 1,
+    maxSize: 4 * 1024 * 1024,
   });
 
   const runSkillGapAndRecommendations = async () => {

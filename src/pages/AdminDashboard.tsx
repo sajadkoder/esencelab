@@ -208,7 +208,7 @@ export function AdminDashboard() {
     }
 
     setProfiles((prev) => prev.map((profile) => (profile.id === profileId ? { ...profile, role } : profile)));
-    await api.logActivity(user?.clerkUserId || '', 'user_role_updated', 'Admin updated user role', { profile_id: profileId, role });
+    await api.logActivity(user?.authUserId || '', 'user_role_updated', 'Admin updated user role', { profile_id: profileId, role }, user?.id);
     toast.success('Role updated');
   };
 
@@ -220,7 +220,7 @@ export function AdminDashboard() {
     }
 
     setJobs((prev) => prev.map((job) => (job.id === jobId ? { ...job, status } : job)));
-    await api.logActivity(user?.clerkUserId || '', 'job_status_updated', 'Admin updated job status', { job_id: jobId, status });
+    await api.logActivity(user?.authUserId || '', 'job_status_updated', 'Admin updated job status', { job_id: jobId, status }, user?.id);
   };
 
   const removeJob = async (jobId: string) => {
@@ -231,7 +231,7 @@ export function AdminDashboard() {
     }
 
     setJobs((prev) => prev.filter((job) => job.id !== jobId));
-    await api.logActivity(user?.clerkUserId || '', 'job_deleted', 'Admin deleted job', { job_id: jobId });
+    await api.logActivity(user?.authUserId || '', 'job_deleted', 'Admin deleted job', { job_id: jobId }, user?.id);
     toast.success('Job deleted');
   };
 
@@ -261,9 +261,9 @@ export function AdminDashboard() {
       setNewCourseProvider('');
       setNewCourseUrl('');
       setNewCourseSkills('');
-      await api.logActivity(user?.clerkUserId || '', 'course_created', 'Admin added a course', {
+      await api.logActivity(user?.authUserId || '', 'course_created', 'Admin added a course', {
         course_title: newCourseTitle.trim(),
-      });
+      }, user?.id);
       toast.success('Course added');
     } finally {
       setCreatingCourse(false);
@@ -278,7 +278,7 @@ export function AdminDashboard() {
     }
 
     setCourses((prev) => prev.filter((course) => course.id !== courseId));
-    await api.logActivity(user?.clerkUserId || '', 'course_deleted', 'Admin deleted a course', { course_id: courseId });
+    await api.logActivity(user?.authUserId || '', 'course_deleted', 'Admin deleted a course', { course_id: courseId }, user?.id);
   };
 
   const exportUsersReport = () => {
@@ -305,7 +305,7 @@ export function AdminDashboard() {
       action: log.action,
       details: log.details || '',
       timestamp: log.timestamp || '',
-      clerk_user_id: log.clerk_user_id || '',
+      auth_user_id: log.clerk_user_id || '',
     })));
   };
 

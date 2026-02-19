@@ -1,6 +1,6 @@
-import { lazy, Suspense, useMemo, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { SignedIn, SignedOut, SignIn, SignUp } from '@clerk/clerk-react';
+import { lazy, Suspense, useState, type FormEvent, type ReactNode } from 'react';
+import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import type { UserRole } from '@/hooks/useAuth';
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -26,7 +26,7 @@ function LoadingScreen() {
   );
 }
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -74,6 +74,8 @@ function RoleOnboarding() {
     setSavingRole(role);
     try {
       await setRole(role);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to set role');
     } finally {
       setSavingRole(null);
     }
@@ -84,14 +86,13 @@ function RoleOnboarding() {
       <div className="w-full max-w-xl border border-[#222] rounded-xl bg-[#0a0a0a] p-6">
         <h2 className="text-white text-xl font-semibold mb-2">Select your role</h2>
         <p className="text-sm text-gray-400 mb-6">
-          Role selection enables role-based dashboard access, API authorization, and database RLS policies.
+          Choose your role to unlock role-based dashboard access.
         </p>
 
         <div className="grid gap-3">
           {([
             { key: 'student', title: 'Student', desc: 'Resume parsing, skill-gap insights, jobs and course recommendations.' },
             { key: 'employer', title: 'Recruiter', desc: 'Post jobs, search candidates by skills, and review match scores.' },
-            { key: 'admin', title: 'Admin', desc: 'Manage users, jobs, courses, reports, and platform analytics.' },
           ] as { key: UserRole; title: string; desc: string }[]).map((roleOption) => (
             <button
               key={roleOption.key}
@@ -109,7 +110,7 @@ function RoleOnboarding() {
   );
 }
 
-function DashboardLayout({ children }: { children: React.ReactNode }) {
+function DashboardLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -122,98 +123,182 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
 }
 
 function LoginPage() {
+  const navigate = useNavigate();
+  const { signIn, signUp, user } = useAuth();
   const [mode, setMode] = useState<'sign-in' | 'sign-up'>('sign-in');
-  const [signupRole, setSignupRole] = useState<UserRole>('student');
+  const [submitting, setSubmitting] = useState(false);
 
-  const signUpMetadata = useMemo(() => ({ role: signupRole }), [signupRole]);
+  const [signInEmail, setSignInEmail] = useState('');
+  const [signInPassword, setSignInPassword] = useState('');
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [signupRole, setSignupRole] = useState<'student' | 'employer'>('student');
+
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  const handleSignIn = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSubmitting(true);
+    try {
+      const result = await signIn(signInEmail, signInPassword);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      navigate('/dashboard', { replace: true });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSignUp = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSubmitting(true);
+    try {
+      const result = await signUp({
+        name,
+        email,
+        password,
+        role: signupRole,
+      });
+
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      if (result.pendingVerification) {
+        toast.success('Signup created. Verify your email, then sign in.');
+        setMode('sign-in');
+        setSignInEmail(email);
+        return;
+      }
+
+      navigate('/dashboard', { replace: true });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">Esencelab</h1>
-          <p className="text-gray-400">AI-Powered Campus Recruitment Platform</p>
+          <p className="text-gray-400">Sign in to continue</p>
         </div>
 
         <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-6">
-          {mode === 'sign-in' ? (
-            <>
-              <SignIn
-                routing="hash"
-                appearance={{
-                  elements: {
-                    rootBox: 'w-full',
-                    card: 'bg-transparent shadow-none',
-                    headerTitle: 'text-white',
-                    headerSubtitle: 'text-gray-400',
-                    formFieldLabel: 'text-white',
-                    formFieldInput: 'bg-[#111] border-[#222] text-white placeholder:text-white',
-                    formButtonPrimary: 'bg-white text-black hover:bg-gray-200',
-                    footerActionLink: 'text-white',
-                    dividerLine: 'bg-[#222]',
-                    dividerText: 'text-gray-500',
-                    socialButtonsBlockButton: 'bg-[#111] border-[#222] text-white',
-                    socialButtonsBlockButtonText: 'text-white',
-                  },
-                }}
-              />
-              <p className="text-center text-black text-sm mt-4">
-                Don&apos;t have an account?{' '}
-                <button onClick={() => setMode('sign-up')} className="text-black hover:underline">
-                  Sign up
-                </button>
-              </p>
-            </>
-          ) : (
-            <>
-              <div className="mb-4">
-                <p className="text-xs text-gray-500 mb-2">Choose account role</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {([
-                    { value: 'student', label: 'Student' },
-                    { value: 'employer', label: 'Recruiter' },
-                    { value: 'admin', label: 'Admin' },
-                  ] as { value: UserRole; label: string }[]).map((roleOption) => (
-                    <button
-                      key={roleOption.value}
-                      onClick={() => setSignupRole(roleOption.value)}
-                      className={`text-xs rounded border px-2 py-2 ${
-                        signupRole === roleOption.value
-                          ? 'bg-white text-black border-white'
-                          : 'bg-[#111] text-gray-300 border-[#222] hover:border-[#444]'
-                      }`}
-                    >
-                      {roleOption.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+          <div className="flex gap-2 mb-5">
+            <button
+              type="button"
+              onClick={() => setMode('sign-in')}
+              className={`flex-1 rounded px-3 py-2 text-sm ${mode === 'sign-in' ? 'bg-white text-black' : 'bg-[#111] text-gray-300'}`}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('sign-up')}
+              className={`flex-1 rounded px-3 py-2 text-sm ${mode === 'sign-up' ? 'bg-white text-black' : 'bg-[#111] text-gray-300'}`}
+            >
+              Sign Up
+            </button>
+          </div>
 
-              <SignUp
-                routing="hash"
-                unsafeMetadata={signUpMetadata as unknown as Record<string, unknown>}
-                appearance={{
-                  elements: {
-                    rootBox: 'w-full',
-                    card: 'bg-transparent shadow-none',
-                    headerTitle: 'text-white',
-                    headerSubtitle: 'text-gray-400',
-                    formFieldLabel: 'text-white',
-                    formFieldInput: 'bg-[#111] border-[#222] text-white placeholder:text-white',
-                    formButtonPrimary: 'bg-white text-black hover:bg-gray-200',
-                    footerActionLink: 'text-white',
-                    dividerLine: 'bg-[#222]',
-                    dividerText: 'text-gray-500',
-                  },
-                }}
+          {mode === 'sign-in' ? (
+            <form onSubmit={handleSignIn} className="space-y-3">
+              <input
+                type="email"
+                value={signInEmail}
+                onChange={(event) => setSignInEmail(event.target.value)}
+                placeholder="Email"
+                required
+                className="w-full bg-[#111] border border-[#222] rounded px-3 py-2 text-sm text-white placeholder:text-gray-500"
               />
-              <p className="text-center text-gray-400 text-sm mt-4">
-                Already have an account?{' '}
-                <button onClick={() => setMode('sign-in')} className="text-white hover:underline">
-                  Sign in
-                </button>
-              </p>
-            </>
+              <input
+                type="password"
+                value={signInPassword}
+                onChange={(event) => setSignInPassword(event.target.value)}
+                placeholder="Password"
+                required
+                className="w-full bg-[#111] border border-[#222] rounded px-3 py-2 text-sm text-white placeholder:text-gray-500"
+              />
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full bg-white text-black rounded px-3 py-2 text-sm font-medium disabled:opacity-60"
+              >
+                {submitting ? 'Signing in...' : 'Sign In'}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleSignUp} className="space-y-3">
+              <input
+                type="text"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Full name"
+                required
+                className="w-full bg-[#111] border border-[#222] rounded px-3 py-2 text-sm text-white placeholder:text-gray-500"
+              />
+              <input
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="Email"
+                required
+                className="w-full bg-[#111] border border-[#222] rounded px-3 py-2 text-sm text-white placeholder:text-gray-500"
+              />
+              <input
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="Password"
+                required
+                minLength={6}
+                className="w-full bg-[#111] border border-[#222] rounded px-3 py-2 text-sm text-white placeholder:text-gray-500"
+              />
+              <div>
+                <p className="text-xs text-gray-500 mb-2">Role</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSignupRole('student')}
+                    className={`rounded px-3 py-2 text-xs border ${
+                      signupRole === 'student'
+                        ? 'bg-white text-black border-white'
+                        : 'bg-[#111] text-gray-300 border-[#222]'
+                    }`}
+                  >
+                    Student
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSignupRole('employer')}
+                    className={`rounded px-3 py-2 text-xs border ${
+                      signupRole === 'employer'
+                        ? 'bg-white text-black border-white'
+                        : 'bg-[#111] text-gray-300 border-[#222]'
+                    }`}
+                  >
+                    Recruiter
+                  </button>
+                </div>
+                <p className="text-[11px] text-gray-500 mt-2">Admin accounts are invite-only.</p>
+              </div>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full bg-white text-black rounded px-3 py-2 text-sm font-medium disabled:opacity-60"
+              >
+                {submitting ? 'Creating account...' : 'Create Account'}
+              </button>
+            </form>
           )}
         </div>
       </div>
@@ -221,7 +306,7 @@ function LoginPage() {
   );
 }
 
-function App() {
+function AppRoutes() {
   const { loading } = useAuth();
 
   if (loading) {
@@ -229,84 +314,79 @@ function App() {
   }
 
   return (
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route
+        path="/dashboard"
+        element={(
+          <ProtectedRoute>
+            <DashboardLayout>
+              <DashboardRouter />
+            </DashboardLayout>
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/jobs"
+        element={(
+          <ProtectedRoute>
+            <DashboardLayout>
+              <DashboardRouter />
+            </DashboardLayout>
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/courses"
+        element={(
+          <ProtectedRoute>
+            <DashboardLayout>
+              <DashboardRouter />
+            </DashboardLayout>
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/candidates"
+        element={(
+          <ProtectedRoute>
+            <DashboardLayout>
+              <DashboardRouter />
+            </DashboardLayout>
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/analytics"
+        element={(
+          <ProtectedRoute>
+            <DashboardLayout>
+              <DashboardRouter />
+            </DashboardLayout>
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/users"
+        element={(
+          <ProtectedRoute>
+            <DashboardLayout>
+              <DashboardRouter />
+            </DashboardLayout>
+          </ProtectedRoute>
+        )}
+      />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
+function App() {
+  return (
     <BrowserRouter>
       <Suspense fallback={<LoadingScreen />}>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route
-            path="/login"
-            element={(
-              <>
-                <SignedIn>
-                  <Navigate to="/dashboard" replace />
-                </SignedIn>
-                <SignedOut>
-                  <LoginPage />
-                </SignedOut>
-              </>
-            )}
-          />
-          <Route
-            path="/dashboard"
-            element={(
-              <ProtectedRoute>
-                <DashboardLayout>
-                  <DashboardRouter />
-                </DashboardLayout>
-              </ProtectedRoute>
-            )}
-          />
-          <Route
-            path="/jobs"
-            element={(
-              <ProtectedRoute>
-                <DashboardLayout>
-                  <DashboardRouter />
-                </DashboardLayout>
-              </ProtectedRoute>
-            )}
-          />
-          <Route
-            path="/courses"
-            element={(
-              <ProtectedRoute>
-                <DashboardLayout>
-                  <DashboardRouter />
-                </DashboardLayout>
-              </ProtectedRoute>
-            )}
-          />
-          <Route
-            path="/candidates"
-            element={(
-              <ProtectedRoute>
-                <DashboardLayout>
-                  <DashboardRouter />
-                </DashboardLayout>
-              </ProtectedRoute>
-            )}
-          />
-          <Route
-            path="/analytics"
-            element={(
-              <ProtectedRoute>
-                <DashboardLayout>
-                  <DashboardRouter />
-                </DashboardLayout>
-              </ProtectedRoute>
-            )}
-          />
-          <Route
-            path="/users"
-            element={(
-              <ProtectedRoute>
-                <DashboardLayout>
-                  <DashboardRouter />
-                </DashboardLayout>
-              </ProtectedRoute>
-            )}
-          />
-        </Routes>
+        <AppRoutes />
       </Suspense>
     </BrowserRouter>
   );

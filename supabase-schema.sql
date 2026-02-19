@@ -1,4 +1,4 @@
--- Esencelab Supabase schema with Clerk JWT + RBAC + RLS
+-- Esencelab Supabase schema with Supabase Auth + RBAC + RLS
 -- Run in Supabase SQL editor
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -34,6 +34,8 @@ DROP TABLE IF EXISTS public.profiles CASCADE;
 
 CREATE TABLE public.profiles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  -- Legacy column name retained for backward compatibility.
+  -- Stores Supabase auth.users.id for each profile.
   clerk_user_id TEXT NOT NULL UNIQUE,
   email TEXT NOT NULL,
   name TEXT NOT NULL,
@@ -116,12 +118,20 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.candidates;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.applications;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.activity_logs;
 
-CREATE OR REPLACE FUNCTION public.clerk_user_id()
+CREATE OR REPLACE FUNCTION public.auth_user_id()
 RETURNS TEXT
 LANGUAGE SQL
 STABLE
 AS $$
   SELECT COALESCE(auth.jwt()->>'sub', auth.jwt()->>'user_id');
+$$;
+
+CREATE OR REPLACE FUNCTION public.clerk_user_id()
+RETURNS TEXT
+LANGUAGE SQL
+STABLE
+AS $$
+  SELECT public.auth_user_id();
 $$;
 
 CREATE OR REPLACE FUNCTION public.current_user_role()
@@ -131,9 +141,8 @@ STABLE
 AS $$
   SELECT LOWER(
     COALESCE(
-      auth.jwt()->'public_metadata'->>'role',
-      auth.jwt()->'metadata'->>'role',
-      auth.jwt()->'unsafe_metadata'->>'role',
+      auth.jwt()->'app_metadata'->>'role',
+      auth.jwt()->'user_metadata'->>'role',
       auth.jwt()->>'role',
       'student'
     )
@@ -149,7 +158,7 @@ AS $$
     SELECT 1
     FROM public.candidates c
     WHERE c.id = candidate_uuid
-      AND c.clerk_user_id = public.clerk_user_id()
+      AND c.clerk_user_id = public.auth_user_id()
   );
 $$;
 
@@ -163,7 +172,7 @@ AS $$
     FROM public.jobs j
     JOIN public.profiles p ON p.id = j.employer_id
     WHERE j.id = job_uuid
-      AND p.clerk_user_id = public.clerk_user_id()
+      AND p.clerk_user_id = public.auth_user_id()
   );
 $$;
 
@@ -177,22 +186,25 @@ ALTER TABLE public.activity_logs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "profiles_select_policy" ON public.profiles
 FOR SELECT
 USING (
-  clerk_user_id = public.clerk_user_id()
+  clerk_user_id = public.auth_user_id()
+  OR LOWER(email) = LOWER(COALESCE(auth.jwt()->>'email', ''))
   OR public.current_user_role() IN ('admin', 'employer')
 );
 
 CREATE POLICY "profiles_insert_policy" ON public.profiles
 FOR INSERT
-WITH CHECK (clerk_user_id = public.clerk_user_id());
+WITH CHECK (clerk_user_id = public.auth_user_id());
 
 CREATE POLICY "profiles_update_policy" ON public.profiles
 FOR UPDATE
 USING (
-  clerk_user_id = public.clerk_user_id()
+  clerk_user_id = public.auth_user_id()
+  OR LOWER(email) = LOWER(COALESCE(auth.jwt()->>'email', ''))
   OR public.current_user_role() = 'admin'
 )
 WITH CHECK (
-  clerk_user_id = public.clerk_user_id()
+  clerk_user_id = public.auth_user_id()
+  OR LOWER(email) = LOWER(COALESCE(auth.jwt()->>'email', ''))
   OR public.current_user_role() = 'admin'
 );
 
@@ -211,7 +223,7 @@ WITH CHECK (
   AND (
     public.current_user_role() = 'admin'
     OR employer_id IN (
-      SELECT p.id FROM public.profiles p WHERE p.clerk_user_id = public.clerk_user_id()
+      SELECT p.id FROM public.profiles p WHERE p.clerk_user_id = public.auth_user_id()
     )
   )
 );
@@ -237,25 +249,25 @@ USING (
 CREATE POLICY "candidates_select_policy" ON public.candidates
 FOR SELECT
 USING (
-  clerk_user_id = public.clerk_user_id()
+  clerk_user_id = public.auth_user_id()
   OR public.current_user_role() IN ('employer', 'admin')
 );
 
 CREATE POLICY "candidates_insert_policy" ON public.candidates
 FOR INSERT
 WITH CHECK (
-  clerk_user_id = public.clerk_user_id()
+  clerk_user_id = public.auth_user_id()
   OR public.current_user_role() IN ('admin', 'employer')
 );
 
 CREATE POLICY "candidates_update_policy" ON public.candidates
 FOR UPDATE
 USING (
-  clerk_user_id = public.clerk_user_id()
+  clerk_user_id = public.auth_user_id()
   OR public.current_user_role() IN ('admin', 'employer')
 )
 WITH CHECK (
-  clerk_user_id = public.clerk_user_id()
+  clerk_user_id = public.auth_user_id()
   OR public.current_user_role() IN ('admin', 'employer')
 );
 
@@ -300,13 +312,13 @@ CREATE POLICY "activity_logs_select_policy" ON public.activity_logs
 FOR SELECT
 USING (
   public.current_user_role() = 'admin'
-  OR clerk_user_id = public.clerk_user_id()
+  OR clerk_user_id = public.auth_user_id()
 );
 
 CREATE POLICY "activity_logs_insert_policy" ON public.activity_logs
 FOR INSERT
 WITH CHECK (
-  clerk_user_id = public.clerk_user_id()
+  clerk_user_id = public.auth_user_id()
   OR public.current_user_role() = 'admin'
 );
 

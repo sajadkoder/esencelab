@@ -4,6 +4,8 @@ import { requireAuth } from '../../_lib/auth.js';
 import { parseResumeText } from '../../_lib/nlp.js';
 import { generateGeminiJson } from '../../_lib/gemini.js';
 
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+
 function toObjectBody(req) {
   if (!req.body) {
     return {};
@@ -18,6 +20,62 @@ function toObjectBody(req) {
   }
 
   return req.body;
+}
+
+function readContentType(req) {
+  const headerValue = req.headers['content-type'] || req.headers['Content-Type'];
+  return String(headerValue || '').toLowerCase();
+}
+
+function decodeHeaderValue(value) {
+  if (!value || typeof value !== 'string') {
+    return '';
+  }
+
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+async function readRawRequestBuffer(req, maxBytes = MAX_UPLOAD_BYTES) {
+  if (Buffer.isBuffer(req.body)) {
+    if (req.body.length > maxBytes) {
+      return { error: 'too_large' };
+    }
+    return { buffer: req.body };
+  }
+
+  if (req.body && req.body instanceof Uint8Array) {
+    const buffer = Buffer.from(req.body);
+    if (buffer.length > maxBytes) {
+      return { error: 'too_large' };
+    }
+    return { buffer };
+  }
+
+  if (typeof req.body === 'string') {
+    const buffer = Buffer.from(req.body, 'utf8');
+    if (buffer.length > maxBytes) {
+      return { error: 'too_large' };
+    }
+    return { buffer };
+  }
+
+  const chunks = [];
+  let total = 0;
+
+  for await (const chunk of req) {
+    const chunkBuffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    total += chunkBuffer.length;
+    if (total > maxBytes) {
+      return { error: 'too_large' };
+    }
+    chunks.push(chunkBuffer);
+  }
+
+  return { buffer: Buffer.concat(chunks) };
 }
 
 function decodeBase64File(rawBase64) {
@@ -71,7 +129,7 @@ export default async function handler(req, res) {
         const parsed = await pdfParse(buffer);
         resumeText = parsed.text || '';
       } catch {
-        sendJson(res, 400, { error: 'Unable to parse PDF content' });
+        sendJson(res, 400, { error: 'Unable to parse PDF content. Try a text-based PDF or TXT file.' });
         return;
       }
     } else {
@@ -79,8 +137,49 @@ export default async function handler(req, res) {
     }
   }
 
+  if (!resumeText) {
+    const contentType = readContentType(req);
+    const expectsBinaryUpload = contentType.includes('application/pdf')
+      || contentType.includes('application/octet-stream')
+      || contentType.includes('text/plain');
+
+    if (expectsBinaryUpload) {
+      const rawResult = await readRawRequestBuffer(req);
+      if (rawResult.error === 'too_large') {
+        sendJson(res, 413, { error: 'Resume file too large. Upload a file under 4 MB.' });
+        return;
+      }
+
+      const rawBuffer = rawResult.buffer;
+      if (rawBuffer && rawBuffer.length > 0) {
+        const headerFileName = decodeHeaderValue(req.headers['x-file-name'] || req.headers['X-File-Name']);
+        const headerMimeType = decodeHeaderValue(req.headers['x-file-mime'] || req.headers['X-File-Mime']);
+        const inferredFileName = String(headerFileName || fileName || '').toLowerCase();
+        const inferredMimeType = String(headerMimeType || contentType || '').toLowerCase();
+        const isTextFile = inferredMimeType.includes('text/plain') || inferredFileName.endsWith('.txt');
+        const isPdf = inferredMimeType.includes('application/pdf')
+          || inferredFileName.endsWith('.pdf')
+          || rawBuffer.slice(0, 4).toString() === '%PDF';
+
+        if (isTextFile) {
+          resumeText = rawBuffer.toString('utf8');
+        } else if (isPdf) {
+          try {
+            const parsed = await pdfParse(rawBuffer);
+            resumeText = parsed.text || '';
+          } catch {
+            sendJson(res, 400, { error: 'Unable to parse PDF content. Try a text-based PDF or TXT file.' });
+            return;
+          }
+        } else {
+          resumeText = rawBuffer.toString('utf8');
+        }
+      }
+    }
+  }
+
   if (!resumeText || !resumeText.trim()) {
-    sendJson(res, 400, { error: 'Either text or fileBase64 is required' });
+    sendJson(res, 400, { error: 'Resume text is empty. Provide text or upload a valid PDF/TXT resume.' });
     return;
   }
 
@@ -118,4 +217,3 @@ contact: ${JSON.stringify(parsed.contact_details)}
 
   sendJson(res, 200, response);
 }
-

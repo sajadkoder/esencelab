@@ -165,9 +165,9 @@ export function RecruiterDashboard() {
       const token = await getToken();
       const ranking = await aiService.rankCandidates(filteredCandidates, requirements, token);
       setRankedCandidates(ranking?.ranked_candidates || []);
-      await api.logActivity(user?.clerkUserId || '', 'candidate_ranked', 'Recruiter ranked candidates for a job', {
+      await api.logActivity(user?.authUserId || '', 'candidate_ranked', 'Recruiter ranked candidates for a job', {
         job_id: selectedJob.id,
-      });
+      }, user?.id);
       toast.success('Candidate ranking generated');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to rank candidates');
@@ -204,9 +204,9 @@ export function RecruiterDashboard() {
       }
 
       await refetchJobs();
-      await api.logActivity(user.clerkUserId, 'job_posted', 'Recruiter posted a new job', {
+      await api.logActivity(user.authUserId, 'job_posted', 'Recruiter posted a new job', {
         job_title: jobTitle.trim(),
-      });
+      }, user.id);
 
       toast.success('Job posted');
       setShowJobForm(false);
@@ -497,4 +497,3 @@ export function RecruiterDashboard() {
     </div>
   );
 }
-

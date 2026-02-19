@@ -1,68 +1,63 @@
 # Esencelab
 
-AI-powered campus recruitment platform with:
-- Clerk authentication + role metadata (`student`, `employer`, `admin`)
-- Supabase database + row-level security (RLS)
-- Serverless AI API on Vercel (`/api/ai/*`) in Node.js
+Esencelab is an AI-powered campus recruitment platform for students, recruiters, and admins.
 
-## Feature Coverage
+## Stack
+- Frontend: React + Vite + TypeScript
+- Auth: Supabase Auth (email/password)
+- Database: Supabase PostgreSQL + RLS
+- AI API: Vercel serverless functions (`api/ai/*`, Node.js runtime)
+- LLM: Gemini (for summary/chat/explanations)
 
-### Core AI
-- Resume parsing + structured extraction (skills, education, experience, contact details)
-- NER-style entity extraction
-- Custom skill ontology matching
-- TF-IDF + cosine similarity skill-gap and matching engine
-- Job recommendation ranking
-- Course recommendation ranking
-- Resume summarization (Gemini)
-- Recommendation explanation generation
-- Career chatbot assistance
-
+## Main Features
 ### Student
-- Register / login
+- Sign up / login
 - Resume upload (PDF/TXT)
-- Parsed profile view
+- AI resume parsing (skills, education, experience, contact details)
 - Skill-gap analysis
-- Top job recommendations
-- Course suggestions
+- Job recommendations
+- Course recommendations
 - Resume summary
-- AI chatbot
+- Career chatbot
 
 ### Recruiter
-- Register / login
-- Post jobs
-- Search/filter candidates by skills
-- View structured candidate profile insights
-- AI candidate ranking and match results
+- Sign up / login
+- Post live jobs
+- Search and filter candidates by skills
+- View candidate profiles and structured resume insights
+- View applicants for jobs
+- AI-based candidate ranking
 
 ### Admin
-- Manage users (roles)
+- Manage users and roles
 - Manage jobs and courses
-- Analytics overview
-- Usage/activity monitoring
-- CSV report generation
+- Usage analytics and monitoring
+- CSV reports
 
 ### Security
-- JWT-based auth (Clerk tokens)
-- Role-based authorization (frontend + serverless API)
-- Supabase RLS policies
-- Authenticated REST API communication
+- JWT auth with Supabase access tokens
+- Role-based authorization (frontend + API)
+- Row-Level Security (RLS) in Supabase
 
-## Architecture
+## Auth and Roles
+- Public signup roles: `student`, `employer`
+- `admin` is invite-only
+- Role is stored in profile + Supabase user metadata
 
-- Frontend: React + Vite + TypeScript
-- Auth: Clerk
-- Database: Supabase PostgreSQL
-- AI API: Vercel serverless functions in `api/ai/*`
-- AI model: Gemini (optional but recommended)
+## Quick Start
+1. Install dependencies:
+```bash
+npm install
+```
+2. Create `.env` from `.env.example` and fill values.
+3. Start dev server:
+```bash
+npm run dev
+```
+4. Open `http://localhost:5173`.
 
 ## Environment Variables
-
-Use `.env.example` as reference.
-
 Required:
-- `VITE_CLERK_PUBLISHABLE_KEY`
-- `CLERK_SECRET_KEY`
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 - `SUPABASE_URL`
@@ -72,33 +67,29 @@ Required:
 
 Optional:
 - `VITE_AI_SERVICE_URL` (default: `/api/ai`)
-- `VITE_CLERK_API_TEMPLATE`
-- `VITE_CLERK_SUPABASE_TEMPLATE` (default: `supabase`)
 - `GEMINI_MODEL` (default: `gemini-2.0-flash`)
 
-## Local Setup
+## Database Setup
+For a fresh setup:
+1. Run `supabase-schema.sql` in Supabase SQL editor.
 
+For existing Clerk-era projects migrating to Supabase Auth:
+1. Run `supabase-auth-migration.sql` in Supabase SQL editor.
+2. This keeps existing tables and updates auth helper functions + RLS policies to Supabase JWT claims.
+
+## Build and Checks
 ```bash
-npm install
-npm run dev
+npm run lint
+npm run build
 ```
 
-App runs at `http://localhost:5173`.
+## Deployment (Vercel)
+Project is preconfigured with `vercel.json`.
+- Frontend is built from Vite (`dist`)
+- API routes are served from `api/ai/*`
+- Set all required environment variables in Vercel project settings
 
-## Supabase Setup
-
-Run `supabase-schema.sql` in Supabase SQL editor to create tables, indexes, and RLS policies.
-
-Important:
-- Configure Supabase to accept Clerk JWTs.
-- Ensure role metadata is present in Clerk token claims (`public_metadata.role` or equivalent).
-
-## Deployment
-
-Already configured for Vercel with `vercel.json`:
-- Static frontend build output from Vite
-- Serverless AI endpoints from `api/ai/*`
-
-## Notes
-
-- AI functionality is implemented through Node.js serverless endpoints in `api/ai/*`.
+## Troubleshooting
+- `Failed to get response from API`: check `VITE_AI_SERVICE_URL` and ensure `/api/ai/*` routes are deployed.
+- `AI request failed`: check `GEMINI_API_KEY` and logs in Vercel Functions.
+- Auth/RLS issues: confirm migration SQL ran successfully and user role metadata exists.
