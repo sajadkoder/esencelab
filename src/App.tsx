@@ -147,7 +147,7 @@ function LoginPage() {
                     headerTitle: 'text-white',
                     headerSubtitle: 'text-gray-400',
                     formFieldLabel: 'text-white',
-                    formFieldInput: 'bg-[#111] border-[#222] text-white',
+                    formFieldInput: 'bg-[#111] border-[#222] text-white placeholder:text-white',
                     formButtonPrimary: 'bg-white text-black hover:bg-gray-200',
                     footerActionLink: 'text-white',
                     dividerLine: 'bg-[#222]',
@@ -157,9 +157,9 @@ function LoginPage() {
                   },
                 }}
               />
-              <p className="text-center text-gray-400 text-sm mt-4">
+              <p className="text-center text-black text-sm mt-4">
                 Don&apos;t have an account?{' '}
-                <button onClick={() => setMode('sign-up')} className="text-white hover:underline">
+                <button onClick={() => setMode('sign-up')} className="text-black hover:underline">
                   Sign up
                 </button>
               </p>
@@ -199,7 +199,7 @@ function LoginPage() {
                     headerTitle: 'text-white',
                     headerSubtitle: 'text-gray-400',
                     formFieldLabel: 'text-white',
-                    formFieldInput: 'bg-[#111] border-[#222] text-white',
+                    formFieldInput: 'bg-[#111] border-[#222] text-white placeholder:text-white',
                     formButtonPrimary: 'bg-white text-black hover:bg-gray-200',
                     footerActionLink: 'text-white',
                     dividerLine: 'bg-[#222]',

@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
+import { useLocation } from 'react-router-dom';
 import { Bot, Briefcase, FileText, GraduationCap, Loader2, Search, Send, Sparkles, Target, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
@@ -100,6 +101,7 @@ function formatSalary(min: number, max: number) {
 
 export function StudentDashboard() {
   const { user, getToken } = useAuth();
+  const location = useLocation();
   const { data: jobs = [] } = useJobs();
   const { data: courses = [] } = useCourses();
   const { messages, isLoading: chatLoading, sendMessage } = useCareerChatbot();
@@ -126,6 +128,8 @@ export function StudentDashboard() {
 
   const [showChat, setShowChat] = useState(false);
   const [chatInput, setChatInput] = useState('');
+  const jobsSectionRef = useRef<HTMLDivElement | null>(null);
+  const coursesSectionRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -148,6 +152,24 @@ export function StudentDashboard() {
     };
     loadCandidate();
   }, [user]);
+
+  useEffect(() => {
+    const target = location.pathname === '/jobs'
+      ? jobsSectionRef.current
+      : location.pathname === '/courses'
+        ? coursesSectionRef.current
+        : null;
+
+    if (!target) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [location.pathname]);
 
   const currentSkills = useMemo(() => (resumeResult?.skills || []).filter(Boolean), [resumeResult]);
   const liveJobs = useMemo(() => jobs.map((job) => normalizeJob(job as unknown as Record<string, unknown>)), [jobs]);
@@ -288,7 +310,7 @@ export function StudentDashboard() {
           </div>
         )}
 
-        <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
+        <div ref={jobsSectionRef} className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
           <div className="flex items-center gap-2 mb-3"><Briefcase className="w-4 h-4 text-white" /><h2 className="text-white font-medium text-sm">Search Live Jobs</h2></div>
           <div className="grid md:grid-cols-4 gap-2 mb-3">
             <div className="md:col-span-2 relative"><Search className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" /><input value={jobSearch} onChange={(event) => setJobSearch(event.target.value)} placeholder="Search title, company, location, skills..." className="w-full bg-[#111] border border-[#222] rounded py-2 pl-9 pr-3 text-sm text-white" /></div>
@@ -319,7 +341,7 @@ export function StudentDashboard() {
           </div>
         </div>
 
-        <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
+        <div ref={coursesSectionRef} className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4">
           <div className="flex items-center gap-2 mb-3"><GraduationCap className="w-4 h-4 text-white" /><h2 className="text-white font-medium text-sm">Recommended Courses</h2></div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
             {(courseRecommendations.length > 0 ? courseRecommendations : courses.slice(0, 8)).map((course) => (
@@ -376,4 +398,3 @@ export function StudentDashboard() {
     </div>
   );
 }
-

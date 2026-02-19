@@ -1,6 +1,27 @@
 import { supabase } from './supabase';
 
-export const AI_SERVICE_URL = import.meta.env.VITE_AI_SERVICE_URL || '/api/ai';
+function resolveAiServiceUrl() {
+  const configuredUrl = String(import.meta.env.VITE_AI_SERVICE_URL || '').trim();
+  if (!configuredUrl) {
+    return '/api/ai';
+  }
+
+  const isPlaceholder = configuredUrl.includes('your-ai-service.vercel.app') || configuredUrl.includes('your-ai-service');
+  const isLocalhostUrl = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/i.test(configuredUrl);
+
+  if (typeof window !== 'undefined') {
+    const runtimeHost = window.location.hostname;
+    const runningLocally = runtimeHost === 'localhost' || runtimeHost === '127.0.0.1';
+
+    if (!runningLocally && (isPlaceholder || isLocalhostUrl)) {
+      return '/api/ai';
+    }
+  }
+
+  return configuredUrl;
+}
+
+export const AI_SERVICE_URL = resolveAiServiceUrl();
 
 function normalizeSupabaseError(error: unknown): string {
   if (!error) {
@@ -415,14 +436,19 @@ class ApiService {
 
 class AIService {
   private async request(path: string, body: Record<string, unknown>, token?: string | null) {
-    const response = await fetch(`${AI_SERVICE_URL}${path}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify(body),
-    });
+    let response: Response;
+    try {
+      response = await fetch(`${AI_SERVICE_URL}${path}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(body),
+      });
+    } catch {
+      throw new Error(`Unable to reach AI service at ${AI_SERVICE_URL}. Check VITE_AI_SERVICE_URL and deployment routes.`);
+    }
 
     if (!response.ok) {
       let message = `AI request failed (${response.status})`;

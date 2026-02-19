@@ -12,7 +12,7 @@
     "SUPABASE_URL": "@supabase_url",
     "SUPABASE_ANON_KEY": "@supabase_anon_key",
     "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key",
-    "VITE_AI_SERVICE_URL": "@ai_service_url",
+    "VITE_AI_SERVICE_URL": "/api/ai",
     "GEMINI_API_KEY": "@gemini_api_key",
     "VITE_CLERK_SUPABASE_TEMPLATE": "supabase"
   }

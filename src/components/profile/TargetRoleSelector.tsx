@@ -9,14 +9,70 @@ interface TargetRoleSelectorProps {
 }
 
 const TARGET_ROLES: TargetRole[] = [
-  { id: '1', name: 'Software Engineer', requiredSkills: ['Python', 'JavaScript', 'React', 'SQL', 'Git', 'DSA'], category: 'Engineering' },
-  { id: '2', name: 'Data Scientist', requiredSkills: ['Python', 'Machine Learning', 'SQL', 'Statistics', 'Pandas'], category: 'Data' },
-  { id: '3', name: 'Frontend Developer', requiredSkills: ['React', 'TypeScript', 'CSS', 'HTML', 'JavaScript'], category: 'Engineering' },
-  { id: '4', name: 'Backend Developer', requiredSkills: ['Python', 'SQL', 'Docker', 'AWS', 'Node.js'], category: 'Engineering' },
-  { id: '5', name: 'Full Stack Developer', requiredSkills: ['React', 'Node.js', 'SQL', 'JavaScript', 'Git'], category: 'Engineering' },
-  { id: '6', name: 'ML Engineer', requiredSkills: ['Python', 'ML', 'PyTorch', 'TensorFlow', 'Statistics'], category: 'AI/ML' },
-  { id: '7', name: 'DevOps Engineer', requiredSkills: ['Docker', 'AWS', 'Kubernetes', 'CI/CD', 'Linux'], category: 'Operations' },
-  { id: '8', name: 'Data Analyst', requiredSkills: ['SQL', 'Python', 'Tableau', 'Excel', 'Statistics'], category: 'Data' },
+  { id: 'software-engineer', name: 'Software Engineer', requiredSkills: ['DSA', 'OOP', 'Git', 'SQL', 'System Design'], category: 'Engineering' },
+  { id: 'associate-software-engineer', name: 'Associate Software Engineer', requiredSkills: ['DSA', 'Java', 'Git', 'REST APIs', 'SQL'], category: 'Engineering' },
+  { id: 'software-development-engineer-i', name: 'Software Development Engineer I', requiredSkills: ['DSA', 'JavaScript', 'Databases', 'Testing', 'Problem Solving'], category: 'Engineering' },
+  { id: 'full-stack-developer', name: 'Full Stack Developer', requiredSkills: ['React', 'Node.js', 'SQL', 'APIs', 'Git'], category: 'Engineering' },
+  { id: 'frontend-developer', name: 'Frontend Developer', requiredSkills: ['React', 'TypeScript', 'CSS', 'HTML', 'State Management'], category: 'Web' },
+  { id: 'frontend-engineer', name: 'Frontend Engineer', requiredSkills: ['React', 'Next.js', 'Performance Optimization', 'Accessibility', 'Testing'], category: 'Web' },
+  { id: 'backend-developer', name: 'Backend Developer', requiredSkills: ['Node.js', 'Python', 'SQL', 'Redis', 'Microservices'], category: 'Engineering' },
+  { id: 'backend-engineer', name: 'Backend Engineer', requiredSkills: ['Java', 'Spring Boot', 'Distributed Systems', 'Databases', 'Caching'], category: 'Engineering' },
+  { id: 'api-developer', name: 'API Developer', requiredSkills: ['REST', 'GraphQL', 'Node.js', 'Authentication', 'PostgreSQL'], category: 'Engineering' },
+  { id: 'platform-engineer', name: 'Platform Engineer', requiredSkills: ['Kubernetes', 'CI/CD', 'Terraform', 'Observability', 'Linux'], category: 'Infrastructure' },
+  { id: 'mobile-app-developer', name: 'Mobile App Developer', requiredSkills: ['Flutter', 'React Native', 'REST APIs', 'Mobile UI', 'State Management'], category: 'Mobile' },
+  { id: 'android-developer', name: 'Android Developer', requiredSkills: ['Kotlin', 'Android SDK', 'Jetpack', 'REST APIs', 'Room DB'], category: 'Mobile' },
+  { id: 'ios-developer', name: 'iOS Developer', requiredSkills: ['Swift', 'UIKit', 'SwiftUI', 'REST APIs', 'Core Data'], category: 'Mobile' },
+  { id: 'game-developer', name: 'Game Developer', requiredSkills: ['C#', 'Unity', 'Game Physics', 'Rendering', 'OOP'], category: 'Engineering' },
+  { id: 'embedded-software-engineer', name: 'Embedded Software Engineer', requiredSkills: ['C', 'C++', 'RTOS', 'Microcontrollers', 'Debugging'], category: 'Engineering' },
+
+  { id: 'data-analyst', name: 'Data Analyst', requiredSkills: ['SQL', 'Python', 'Excel', 'Tableau', 'Statistics'], category: 'Data' },
+  { id: 'business-analyst', name: 'Business Analyst', requiredSkills: ['SQL', 'Excel', 'Dashboarding', 'Requirement Analysis', 'Communication'], category: 'Data' },
+  { id: 'bi-analyst', name: 'Business Intelligence Analyst', requiredSkills: ['Power BI', 'SQL', 'Data Modeling', 'ETL', 'DAX'], category: 'Data' },
+  { id: 'data-engineer', name: 'Data Engineer', requiredSkills: ['Python', 'SQL', 'ETL', 'Airflow', 'Spark'], category: 'Data' },
+  { id: 'analytics-engineer', name: 'Analytics Engineer', requiredSkills: ['dbt', 'SQL', 'Data Warehousing', 'Python', 'BI Tools'], category: 'Data' },
+  { id: 'database-administrator', name: 'Database Administrator', requiredSkills: ['PostgreSQL', 'MySQL', 'Query Optimization', 'Backups', 'Replication'], category: 'Data' },
+  { id: 'data-scientist', name: 'Data Scientist', requiredSkills: ['Python', 'Machine Learning', 'Statistics', 'Pandas', 'Feature Engineering'], category: 'AI/ML' },
+  { id: 'machine-learning-engineer', name: 'Machine Learning Engineer', requiredSkills: ['Python', 'Scikit-learn', 'MLOps', 'Model Deployment', 'TensorFlow'], category: 'AI/ML' },
+  { id: 'ai-engineer', name: 'AI Engineer', requiredSkills: ['LLMs', 'Prompt Engineering', 'RAG', 'Python', 'Vector Databases'], category: 'AI/ML' },
+  { id: 'nlp-engineer', name: 'NLP Engineer', requiredSkills: ['Python', 'Transformers', 'spaCy', 'Text Processing', 'Evaluation Metrics'], category: 'AI/ML' },
+  { id: 'computer-vision-engineer', name: 'Computer Vision Engineer', requiredSkills: ['OpenCV', 'PyTorch', 'CNNs', 'Image Processing', 'Python'], category: 'AI/ML' },
+  { id: 'mlops-engineer', name: 'MLOps Engineer', requiredSkills: ['Docker', 'Kubernetes', 'MLflow', 'CI/CD', 'Cloud'], category: 'AI/ML' },
+
+  { id: 'cloud-engineer', name: 'Cloud Engineer', requiredSkills: ['AWS', 'Terraform', 'Docker', 'IAM', 'Networking'], category: 'Cloud & DevOps' },
+  { id: 'devops-engineer', name: 'DevOps Engineer', requiredSkills: ['Linux', 'Docker', 'Kubernetes', 'CI/CD', 'Monitoring'], category: 'Cloud & DevOps' },
+  { id: 'site-reliability-engineer', name: 'Site Reliability Engineer (SRE)', requiredSkills: ['Kubernetes', 'Prometheus', 'Incident Response', 'Automation', 'Linux'], category: 'Cloud & DevOps' },
+  { id: 'release-engineer', name: 'Release Engineer', requiredSkills: ['CI/CD', 'Git', 'Automation', 'Versioning', 'Testing'], category: 'Cloud & DevOps' },
+  { id: 'systems-engineer', name: 'Systems Engineer', requiredSkills: ['Linux', 'Networking', 'Shell Scripting', 'Infrastructure', 'Monitoring'], category: 'Infrastructure' },
+  { id: 'network-engineer', name: 'Network Engineer', requiredSkills: ['TCP/IP', 'Routing', 'Switching', 'Firewalls', 'Network Security'], category: 'Infrastructure' },
+
+  { id: 'cybersecurity-analyst', name: 'Cybersecurity Analyst', requiredSkills: ['Network Security', 'SIEM', 'Incident Response', 'OWASP', 'Threat Analysis'], category: 'Security' },
+  { id: 'security-engineer', name: 'Security Engineer', requiredSkills: ['AppSec', 'Threat Modeling', 'IAM', 'Cloud Security', 'Pen Testing'], category: 'Security' },
+  { id: 'penetration-tester', name: 'Penetration Tester', requiredSkills: ['Kali Linux', 'Burp Suite', 'OWASP', 'Scripting', 'Vulnerability Assessment'], category: 'Security' },
+  { id: 'soc-analyst', name: 'SOC Analyst', requiredSkills: ['SIEM', 'Log Analysis', 'Incident Handling', 'EDR', 'Threat Intelligence'], category: 'Security' },
+  { id: 'application-security-engineer', name: 'Application Security Engineer', requiredSkills: ['Secure Coding', 'SAST/DAST', 'OWASP', 'Code Review', 'Threat Modeling'], category: 'Security' },
+
+  { id: 'qa-engineer', name: 'QA Engineer', requiredSkills: ['Test Cases', 'Manual Testing', 'Bug Tracking', 'Regression Testing', 'Agile'], category: 'Quality' },
+  { id: 'software-test-engineer', name: 'Software Test Engineer', requiredSkills: ['Selenium', 'API Testing', 'Postman', 'Test Automation', 'CI/CD'], category: 'Quality' },
+  { id: 'sdet', name: 'SDET', requiredSkills: ['Java', 'Selenium', 'Cypress', 'API Automation', 'Framework Design'], category: 'Quality' },
+  { id: 'performance-test-engineer', name: 'Performance Test Engineer', requiredSkills: ['JMeter', 'Load Testing', 'Profiling', 'Monitoring', 'Bottleneck Analysis'], category: 'Quality' },
+
+  { id: 'ui-ux-designer', name: 'UI/UX Designer', requiredSkills: ['Figma', 'Wireframing', 'Design Systems', 'User Research', 'Prototyping'], category: 'Product & Design' },
+  { id: 'product-designer', name: 'Product Designer', requiredSkills: ['Figma', 'UX Writing', 'Interaction Design', 'User Research', 'Design Thinking'], category: 'Product & Design' },
+  { id: 'product-manager', name: 'Product Manager', requiredSkills: ['Product Strategy', 'Roadmapping', 'Analytics', 'A/B Testing', 'Stakeholder Management'], category: 'Product & Design' },
+  { id: 'technical-product-manager', name: 'Technical Product Manager', requiredSkills: ['System Design', 'APIs', 'Roadmapping', 'Agile', 'Data Analysis'], category: 'Product & Design' },
+  { id: 'program-manager-tech', name: 'Technical Program Manager', requiredSkills: ['Project Planning', 'Risk Management', 'Cross-functional Leadership', 'Agile', 'Metrics'], category: 'Product & Design' },
+
+  { id: 'blockchain-developer', name: 'Blockchain Developer', requiredSkills: ['Solidity', 'EVM', 'Smart Contracts', 'Web3.js', 'Security'], category: 'Blockchain' },
+  { id: 'smart-contract-engineer', name: 'Smart Contract Engineer', requiredSkills: ['Solidity', 'Hardhat', 'Testing', 'Auditing', 'Gas Optimization'], category: 'Blockchain' },
+  { id: 'web3-frontend-developer', name: 'Web3 Frontend Developer', requiredSkills: ['React', 'ethers.js', 'Wallet Integration', 'TypeScript', 'Web3 UX'], category: 'Blockchain' },
+
+  { id: 'ar-vr-developer', name: 'AR/VR Developer', requiredSkills: ['Unity', 'C#', '3D Math', 'XR SDKs', 'Performance Optimization'], category: 'Emerging Tech' },
+  { id: 'iot-engineer', name: 'IoT Engineer', requiredSkills: ['Embedded C', 'MQTT', 'Sensors', 'Edge Computing', 'Cloud IoT'], category: 'Emerging Tech' },
+  { id: 'robotics-engineer', name: 'Robotics Engineer', requiredSkills: ['ROS', 'C++', 'Control Systems', 'Computer Vision', 'Python'], category: 'Emerging Tech' },
+
+  { id: 'it-support-engineer', name: 'IT Support Engineer', requiredSkills: ['Windows/Linux', 'Networking', 'Troubleshooting', 'Ticketing Systems', 'Scripting'], category: 'Support' },
+  { id: 'technical-support-engineer', name: 'Technical Support Engineer', requiredSkills: ['Debugging', 'SQL Basics', 'APIs', 'Communication', 'Incident Management'], category: 'Support' },
+  { id: 'solutions-engineer', name: 'Solutions Engineer', requiredSkills: ['APIs', 'Cloud Basics', 'Customer Discovery', 'Pre-sales', 'Integrations'], category: 'Support' },
 ];
 
 export function TargetRoleSelector({ selectedRole, onSelect }: TargetRoleSelectorProps) {

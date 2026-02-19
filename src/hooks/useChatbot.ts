@@ -9,7 +9,15 @@ function createInitialGreeting(userName?: string): ChatMessage {
   return {
     id: 'welcome',
     role: 'assistant',
-    content: `Hi${userName ? `, ${userName.split(' ')[0]}` : ''}! I'm your career guidance assistant powered by AI. I can help you with:\n\n• Resume tips and improvements\n• Career path advice for Indian tech industry\n• Interview preparation (DSA, System Design)\n• Skill development suggestions\n• Job search strategies for campus placements\n\nWhat would you like to know?`,
+    content: `Hi${userName ? `, ${userName.split(' ')[0]}` : ''}! I'm your career guidance assistant powered by AI. I can help you with:
+
+- Resume tips and improvements
+- Career path advice for Indian tech industry
+- Interview preparation (DSA, System Design)
+- Skill development suggestions
+- Job search strategies for campus placements
+
+What would you like to know?`,
     timestamp: new Date().toISOString(),
   };
 }
@@ -30,7 +38,7 @@ export function useCareerChatbot() {
       timestamp: new Date().toISOString(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
     try {
@@ -40,12 +48,16 @@ export function useCareerChatbot() {
         email: user?.email,
       };
 
-      const history = messages.slice(-5).map(m => ({
-        role: m.role,
-        content: m.content,
+      const history = messages.slice(-5).map((message) => ({
+        role: message.role,
+        content: message.content,
       }));
 
       const token = await getToken();
+      if (!token) {
+        throw new Error('Authentication token unavailable. Sign out and sign in again, then retry.');
+      }
+
       const response = await aiService.chat(content, context, history, token);
 
       const assistantMessage: ChatMessage = {
@@ -55,16 +67,21 @@ export function useCareerChatbot() {
         timestamp: new Date().toISOString(),
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
-    } catch {
-      toast.error('Failed to get response from AI');
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to get response from AI';
+      toast.error(message);
       const errorMessage: ChatMessage = {
         id: uuidv4(),
         role: 'assistant',
-        content: 'I apologize, but I encountered an error. Please make sure the AI service is running on port 8000.',
+        content: `I hit an error while reaching the AI service.
+
+Details: ${message}
+
+If this keeps happening on Vercel, verify VITE_AI_SERVICE_URL is set to /api/ai and GEMINI_API_KEY is configured.`,
         timestamp: new Date().toISOString(),
       };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }

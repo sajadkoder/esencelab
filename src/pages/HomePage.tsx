@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { GraduationCap, ArrowRight, Sparkles, Target, BookOpen, Bot } from 'lucide-react';
@@ -25,35 +26,53 @@ const features = [
   }
 ];
 
-const stats = [
-  { value: '50K+', label: 'Students' },
-  { value: '2K+', label: 'Jobs' },
-  { value: '500+', label: 'Companies' },
-  { value: '10K+', label: 'Placements' }
-];
+type LandingTheme = 'dark' | 'light';
+
+const LANDING_THEME_STORAGE_KEY = 'esencelab-landing-theme';
 
 export function HomePage() {
+  const [theme, setTheme] = useState<LandingTheme>(() => {
+    if (typeof window === 'undefined') {
+      return 'dark';
+    }
+
+    const storedTheme = window.localStorage.getItem(LANDING_THEME_STORAGE_KEY);
+    return storedTheme === 'light' || storedTheme === 'dark' ? storedTheme : 'dark';
+  });
+  const isLight = theme === 'light';
+
+  useEffect(() => {
+    window.localStorage.setItem(LANDING_THEME_STORAGE_KEY, theme);
+  }, [theme]);
+
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className={isLight ? 'min-h-screen bg-[#f8fafc] text-[#0f172a]' : 'min-h-screen bg-black text-white'}>
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-[#222]">
+      <nav className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b ${isLight ? 'bg-white/90 border-slate-200' : 'bg-black/80 border-[#222]'}`}>
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded bg-white flex items-center justify-center">
-              <GraduationCap className="w-4 h-4 text-black" />
+            <div className={`w-8 h-8 rounded flex items-center justify-center ${isLight ? 'bg-slate-900' : 'bg-white'}`}>
+              <GraduationCap className={`w-4 h-4 ${isLight ? 'text-white' : 'text-black'}`} />
             </div>
             <span className="text-lg font-bold">Esencelab</span>
           </Link>
           <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => setTheme((previous) => (previous === 'dark' ? 'light' : 'dark'))}
+              className={`px-3 py-2 rounded text-xs font-medium border transition-colors ${isLight ? 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100' : 'bg-[#111] text-gray-200 border-[#222] hover:border-[#444]'}`}
+            >
+              {isLight ? 'Dark mode' : 'Light mode'}
+            </button>
             <Link 
               to="/login" 
-              className="text-sm text-gray-400 hover:text-white transition-colors"
+              className={`text-sm transition-colors ${isLight ? 'text-slate-600 hover:text-slate-900' : 'text-gray-400 hover:text-white'}`}
             >
               Sign in
             </Link>
             <Link 
               to="/login" 
-              className="bg-white text-black px-4 py-2 rounded text-sm font-medium hover:bg-gray-200 transition-colors"
+              className={`px-4 py-2 rounded text-sm font-medium transition-colors ${isLight ? 'bg-slate-900 text-white hover:bg-slate-700' : 'bg-white text-black hover:bg-gray-200'}`}
             >
               Get started
             </Link>
@@ -69,56 +88,37 @@ export function HomePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#111] border border-[#222] text-xs text-gray-400 mb-6">
+            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs mb-6 ${isLight ? 'bg-white border-slate-200 text-slate-600' : 'bg-[#111] border-[#222] text-gray-400'}`}>
               <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-              Now live in India
+              now live in sngcet
             </div>
             
             <h1 className="text-5xl sm:text-7xl font-bold mb-6 leading-tight">
               Close the<br />
-              <span className="text-gray-500">career gap.</span>
+              <span className={isLight ? 'text-slate-500' : 'text-gray-500'}>career gap.</span>
             </h1>
             
-            <p className="text-xl text-gray-400 mb-10 max-w-xl mx-auto leading-relaxed">
-              AI-powered campus recruitment platform for Indian students. 
+            <p className={`text-xl mb-10 max-w-xl mx-auto leading-relaxed ${isLight ? 'text-slate-600' : 'text-gray-400'}`}>
+              AI-powered campus recruitment platform for sngcet students. 
               Upload your resume. Get matched. Get placed.
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 to="/login"
-                className="group flex items-center gap-2 bg-white text-black px-8 py-4 rounded-full font-medium text-lg hover:bg-gray-200 transition-all"
+                className={`group flex items-center gap-2 px-8 py-4 rounded-full font-medium text-lg transition-all ${isLight ? 'bg-slate-900 text-white hover:bg-slate-700' : 'bg-white text-black hover:bg-gray-200'}`}
               >
                 Start free
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
               <a
                 href="#features"
-                className="flex items-center gap-2 px-8 py-4 rounded-full font-medium text-lg text-gray-400 hover:text-white transition-colors"
+                className={`flex items-center gap-2 px-8 py-4 rounded-full font-medium text-lg transition-colors ${isLight ? 'text-slate-600 hover:text-slate-900' : 'text-gray-400 hover:text-white'}`}
               >
                 Learn more
               </a>
             </div>
           </motion.div>
-        </div>
-      </section>
-
-      {/* Stats */}
-      <section className="py-16 px-6 border-y border-[#222]">
-        <div className="max-w-4xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-8">
-          {stats.map((stat, i) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              viewport={{ once: true }}
-              className="text-center"
-            >
-              <div className="text-3xl sm:text-4xl font-bold mb-1">{stat.value}</div>
-              <div className="text-gray-500">{stat.label}</div>
-            </motion.div>
-          ))}
         </div>
       </section>
 
@@ -132,8 +132,8 @@ export function HomePage() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">Everything you need</h2>
-            <p className="text-gray-400 max-w-lg mx-auto">
-              Built specifically for Indian campus placements with AI-powered features
+            <p className={`max-w-lg mx-auto ${isLight ? 'text-slate-600' : 'text-gray-400'}`}>
+              Built specifically for sngcet campus with AI-powered features
             </p>
           </motion.div>
 
@@ -145,11 +145,11 @@ export function HomePage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
                 viewport={{ once: true }}
-                className="p-6 rounded-2xl bg-[#0a0a0a] border border-[#222] hover:border-[#333] transition-colors"
+                className={`p-6 rounded-2xl border transition-colors ${isLight ? 'bg-white border-slate-200 hover:border-slate-300' : 'bg-[#0a0a0a] border-[#222] hover:border-[#333]'}`}
               >
-                <feature.icon className="w-8 h-8 mb-4 text-white" />
+                <feature.icon className={`w-8 h-8 mb-4 ${isLight ? 'text-slate-900' : 'text-white'}`} />
                 <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                <p className="text-gray-400 text-sm leading-relaxed">{feature.desc}</p>
+                <p className={`text-sm leading-relaxed ${isLight ? 'text-slate-600' : 'text-gray-400'}`}>{feature.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -157,7 +157,7 @@ export function HomePage() {
       </section>
 
       {/* How it works */}
-      <section className="py-24 px-6 border-t border-[#222]">
+      <section className={`py-24 px-6 border-t ${isLight ? 'border-slate-200' : 'border-[#222]'}`}>
         <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0 }}
@@ -182,9 +182,9 @@ export function HomePage() {
                 viewport={{ once: true }}
                 className="text-center"
               >
-                <div className="text-5xl font-bold text-[#222] mb-4">{item.step}</div>
+                <div className={`text-5xl font-bold mb-4 ${isLight ? 'text-slate-200' : 'text-[#222]'}`}>{item.step}</div>
                 <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
-                <p className="text-gray-400 text-sm">{item.desc}</p>
+                <p className={`text-sm ${isLight ? 'text-slate-600' : 'text-gray-400'}`}>{item.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -192,7 +192,7 @@ export function HomePage() {
       </section>
 
       {/* CTA */}
-      <section className="py-24 px-6 border-t border-[#222]">
+      <section className={`py-24 px-6 border-t ${isLight ? 'border-slate-200' : 'border-[#222]'}`}>
         <div className="max-w-2xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -200,12 +200,12 @@ export function HomePage() {
             viewport={{ once: true }}
           >
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">Ready to get placed?</h2>
-            <p className="text-gray-400 mb-8">
-              Join thousands of Indian students who got their dream jobs through Esencelab
+            <p className={`mb-8 ${isLight ? 'text-slate-600' : 'text-gray-400'}`}>
+              Join sngcet students building stronger placement outcomes with Esencelab
             </p>
             <Link
               to="/login"
-              className="inline-flex items-center gap-2 bg-white text-black px-8 py-4 rounded-full font-medium text-lg hover:bg-gray-200 transition-all"
+              className={`inline-flex items-center gap-2 px-8 py-4 rounded-full font-medium text-lg transition-all ${isLight ? 'bg-slate-900 text-white hover:bg-slate-700' : 'bg-white text-black hover:bg-gray-200'}`}
             >
               Create free account
               <ArrowRight className="w-5 h-5" />
@@ -215,16 +215,16 @@ export function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-6 border-t border-[#222]">
+      <footer className={`py-8 px-6 border-t ${isLight ? 'border-slate-200' : 'border-[#222]'}`}>
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-white flex items-center justify-center">
-              <GraduationCap className="w-3 h-3 text-black" />
+            <div className={`w-6 h-6 rounded flex items-center justify-center ${isLight ? 'bg-slate-900' : 'bg-white'}`}>
+              <GraduationCap className={`w-3 h-3 ${isLight ? 'text-white' : 'text-black'}`} />
             </div>
             <span className="text-sm font-medium">Esencelab</span>
           </div>
-          <p className="text-xs text-gray-500">
-            Built for Indian students
+          <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-gray-500'}`}>
+            Built for sngcet campus
           </p>
         </div>
       </footer>

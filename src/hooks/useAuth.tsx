@@ -167,7 +167,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const getToken = useCallback(async () => {
     const template = import.meta.env.VITE_CLERK_API_TEMPLATE;
-    return clerkGetToken(template ? { template } : undefined);
+    if (template) {
+      const templateToken = await clerkGetToken({ template });
+      if (templateToken) {
+        return templateToken;
+      }
+    }
+
+    return clerkGetToken();
   }, [clerkGetToken]);
 
   const setRole = useCallback(async (role: UserRole) => {
