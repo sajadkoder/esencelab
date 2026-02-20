@@ -9,6 +9,16 @@ import Button from '@/components/Button';
 import Input from '@/components/Input';
 import Select from '@/components/Select';
 
+function GraduationCapLogo({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"></path>
+      <path d="M22 10v6"></path>
+      <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"></path>
+    </svg>
+  );
+}
+
 export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -56,12 +66,12 @@ export default function RegisterPage() {
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-2">
-            <div className="w-10 h-10 bg-[#FF6B35] rounded-xl flex items-center justify-center">
-              <span className="font-bold text-xl text-white">E</span>
+            <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center">
+              <GraduationCapLogo className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-2xl text-[#1a1a1a]">EsenceLab</span>
+            <span className="font-bold text-2xl text-black">EsenceLab</span>
           </Link>
-          <h2 className="mt-6 text-2xl font-bold text-[#1a1a1a]">Create your account</h2>
+          <h2 className="mt-6 text-2xl font-bold text-black">Create your account</h2>
           <p className="mt-2 text-gray-600">Join EsenceLab today</p>
         </div>
 
@@ -116,7 +126,7 @@ export default function RegisterPage() {
               required
             />
 
-            <Button type="submit" className="w-full bg-[#FF6B35] hover:bg-[#e55a2b]" isLoading={isLoading}>
+            <Button type="submit" className="w-full bg-black hover:bg-gray-800 text-white" isLoading={isLoading}>
               Create Account
             </Button>
           </form>
@@ -124,7 +134,7 @@ export default function RegisterPage() {
           <div className="mt-6 text-center">
             <p className="text-gray-600">
               Already have an account?{' '}
-              <Link href="/login" className="text-[#FF6B35] hover:underline font-medium">
+              <Link href="/login" className="text-black hover:underline font-medium">
                 Sign in
               </Link>
             </p>
