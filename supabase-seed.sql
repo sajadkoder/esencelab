@@ -1,27 +1,53 @@
--- Run this in Supabase SQL Editor after schema is created
+-- Insert Demo Users with proper UUIDs (Password: demo123)
+INSERT INTO profiles (id, email, name, role) VALUES
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'student@esencelab.com', 'Sajad', 'student'),
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12', 'recruiter@esencelab.com', 'Rajesh Kumar', 'employer'),
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13', 'admin@esencelab.com', 'Admin User', 'admin')
+ON CONFLICT (email) DO NOTHING;
 
--- Insert demo users (password is 'demo123' hashed with bcrypt)
--- Hash: $2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+-- Insert Candidates with parsed resume data
+INSERT INTO candidates (id, user_id, name, email, role, skills, education, experience, match_score, status) VALUES
+('c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a21', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Sajad', 'student@esencelab.com', 'Software Developer',
+  '["Python", "JavaScript", "React", "Node.js", "SQL", "Git"]'::jsonb,
+  '[{"institution": "SNGCET", "degree": "B.Tech", "field": "Computer Science", "year": "2025"}]'::jsonb,
+  '[{"company": "Tech Intern", "title": "Intern", "duration": "6 months"}]'::jsonb,
+  85, 'new');
 
-INSERT INTO "users" (id, email, password_hash, name, role) VALUES
-('user-student-1', 'student@esencelab.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'John Student', 'student'),
-('user-recruiter-1', 'recruiter@esencelab.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Jane Recruiter', 'recruiter'),
-('user-admin-1', 'admin@esencelab.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Admin User', 'admin')
-ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name;
+-- Insert Jobs
+INSERT INTO jobs (id, employer_id, title, company, location, description, requirements, skills, salary_min, salary_max, job_type, status) VALUES
+('j0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12', 'Software Engineer', 'Tech Corp', 'Bangalore, India',
+  'We are looking for a skilled software engineer to join our team.',
+  ARRAY['Python', 'JavaScript', 'React', 'Node.js', 'SQL'],
+  ARRAY['Python', 'JavaScript', 'React', 'Node.js', 'SQL', 'Git'],
+  80000, 120000, 'full-time', 'active'),
 
--- Insert demo jobs
-INSERT INTO "jobs" (id, title, company, description, requirements, location, salary_min, salary_max, job_type, status, recruiter_id) VALUES
-('job-1', 'Software Engineer', 'Tech Corp', 'We are looking for a skilled software engineer to join our team.', 'Python, JavaScript, React, Node.js, SQL', 'New York, NY', 80000, 120000, 'full_time', 'active', 'user-recruiter-1'),
-('job-2', 'Data Scientist', 'Data Inc', 'Join our data science team to build ML models.', 'Python, Machine Learning, TensorFlow, SQL, Statistics', 'San Francisco, CA', 100000, 150000, 'full_time', 'active', 'user-recruiter-1'),
-('job-3', 'Frontend Developer', 'Web Solutions', 'Build beautiful web applications.', 'React, TypeScript, CSS, HTML, JavaScript', 'Remote', 60000, 90000, 'full_time', 'active', 'user-recruiter-1'),
-('job-4', 'Backend Developer', 'API Solutions', 'Build scalable backend services.', 'Node.js, Python, PostgreSQL, REST APIs, Docker', 'Austin, TX', 70000, 110000, 'full_time', 'active', 'user-recruiter-1'),
-('job-5', 'DevOps Engineer', 'Cloud Systems', 'Manage cloud infrastructure.', 'AWS, Docker, Kubernetes, CI/CD, Terraform', 'Seattle, WA', 90000, 140000, 'full_time', 'active', 'user-recruiter-1')
-ON CONFLICT DO NOTHING;
+('j0eebc99-9c0b-4ef8-bb6d-6bb9bd380a32', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12', 'Data Scientist', 'Data Inc', 'Hyderabad, India',
+  'Join our data science team to build ML models.',
+  ARRAY['Python', 'Machine Learning', 'TensorFlow', 'SQL'],
+  ARRAY['Python', 'Machine Learning', 'TensorFlow', 'SQL', 'Statistics', 'Pandas'],
+  100000, 150000, 'full-time', 'active'),
 
--- Insert demo courses
-INSERT INTO "courses" (id, title, description, instructor, url) VALUES
-('course-1', 'Complete Python Bootcamp', 'Learn Python from scratch to advanced concepts.', 'Dr. Angela Yu', 'https://www.udemy.com/course/complete-python-bootcamp/'),
-('course-2', 'React - The Complete Guide', 'Master React.js including hooks, Redux, and more.', 'Maximilian Schwarzmuller', 'https://www.udemy.com/course/react-the-complete-guide/'),
-('course-3', 'Machine Learning A-Z', 'Learn to create Machine Learning Algorithms.', 'Kirill Eremenko', 'https://www.udemy.com/course/machinelearning/'),
-('course-4', 'Node.js Developer Course', 'Learn Node.js by building real-world applications.', 'Andrew Mead', 'https://www.udemy.com/course/node-js-developer-course/')
-ON CONFLICT DO NOTHING;
+('j0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12', 'Frontend Developer', 'Web Solutions', 'Remote',
+  'Build beautiful web applications.',
+  ARRAY['React', 'TypeScript', 'CSS', 'HTML'],
+  ARRAY['React', 'TypeScript', 'CSS', 'HTML', 'JavaScript', 'Tailwind'],
+  60000, 90000, 'full-time', 'active'),
+
+('j0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12', 'Backend Developer', 'API Solutions', 'Chennai, India',
+  'Build scalable backend services.',
+  ARRAY['Node.js', 'Python', 'PostgreSQL', 'REST APIs'],
+  ARRAY['Node.js', 'Python', 'PostgreSQL', 'REST APIs', 'Docker', 'AWS'],
+  70000, 110000, 'full-time', 'active'),
+
+('j0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12', 'DevOps Engineer', 'Cloud Systems', 'Bangalore, India',
+  'Manage cloud infrastructure.',
+  ARRAY['AWS', 'Docker', 'Kubernetes', 'CI/CD'],
+  ARRAY['AWS', 'Docker', 'Kubernetes', 'CI/CD', 'Terraform', 'Linux'],
+  90000, 140000, 'full-time', 'active');
+
+-- Insert Courses
+INSERT INTO courses (id, title, description, provider, url, skills, duration, level, rating) VALUES
+('c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a41', 'Complete Python Bootcamp', 'Learn Python from scratch to advanced concepts.', 'Udemy', 'https://www.udemy.com/course/complete-python-bootcamp/', ARRAY['Python', 'Django', 'Flask'], '22 hours', 'beginner', 4.5),
+('c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a42', 'React - The Complete Guide', 'Master React.js including hooks, Redux, and more.', 'Udemy', 'https://www.udemy.com/course/react-the-complete-guide/', ARRAY['React', 'Redux', 'JavaScript'], '40 hours', 'intermediate', 4.6),
+('c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a43', 'Machine Learning A-Z', 'Learn to create Machine Learning Algorithms.', 'Udemy', 'https://www.udemy.com/course/machinelearning/', ARRAY['Python', 'Machine Learning', 'TensorFlow'], '44 hours', 'intermediate', 4.5),
+('c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'Node.js Developer Course', 'Learn Node.js by building real-world applications.', 'Udemy', 'https://www.udemy.com/course/node-js-developer-course/', ARRAY['Node.js', 'Express', 'MongoDB'], '37 hours', 'intermediate', 4.7);

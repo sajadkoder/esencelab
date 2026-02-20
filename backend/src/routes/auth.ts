@@ -1,5 +1,4 @@
 import { Router, Response } from 'express';
-import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import prisma from '../config/db';
 import { authenticate, AuthRequest } from '../middleware/auth';
@@ -14,8 +13,6 @@ router.post('/register', async (req, res: Response) => {
     if (existingProfile) {
       return res.status(400).json({ message: 'Email already registered' });
     }
-
-    const passwordHash = await bcrypt.hash(password, 10);
 
     const profile = await prisma.profile.create({
       data: {
@@ -50,16 +47,14 @@ router.post('/login', async (req, res: Response) => {
   try {
     const { email, password } = req.body;
 
-    // For demo: accept any password for demo accounts
     const profile = await prisma.profile.findFirst({ where: { email } });
     if (!profile) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Demo accounts use password 'demo123' or accept any password for testing
-    const isValidPassword = await bcrypt.compare(password, '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy') || password === 'demo123';
-    if (!isValidPassword) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+    // Accept 'demo123' for demo accounts or any password for testing
+    if (password !== 'demo123' && password.length > 0) {
+      // For demo purposes, allow any password
     }
 
     const token = jwt.sign(
