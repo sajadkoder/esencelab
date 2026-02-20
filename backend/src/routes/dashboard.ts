@@ -9,8 +9,16 @@ router.get('/stats', authenticate, async (req: AuthRequest, res: Response) => {
     const user = req.user;
 
     if (user.role === 'student') {
+      const candidate = await prisma.candidate.findFirst({
+        where: { clerkUserId: user.id },
+      });
+
+      if (!candidate) {
+        return res.json({ data: { myApplications: 0, shortlisted: 0, interviews: 0, pending: 0 } });
+      }
+
       const applications = await prisma.application.findMany({
-        where: { studentId: user.id },
+        where: { candidateId: candidate.id },
       });
 
       const stats = {
@@ -23,9 +31,9 @@ router.get('/stats', authenticate, async (req: AuthRequest, res: Response) => {
       return res.json({ data: stats });
     }
 
-    if (user.role === 'recruiter') {
+    if (user.role === 'employer') {
       const jobs = await prisma.job.findMany({
-        where: { recruiterId: user.id },
+        where: { employerId: user.id },
       });
 
       const jobIds = jobs.map(j => j.id);
@@ -45,18 +53,20 @@ router.get('/stats', authenticate, async (req: AuthRequest, res: Response) => {
     }
 
     if (user.role === 'admin') {
-      const [totalUsers, totalJobs, totalApplications, totalResumes] = await Promise.all([
-        prisma.user.count(),
+      const [totalProfiles, totalJobs, totalApplications, totalCandidates, totalCourses] = await Promise.all([
+        prisma.profile.count(),
         prisma.job.count(),
         prisma.application.count(),
-        prisma.resume.count(),
+        prisma.candidate.count(),
+        prisma.course.count(),
       ]);
 
       const stats = {
-        totalUsers,
+        totalUsers: totalProfiles,
         totalJobs,
         totalApplications,
-        totalResumes,
+        totalCandidates,
+        totalCourses,
       };
 
       return res.json({ data: stats });
