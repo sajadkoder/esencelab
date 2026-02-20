@@ -17,7 +17,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { userId: string };
     
-    const user = await prisma.user.findUnique({
+    const profile = await prisma.profile.findUnique({
       where: { id: decoded.userId },
       select: {
         id: true,
@@ -25,15 +25,14 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
         name: true,
         role: true,
         avatarUrl: true,
-        isActive: true,
       },
     });
 
-    if (!user || !user.isActive) {
-      return res.status(401).json({ message: 'User not found or inactive' });
+    if (!profile) {
+      return res.status(401).json({ message: 'User not found' });
     }
 
-    req.user = user;
+    req.user = profile;
     next();
   } catch (error) {
     return res.status(401).json({ message: 'Invalid token' });

@@ -19,7 +19,7 @@ router.get('/', authenticate, authorize('admin'), async (req: AuthRequest, res: 
       where.role = role;
     }
 
-    const users = await prisma.user.findMany({
+    const profiles = await prisma.profile.findMany({
       where,
       select: {
         id: true,
@@ -27,14 +27,14 @@ router.get('/', authenticate, authorize('admin'), async (req: AuthRequest, res: 
         name: true,
         role: true,
         avatarUrl: true,
-        isActive: true,
         createdAt: true,
       },
       orderBy: { createdAt: 'desc' },
     });
 
-    res.json({ data: users });
+    res.json({ data: profiles });
   } catch (error) {
+    console.error('Error fetching profiles:', error);
     res.status(500).json({ message: 'Failed to fetch users' });
   }
 });
@@ -43,7 +43,7 @@ router.get('/:id', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     
-    const user = await prisma.user.findUnique({
+    const profile = await prisma.profile.findUnique({
       where: { id },
       select: {
         id: true,
@@ -51,17 +51,17 @@ router.get('/:id', authenticate, async (req: AuthRequest, res: Response) => {
         name: true,
         role: true,
         avatarUrl: true,
-        isActive: true,
         createdAt: true,
       },
     });
 
-    if (!user) {
+    if (!profile) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json({ data: user });
+    res.json({ data: profile });
   } catch (error) {
+    console.error('Error fetching profile:', error);
     res.status(500).json({ message: 'Failed to fetch user' });
   }
 });
@@ -69,14 +69,13 @@ router.get('/:id', authenticate, async (req: AuthRequest, res: Response) => {
 router.put('/:id', authenticate, authorize('admin'), async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, role, isActive } = req.body;
+    const { name, role } = req.body;
 
-    const user = await prisma.user.update({
+    const profile = await prisma.profile.update({
       where: { id },
       data: {
         ...(name && { name }),
         ...(role && { role }),
-        ...(isActive !== undefined && { isActive }),
       },
       select: {
         id: true,
@@ -84,12 +83,12 @@ router.put('/:id', authenticate, authorize('admin'), async (req: AuthRequest, re
         name: true,
         role: true,
         avatarUrl: true,
-        isActive: true,
       },
     });
 
-    res.json({ data: user });
+    res.json({ data: profile });
   } catch (error) {
+    console.error('Error updating profile:', error);
     res.status(500).json({ message: 'Failed to update user' });
   }
 });
@@ -98,10 +97,11 @@ router.delete('/:id', authenticate, authorize('admin'), async (req: AuthRequest,
   try {
     const { id } = req.params;
 
-    await prisma.user.delete({ where: { id } });
+    await prisma.profile.delete({ where: { id } });
 
     res.json({ message: 'User deleted successfully' });
   } catch (error) {
+    console.error('Error deleting profile:', error);
     res.status(500).json({ message: 'Failed to delete user' });
   }
 });

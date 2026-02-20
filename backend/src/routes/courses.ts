@@ -7,12 +7,12 @@ const router = Router();
 router.get('/', async (req, res: Response) => {
   try {
     const courses = await prisma.course.findMany({
-      where: { isActive: true },
       orderBy: { createdAt: 'desc' },
     });
 
     res.json({ data: courses });
   } catch (error) {
+    console.error('Error fetching courses:', error);
     res.status(500).json({ message: 'Failed to fetch courses' });
   }
 });
@@ -31,26 +31,32 @@ router.get('/:id', async (req, res: Response) => {
 
     res.json({ data: course });
   } catch (error) {
+    console.error('Error fetching course:', error);
     res.status(500).json({ message: 'Failed to fetch course' });
   }
 });
 
 router.post('/', authenticate, authorize('admin'), async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, instructor, url, thumbnailUrl } = req.body;
+    const { title, description, provider, url, skills, duration, level, rating, imageUrl } = req.body;
 
     const course = await prisma.course.create({
       data: {
         title,
         description,
-        instructor,
+        provider,
         url,
-        thumbnailUrl,
+        skills: skills || [],
+        duration,
+        level,
+        rating: rating ? Number(rating) : null,
+        imageUrl,
       },
     });
 
     res.status(201).json({ data: course });
   } catch (error) {
+    console.error('Error creating course:', error);
     res.status(500).json({ message: 'Failed to create course' });
   }
 });
@@ -58,22 +64,26 @@ router.post('/', authenticate, authorize('admin'), async (req: AuthRequest, res:
 router.put('/:id', authenticate, authorize('admin'), async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { title, description, instructor, url, thumbnailUrl, isActive } = req.body;
+    const { title, description, provider, url, skills, duration, level, rating, imageUrl } = req.body;
 
     const course = await prisma.course.update({
       where: { id },
       data: {
         ...(title && { title }),
         ...(description && { description }),
-        ...(instructor && { instructor }),
+        ...(provider && { provider }),
         ...(url && { url }),
-        ...(thumbnailUrl !== undefined && { thumbnailUrl }),
-        ...(isActive !== undefined && { isActive }),
+        ...(skills && { skills }),
+        ...(duration && { duration }),
+        ...(level && { level }),
+        ...(rating !== undefined && { rating: rating ? Number(rating) : null }),
+        ...(imageUrl !== undefined && { imageUrl }),
       },
     });
 
     res.json({ data: course });
   } catch (error) {
+    console.error('Error updating course:', error);
     res.status(500).json({ message: 'Failed to update course' });
   }
 });
@@ -86,6 +96,7 @@ router.delete('/:id', authenticate, authorize('admin'), async (req: AuthRequest,
 
     res.json({ message: 'Course deleted successfully' });
   } catch (error) {
+    console.error('Error deleting course:', error);
     res.status(500).json({ message: 'Failed to delete course' });
   }
 });

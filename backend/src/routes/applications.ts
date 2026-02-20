@@ -7,21 +7,30 @@ const router = Router();
 
 router.get('/my', authenticate, async (req: AuthRequest, res: Response) => {
   try {
+    const candidate = await prisma.candidate.findFirst({
+      where: { clerkUserId: req.user.id },
+    });
+
+    if (!candidate) {
+      return res.json({ data: [] });
+    }
+
     const applications = await prisma.application.findMany({
-      where: { studentId: req.user.id },
+      where: { candidateId: candidate.id },
       include: {
         job: {
           include: {
-            recruiter: { select: { id: true, name: true } },
+            employer: { select: { id: true, name: true } },
           },
         },
-        resume: true,
+        candidate: true,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { appliedAt: 'desc' },
     });
 
     res.json({ data: applications });
   } catch (error) {
+    console.error('Error fetching my applications:', error);
     res.status(500).json({ message: 'Failed to fetch applications' });
   }
 });
@@ -32,9 +41,14 @@ router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
     const where: any = {};
 
     if (req.user.role === 'student') {
-      where.studentId = req.user.id;
-    } else if (req.user.role === 'recruiter') {
-      where.job = { recruiterId: req.user.id };
+      const candidate = await prisma.candidate.findFirst({
+        where: { clerkUserId: req.user.id },
+      });
+      if (candidate) {
+        where.candidateId = candidate.id;
+      }
+    } else if (req.user.role === 'employer') {
+      where.job = { employerId: req.user.id };
     }
 
     if (status) {
@@ -49,30 +63,36 @@ router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
       include: {
         job: {
           include: {
-            recruiter: { select: { id: true, name: true, email: true } },
+            employer: { select: { id: true, name: true, email: true } },
           },
         },
-        student: {
-          select: { id: true, name: true, email: true, avatarUrl: true },
-        },
-        resume: true,
+        candidate: true,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { appliedAt: 'desc' },
     });
 
     res.json({ data: applications });
   } catch (error) {
+    console.error('Error fetching applications:', error);
     res.status(500).json({ message: 'Failed to fetch applications' });
   }
 });
 
-router.post('/', authenticate, authorize('student'), async (req: AuthRequest, res: Response) => {
+router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
   try {
-    const { jobId, coverLetter } = req.body;
+    const { jobId } = req.body;
+
+    const candidate = await prisma.candidate.findFirst({
+      where: { clerkUserId: req.user.id },
+    });
+
+    if (!candidate) {
+      return res.status(400).json({ message: 'Please create your candidate profile first' });
+    }
 
     const existingApplication = await prisma.application.findUnique({
       where: {
-        jobId_studentId: { jobId, studentId: req.user.id },
+        jobId_candidateId: { jobId, candidateId: candidate.id },
       },
     });
 
@@ -80,47 +100,19 @@ router.post('/', authenticate, authorize('student'), async (req: AuthRequest, re
       return res.status(400).json({ message: 'You have already applied to this job' });
     }
 
-    const resume = await prisma.resume.findFirst({
-      where: { userId: req.user.id },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    if (!resume) {
-      return res.status(400).json({ message: 'Please upload a resume first' });
-    }
-
     const job = await prisma.job.findUnique({ where: { id: jobId } });
     if (!job) {
       return res.status(404).json({ message: 'Job not found' });
     }
 
-    let matchScore = null;
-    try {
-      const aiResponse = await axios.post(
-        `${process.env.AI_SERVICE_URL || 'http://localhost:3002'}/ai/match`,
-        {
-          resumeSkills: resume.skills,
-          jobRequirements: job.requirements || job.description,
-        },
-        { timeout: 10000 }
-      );
-      matchScore = aiResponse.data.matchScore || null;
-    } catch (aiError) {
-      console.error('AI matching failed:', aiError);
-    }
-
     const application = await prisma.application.create({
       data: {
         jobId,
-        studentId: req.user.id,
-        resumeId: resume.id,
-        coverLetter,
-        matchScore,
+        candidateId: candidate.id,
       },
       include: {
         job: true,
-        student: { select: { id: true, name: true, email: true } },
-        resume: true,
+        candidate: true,
       },
     });
 
@@ -131,7 +123,7 @@ router.post('/', authenticate, authorize('student'), async (req: AuthRequest, re
   }
 });
 
-router.put('/:id/status', authenticate, authorize('recruiter', 'admin'), async (req: AuthRequest, res: Response) => {
+router.put('/:id/status', authenticate, authorize('employer', 'admin'), async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -141,12 +133,13 @@ router.put('/:id/status', authenticate, authorize('recruiter', 'admin'), async (
       data: { status },
       include: {
         job: true,
-        student: { select: { id: true, name: true, email: true } },
+        candidate: true,
       },
     });
 
     res.json({ data: application });
   } catch (error) {
+    console.error('Error updating application:', error);
     res.status(500).json({ message: 'Failed to update application status' });
   }
 });

@@ -5,9 +5,9 @@ import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
 import jobRoutes from './routes/jobs';
 import applicationRoutes from './routes/applications';
-import resumeRoutes from './routes/resumes';
 import courseRoutes from './routes/courses';
 import dashboardRoutes from './routes/dashboard';
+import candidateRoutes from './routes/candidates';
 
 dotenv.config();
 
@@ -22,9 +22,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/applications', applicationRoutes);
-app.use('/api/resume', resumeRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/candidates', candidateRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Backend API is running' });
