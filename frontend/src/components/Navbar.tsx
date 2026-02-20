@@ -5,6 +5,16 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { User, LogOut, Menu, X, LayoutDashboard, Briefcase, GraduationCap, Settings } from 'lucide-react';
 
+function GraduationCapLogo({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"></path>
+      <path d="M22 10v6"></path>
+      <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"></path>
+    </svg>
+  );
+}
+
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -51,10 +61,10 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link href="/dashboard" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-[#FF6B35] rounded-lg flex items-center justify-center">
-              <span className="font-bold text-lg text-white">E</span>
+            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
+              <GraduationCapLogo className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-xl text-[#1a1a1a]">EsenceLab</span>
+            <span className="font-bold text-xl text-black">EsenceLab</span>
           </Link>
 
           <div className="hidden md:flex items-center space-x-8">
@@ -62,7 +72,7 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="flex items-center space-x-1.5 text-gray-600 hover:text-[#FF6B35] transition-colors font-medium"
+                className="flex items-center space-x-1.5 text-gray-600 hover:text-black transition-colors font-medium"
               >
                 <link.icon className="w-4 h-4" />
                 <span>{link.label}</span>
@@ -74,21 +84,21 @@ export default function Navbar() {
             <div className="relative">
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="flex items-center space-x-2 text-gray-600 hover:text-[#1a1a1a] transition-colors"
+                className="flex items-center space-x-2 text-gray-600 hover:text-black transition-colors"
               >
-                <div className="w-8 h-8 bg-[#FFF5E6] rounded-full flex items-center justify-center">
-                  <User className="w-4 h-4 text-[#FF6B35]" />
+                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                  <User className="w-4 h-4 text-black" />
                 </div>
                 <span className="font-medium">{user?.name}</span>
               </button>
               
               {isProfileOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white text-[#1a1a1a] rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                <div className="absolute right-0 mt-2 w-48 bg-white text-black rounded-xl shadow-lg border border-gray-100 py-2 z-50">
                   <div className="px-4 py-2 border-b border-gray-100">
                     <p className="font-medium">{user?.name}</p>
                     <p className="text-sm text-gray-500 capitalize">{user?.role}</p>
                   </div>
-                  <Link href="/profile" className="block px-4 py-2 hover:bg-[#FFF5E6] flex items-center space-x-2 transition-colors">
+                  <Link href="/profile" className="block px-4 py-2 hover:bg-gray-50 flex items-center space-x-2 transition-colors">
                     <Settings className="w-4 h-4" />
                     <span>Settings</span>
                   </Link>
@@ -120,7 +130,7 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="block px-3 py-2 text-gray-600 hover:text-[#FF6B35] hover:bg-[#FFF5E6] rounded-lg flex items-center space-x-2 transition-colors"
+                className="block px-3 py-2 text-gray-600 hover:text-black hover:bg-gray-50 rounded-lg flex items-center space-x-2 transition-colors"
               >
                 <link.icon className="w-4 h-4" />
                 <span>{link.label}</span>

@@ -5,15 +5,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --primary: #1a1a1a;
-  --secondary: #FF6B35;
-  --accent: #10B981;
+  --primary: #000000;
+  --secondary: #1a1a1a;
+  --accent: #000000;
   --warning: #F59E0B;
   --error: #EF4444;
+  --success: #10B981;
   --background: #FFFBF5;
   --background-alt: #FFF8F0;
   --card: #FFFFFF;
-  --text-primary: #1a1a1a;
+  --text-primary: #000000;
   --text-secondary: #6B7280;
   --text-muted: #9CA3AF;
   --border: #E5E7EB;
@@ -44,7 +45,7 @@ a {
 }
 
 ::selection {
-  background-color: var(--secondary);
+  background-color: var(--primary);
   color: white;
 }
 

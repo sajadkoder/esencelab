@@ -54,7 +54,7 @@ export default function DashboardPage() {
   if (isLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FF6B35]"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
       </div>
     );
   }
@@ -75,12 +75,12 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">Welcome back, {user.name}!</h1>
+          <h1 className="text-2xl font-bold text-black">Welcome back, {user.name}!</h1>
           <p className="text-gray-500">Here's what's happening with your {user.role === 'student' ? 'job search' : 'recruitment'}.</p>
         </div>
         {user.role === 'employer' && (
           <Link href="/jobs/new">
-            <Button className="bg-[#FF6B35] hover:bg-[#e55a2b]">Post New Job</Button>
+            <Button className="bg-black hover:bg-gray-800 text-white">Post New Job</Button>
           </Link>
         )}
       </div>
@@ -88,32 +88,32 @@ export default function DashboardPage() {
       {user.role === 'student' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="flex items-center space-x-4">
-            <div className="p-3 bg-[#FFF5E6] rounded-xl">
-              <FileText className="w-6 h-6 text-[#FF6B35]" />
+            <div className="p-3 bg-gray-100 rounded-xl">
+              <FileText className="w-6 h-6 text-black" />
             </div>
             <div>
               <p className="text-sm text-gray-500">Applications</p>
-              <p className="text-2xl font-bold text-[#1a1a1a]">{stats.myApplications || 0}</p>
+              <p className="text-2xl font-bold text-black">{stats.myApplications || 0}</p>
             </div>
           </Card>
           <Card className="flex items-center space-x-4">
-            <div className="p-3 bg-green-50 rounded-xl">
-              <CheckCircle className="w-6 h-6 text-green-500" />
+            <div className="p-3 bg-gray-100 rounded-xl">
+              <CheckCircle className="w-6 h-6 text-black" />
             </div>
             <div>
               <p className="text-sm text-gray-500">Shortlisted</p>
-              <p className="text-2xl font-bold text-[#1a1a1a]">
+              <p className="text-2xl font-bold text-black">
                 {recentApplications.filter((a: Application) => a.status === 'shortlisted').length}
               </p>
             </div>
           </Card>
           <Card className="flex items-center space-x-4">
-            <div className="p-3 bg-blue-50 rounded-xl">
-              <Clock className="w-6 h-6 text-blue-500" />
+            <div className="p-3 bg-gray-100 rounded-xl">
+              <Clock className="w-6 h-6 text-black" />
             </div>
             <div>
               <p className="text-sm text-gray-500">Interviews</p>
-              <p className="text-2xl font-bold text-[#1a1a1a]">
+              <p className="text-2xl font-bold text-black">
                 {recentApplications.filter((a: Application) => a.status === 'interview').length}
               </p>
             </div>
@@ -124,30 +124,30 @@ export default function DashboardPage() {
       {user.role === 'employer' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="flex items-center space-x-4">
-            <div className="p-3 bg-[#FFF5E6] rounded-xl">
-              <Briefcase className="w-6 h-6 text-[#FF6B35]" />
+            <div className="p-3 bg-gray-100 rounded-xl">
+              <Briefcase className="w-6 h-6 text-black" />
             </div>
             <div>
               <p className="text-sm text-gray-500">Posted Jobs</p>
-              <p className="text-2xl font-bold text-[#1a1a1a]">{stats.postedJobs || 0}</p>
+              <p className="text-2xl font-bold text-black">{stats.postedJobs || 0}</p>
             </div>
           </Card>
           <Card className="flex items-center space-x-4">
-            <div className="p-3 bg-green-50 rounded-xl">
-              <Users className="w-6 h-6 text-green-500" />
+            <div className="p-3 bg-gray-100 rounded-xl">
+              <Users className="w-6 h-6 text-black" />
             </div>
             <div>
               <p className="text-sm text-gray-500">Total Applicants</p>
-              <p className="text-2xl font-bold text-[#1a1a1a]">{stats.totalApplications || 0}</p>
+              <p className="text-2xl font-bold text-black">{stats.totalApplications || 0}</p>
             </div>
           </Card>
           <Card className="flex items-center space-x-4">
-            <div className="p-3 bg-blue-50 rounded-xl">
-              <TrendingUp className="w-6 h-6 text-blue-500" />
+            <div className="p-3 bg-gray-100 rounded-xl">
+              <TrendingUp className="w-6 h-6 text-black" />
             </div>
             <div>
               <p className="text-sm text-gray-500">Interviews</p>
-              <p className="text-2xl font-bold text-[#1a1a1a]">{stats.interviewsScheduled || 0}</p>
+              <p className="text-2xl font-bold text-black">{stats.interviewsScheduled || 0}</p>
             </div>
           </Card>
         </div>
@@ -156,39 +156,39 @@ export default function DashboardPage() {
       {user.role === 'admin' && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="flex items-center space-x-4">
-            <div className="p-3 bg-[#FFF5E6] rounded-xl">
-              <Users className="w-6 h-6 text-[#FF6B35]" />
+            <div className="p-3 bg-gray-100 rounded-xl">
+              <Users className="w-6 h-6 text-black" />
             </div>
             <div>
               <p className="text-sm text-gray-500">Total Users</p>
-              <p className="text-2xl font-bold text-[#1a1a1a]">{stats.totalUsers || 0}</p>
+              <p className="text-2xl font-bold text-black">{stats.totalUsers || 0}</p>
             </div>
           </Card>
           <Card className="flex items-center space-x-4">
-            <div className="p-3 bg-green-50 rounded-xl">
-              <Briefcase className="w-6 h-6 text-green-500" />
+            <div className="p-3 bg-gray-100 rounded-xl">
+              <Briefcase className="w-6 h-6 text-black" />
             </div>
             <div>
               <p className="text-sm text-gray-500">Total Jobs</p>
-              <p className="text-2xl font-bold text-[#1a1a1a]">{stats.totalJobs || 0}</p>
+              <p className="text-2xl font-bold text-black">{stats.totalJobs || 0}</p>
             </div>
           </Card>
           <Card className="flex items-center space-x-4">
-            <div className="p-3 bg-blue-50 rounded-xl">
-              <FileText className="w-6 h-6 text-blue-500" />
+            <div className="p-3 bg-gray-100 rounded-xl">
+              <FileText className="w-6 h-6 text-black" />
             </div>
             <div>
               <p className="text-sm text-gray-500">Applications</p>
-              <p className="text-2xl font-bold text-[#1a1a1a]">{stats.totalApplications || 0}</p>
+              <p className="text-2xl font-bold text-black">{stats.totalApplications || 0}</p>
             </div>
           </Card>
           <Card className="flex items-center space-x-4">
-            <div className="p-3 bg-purple-50 rounded-xl">
-              <FileText className="w-6 h-6 text-purple-500" />
+            <div className="p-3 bg-gray-100 rounded-xl">
+              <FileText className="w-6 h-6 text-black" />
             </div>
             <div>
               <p className="text-sm text-gray-500">Candidates</p>
-              <p className="text-2xl font-bold text-[#1a1a1a]">{stats.totalCandidates || 0}</p>
+              <p className="text-2xl font-bold text-black">{stats.totalCandidates || 0}</p>
             </div>
           </Card>
         </div>
@@ -196,16 +196,16 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card title="Recent Jobs" subtitle="Latest job postings" action={
-          <Link href="/jobs" className="text-[#FF6B35] hover:underline text-sm flex items-center">
+          <Link href="/jobs" className="text-black hover:underline text-sm flex items-center font-medium">
             View all <ArrowRight className="w-4 h-4 ml-1" />
           </Link>
         }>
           {recentJobs.length > 0 ? (
             <div className="space-y-3">
               {recentJobs.map((job: Job) => (
-                <div key={job.id} className="flex items-center justify-between p-4 bg-[#FFF8F0] rounded-xl hover:bg-[#FFF5E6] transition-colors">
+                <div key={job.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
                   <div>
-                    <h4 className="font-medium text-[#1a1a1a]">{job.title}</h4>
+                    <h4 className="font-medium text-black">{job.title}</h4>
                     <p className="text-sm text-gray-500">{job.company} - {job.location}</p>
                   </div>
                   <Badge variant={job.status === 'active' ? 'success' : 'default'}>
@@ -221,16 +221,16 @@ export default function DashboardPage() {
 
         {user.role === 'student' && (
           <Card title="My Applications" subtitle="Track your applications" action={
-            <Link href="/applications" className="text-[#FF6B35] hover:underline text-sm flex items-center">
+            <Link href="/applications" className="text-black hover:underline text-sm flex items-center font-medium">
               View all <ArrowRight className="w-4 h-4 ml-1" />
             </Link>
           }>
             {recentApplications.length > 0 ? (
               <div className="space-y-3">
                 {recentApplications.slice(0, 5).map((app: Application) => (
-                  <div key={app.id} className="flex items-center justify-between p-4 bg-[#FFF8F0] rounded-xl">
+                  <div key={app.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                     <div>
-                      <h4 className="font-medium text-[#1a1a1a]">{app.job?.title}</h4>
+                      <h4 className="font-medium text-black">{app.job?.title}</h4>
                       <p className="text-sm text-gray-500">{app.job?.company}</p>
                     </div>
                     {getStatusBadge(app.status)}
@@ -238,7 +238,7 @@ export default function DashboardPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-8">No applications yet. <Link href="/jobs" className="text-[#FF6B35]">Browse jobs</Link></p>
+              <p className="text-gray-500 text-center py-8">No applications yet. <Link href="/jobs" className="text-black font-medium">Browse jobs</Link></p>
             )}
           </Card>
         )}
