@@ -22,8 +22,7 @@ export default function RegisterPage() {
 
   const roleOptions = [
     { value: 'student', label: 'Student / Job Seeker' },
-    { value: 'recruiter', label: 'Recruiter' },
-    { value: 'admin', label: 'Admin' },
+    { value: 'employer', label: 'Recruiter / Employer' },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,23 +52,23 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 py-12 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#FFFBF5] py-12 px-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-2">
-            <div className="w-12 h-12 bg-secondary rounded-lg flex items-center justify-center">
-              <span className="font-bold text-2xl text-white">E</span>
+            <div className="w-10 h-10 bg-[#FF6B35] rounded-xl flex items-center justify-center">
+              <span className="font-bold text-xl text-white">E</span>
             </div>
-            <span className="font-bold text-3xl text-primary">EsenceLab</span>
+            <span className="font-bold text-2xl text-[#1a1a1a]">EsenceLab</span>
           </Link>
-          <h2 className="mt-6 text-2xl font-bold text-primary">Create your account</h2>
-          <p className="mt-2 text-slate-600">Join EsenceLab today</p>
+          <h2 className="mt-6 text-2xl font-bold text-[#1a1a1a]">Create your account</h2>
+          <p className="mt-2 text-gray-600">Join EsenceLab today</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="bg-red-50 text-error p-4 rounded-lg text-sm">
+              <div className="bg-red-50 text-red-500 p-4 rounded-xl text-sm">
                 {error}
               </div>
             )}
@@ -79,7 +78,7 @@ export default function RegisterPage() {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="John Doe"
+              placeholder="Your name"
               required
             />
 
@@ -117,15 +116,15 @@ export default function RegisterPage() {
               required
             />
 
-            <Button type="submit" className="w-full" isLoading={isLoading}>
+            <Button type="submit" className="w-full bg-[#FF6B35] hover:bg-[#e55a2b]" isLoading={isLoading}>
               Create Account
             </Button>
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-slate-600">
+            <p className="text-gray-600">
               Already have an account?{' '}
-              <Link href="/login" className="text-secondary hover:underline font-medium">
+              <Link href="/login" className="text-[#FF6B35] hover:underline font-medium">
                 Sign in
               </Link>
             </p>

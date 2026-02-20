@@ -54,7 +54,7 @@ export default function DashboardPage() {
   if (isLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-secondary"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FF6B35]"></div>
       </div>
     );
   }
@@ -75,12 +75,12 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-primary">Welcome back, {user.name}!</h1>
-          <p className="text-slate-500">Here&apos;s what&apos;s happening with your {user.role === 'student' ? 'job search' : 'recruitment'}.</p>
+          <h1 className="text-2xl font-bold text-[#1a1a1a]">Welcome back, {user.name}!</h1>
+          <p className="text-gray-500">Here's what's happening with your {user.role === 'student' ? 'job search' : 'recruitment'}.</p>
         </div>
-        {user.role === 'recruiter' && (
+        {user.role === 'employer' && (
           <Link href="/jobs/new">
-            <Button>Post New Job</Button>
+            <Button className="bg-[#FF6B35] hover:bg-[#e55a2b]">Post New Job</Button>
           </Link>
         )}
       </div>
@@ -88,32 +88,32 @@ export default function DashboardPage() {
       {user.role === 'student' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="flex items-center space-x-4">
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <FileText className="w-6 h-6 text-secondary" />
+            <div className="p-3 bg-[#FFF5E6] rounded-xl">
+              <FileText className="w-6 h-6 text-[#FF6B35]" />
             </div>
             <div>
-              <p className="text-sm text-slate-500">Applications</p>
-              <p className="text-2xl font-bold">{stats.myApplications || 0}</p>
+              <p className="text-sm text-gray-500">Applications</p>
+              <p className="text-2xl font-bold text-[#1a1a1a]">{stats.myApplications || 0}</p>
             </div>
           </Card>
           <Card className="flex items-center space-x-4">
-            <div className="p-3 bg-green-100 rounded-lg">
-              <CheckCircle className="w-6 h-6 text-accent" />
+            <div className="p-3 bg-green-50 rounded-xl">
+              <CheckCircle className="w-6 h-6 text-green-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-500">Shortlisted</p>
-              <p className="text-2xl font-bold">
+              <p className="text-sm text-gray-500">Shortlisted</p>
+              <p className="text-2xl font-bold text-[#1a1a1a]">
                 {recentApplications.filter((a: Application) => a.status === 'shortlisted').length}
               </p>
             </div>
           </Card>
           <Card className="flex items-center space-x-4">
-            <div className="p-3 bg-amber-100 rounded-lg">
-              <Clock className="w-6 h-6 text-warning" />
+            <div className="p-3 bg-blue-50 rounded-xl">
+              <Clock className="w-6 h-6 text-blue-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-500">Interviews</p>
-              <p className="text-2xl font-bold">
+              <p className="text-sm text-gray-500">Interviews</p>
+              <p className="text-2xl font-bold text-[#1a1a1a]">
                 {recentApplications.filter((a: Application) => a.status === 'interview').length}
               </p>
             </div>
@@ -121,33 +121,33 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {user.role === 'recruiter' && (
+      {user.role === 'employer' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="flex items-center space-x-4">
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <Briefcase className="w-6 h-6 text-secondary" />
+            <div className="p-3 bg-[#FFF5E6] rounded-xl">
+              <Briefcase className="w-6 h-6 text-[#FF6B35]" />
             </div>
             <div>
-              <p className="text-sm text-slate-500">Posted Jobs</p>
-              <p className="text-2xl font-bold">{stats.postedJobs || 0}</p>
+              <p className="text-sm text-gray-500">Posted Jobs</p>
+              <p className="text-2xl font-bold text-[#1a1a1a]">{stats.postedJobs || 0}</p>
             </div>
           </Card>
           <Card className="flex items-center space-x-4">
-            <div className="p-3 bg-green-100 rounded-lg">
-              <Users className="w-6 h-6 text-accent" />
+            <div className="p-3 bg-green-50 rounded-xl">
+              <Users className="w-6 h-6 text-green-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-500">Total Applicants</p>
-              <p className="text-2xl font-bold">{stats.totalApplications || 0}</p>
+              <p className="text-sm text-gray-500">Total Applicants</p>
+              <p className="text-2xl font-bold text-[#1a1a1a]">{stats.totalApplications || 0}</p>
             </div>
           </Card>
           <Card className="flex items-center space-x-4">
-            <div className="p-3 bg-amber-100 rounded-lg">
-              <TrendingUp className="w-6 h-6 text-warning" />
+            <div className="p-3 bg-blue-50 rounded-xl">
+              <TrendingUp className="w-6 h-6 text-blue-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-500">Interviews</p>
-              <p className="text-2xl font-bold">{stats.interviewsScheduled || 0}</p>
+              <p className="text-sm text-gray-500">Interviews</p>
+              <p className="text-2xl font-bold text-[#1a1a1a]">{stats.interviewsScheduled || 0}</p>
             </div>
           </Card>
         </div>
@@ -156,39 +156,39 @@ export default function DashboardPage() {
       {user.role === 'admin' && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="flex items-center space-x-4">
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <Users className="w-6 h-6 text-secondary" />
+            <div className="p-3 bg-[#FFF5E6] rounded-xl">
+              <Users className="w-6 h-6 text-[#FF6B35]" />
             </div>
             <div>
-              <p className="text-sm text-slate-500">Total Users</p>
-              <p className="text-2xl font-bold">{stats.totalUsers || 0}</p>
+              <p className="text-sm text-gray-500">Total Users</p>
+              <p className="text-2xl font-bold text-[#1a1a1a]">{stats.totalUsers || 0}</p>
             </div>
           </Card>
           <Card className="flex items-center space-x-4">
-            <div className="p-3 bg-green-100 rounded-lg">
-              <Briefcase className="w-6 h-6 text-accent" />
+            <div className="p-3 bg-green-50 rounded-xl">
+              <Briefcase className="w-6 h-6 text-green-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-500">Total Jobs</p>
-              <p className="text-2xl font-bold">{stats.totalJobs || 0}</p>
+              <p className="text-sm text-gray-500">Total Jobs</p>
+              <p className="text-2xl font-bold text-[#1a1a1a]">{stats.totalJobs || 0}</p>
             </div>
           </Card>
           <Card className="flex items-center space-x-4">
-            <div className="p-3 bg-amber-100 rounded-lg">
-              <FileText className="w-6 h-6 text-warning" />
+            <div className="p-3 bg-blue-50 rounded-xl">
+              <FileText className="w-6 h-6 text-blue-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-500">Applications</p>
-              <p className="text-2xl font-bold">{stats.totalApplications || 0}</p>
+              <p className="text-sm text-gray-500">Applications</p>
+              <p className="text-2xl font-bold text-[#1a1a1a]">{stats.totalApplications || 0}</p>
             </div>
           </Card>
           <Card className="flex items-center space-x-4">
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <FileText className="w-6 h-6 text-purple-600" />
+            <div className="p-3 bg-purple-50 rounded-xl">
+              <FileText className="w-6 h-6 text-purple-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-500">Resumes</p>
-              <p className="text-2xl font-bold">{stats.totalResumes || 0}</p>
+              <p className="text-sm text-gray-500">Candidates</p>
+              <p className="text-2xl font-bold text-[#1a1a1a]">{stats.totalCandidates || 0}</p>
             </div>
           </Card>
         </div>
@@ -196,17 +196,17 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card title="Recent Jobs" subtitle="Latest job postings" action={
-          <Link href="/jobs" className="text-secondary hover:underline text-sm flex items-center">
+          <Link href="/jobs" className="text-[#FF6B35] hover:underline text-sm flex items-center">
             View all <ArrowRight className="w-4 h-4 ml-1" />
           </Link>
         }>
           {recentJobs.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {recentJobs.map((job: Job) => (
-                <div key={job.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
+                <div key={job.id} className="flex items-center justify-between p-4 bg-[#FFF8F0] rounded-xl hover:bg-[#FFF5E6] transition-colors">
                   <div>
-                    <h4 className="font-medium text-slate-800">{job.title}</h4>
-                    <p className="text-sm text-slate-500">{job.company} - {job.location}</p>
+                    <h4 className="font-medium text-[#1a1a1a]">{job.title}</h4>
+                    <p className="text-sm text-gray-500">{job.company} - {job.location}</p>
                   </div>
                   <Badge variant={job.status === 'active' ? 'success' : 'default'}>
                     {job.status}
@@ -215,35 +215,35 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : (
-            <p className="text-slate-500 text-center py-8">No jobs available yet.</p>
+            <p className="text-gray-500 text-center py-8">No jobs available yet.</p>
           )}
         </Card>
 
         {user.role === 'student' && (
           <Card title="My Applications" subtitle="Track your applications" action={
-            <Link href="/applications" className="text-secondary hover:underline text-sm flex items-center">
+            <Link href="/applications" className="text-[#FF6B35] hover:underline text-sm flex items-center">
               View all <ArrowRight className="w-4 h-4 ml-1" />
             </Link>
           }>
             {recentApplications.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {recentApplications.slice(0, 5).map((app: Application) => (
-                  <div key={app.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                  <div key={app.id} className="flex items-center justify-between p-4 bg-[#FFF8F0] rounded-xl">
                     <div>
-                      <h4 className="font-medium text-slate-800">{app.job?.title}</h4>
-                      <p className="text-sm text-slate-500">{app.job?.company}</p>
+                      <h4 className="font-medium text-[#1a1a1a]">{app.job?.title}</h4>
+                      <p className="text-sm text-gray-500">{app.job?.company}</p>
                     </div>
                     {getStatusBadge(app.status)}
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-slate-500 text-center py-8">No applications yet. <Link href="/jobs" className="text-secondary">Browse jobs</Link></p>
+              <p className="text-gray-500 text-center py-8">No applications yet. <Link href="/jobs" className="text-[#FF6B35]">Browse jobs</Link></p>
             )}
           </Card>
         )}
 
-        {user.role === 'recruiter' && (
+        {user.role === 'employer' && (
           <Card title="Quick Actions" subtitle="Common tasks">
             <div className="space-y-3">
               <Link href="/jobs/new">

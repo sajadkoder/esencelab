@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Briefcase, Users, GraduationCap, ArrowRight, CheckCircle, Sparkles, Target, BookOpen } from 'lucide-react';
+import { Sparkles, ArrowRight, CheckCircle, Zap, Target, TrendingUp } from 'lucide-react';
 import Button from '@/components/Button';
 
 export default function HomePage() {
@@ -19,174 +19,157 @@ export default function HomePage() {
 
   if (isLoading || isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-secondary"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[#FFFBF5]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FF6B35]"></div>
       </div>
     );
   }
 
   const features = [
     {
-      icon: Sparkles,
+      icon: Zap,
       title: 'AI Resume Screening',
-      description: 'Upload your resume and our AI automatically extracts skills, education, and experience for accurate matching.',
+      description: 'Upload your resume and our AI extracts skills, education, and experience automatically.',
     },
     {
       icon: Target,
       title: 'Smart Job Matching',
-      description: 'Get personalized job recommendations based on your skills and career goals with AI-powered matching.',
+      description: 'Get personalized job recommendations based on your skills and career goals.',
     },
     {
-      icon: BookOpen,
-      title: 'Course Recommendations',
-      description: 'Discover courses to bridge skill gaps and boost your employability with personalized learning paths.',
+      icon: TrendingUp,
+      title: 'Career Growth',
+      description: 'Discover courses to bridge skill gaps and accelerate your career.',
     },
   ];
 
   const benefits = [
-    'Automated resume parsing with NLP',
+    'Automated resume parsing',
     'AI-powered skill matching',
     'Real-time application tracking',
     'Role-based dashboards',
-    'Job recommendations for students',
-    'Easy recruitment for companies',
-  ];
-
-  const stats = [
-    { value: '500+', label: 'Students Registered' },
-    { value: '50+', label: 'Recruiting Companies' },
-    { value: '200+', label: 'Jobs Posted' },
-    { value: '1000+', label: 'Applications Processed' },
+    'Job recommendations',
+    'Easy recruitment process',
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50">
-      <header className="bg-white/80 backdrop-blur-sm shadow-sm fixed w-full z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FFFBF5]">
+      {/* Header */}
+      <header className="fixed top-0 w-full z-50 bg-[#FFFBF5]/80 backdrop-blur-md border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-6">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                <GraduationCap className="w-6 h-6 text-white" />
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-[#FF6B35] rounded-lg flex items-center justify-center">
+                <span className="font-bold text-lg text-white">E</span>
               </div>
-              <div>
-                <span className="font-bold text-xl text-primary">SNGCET</span>
-                <span className="font-bold text-xl text-secondary ml-1">CareerHub</span>
-              </div>
+              <span className="font-bold text-xl text-[#1a1a1a]">EsenceLab</span>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               <Link href="/login">
-                <Button variant="outline">Login</Button>
+                <Button variant="outline" className="text-sm">Login</Button>
               </Link>
               <Link href="/register">
-                <Button>Register</Button>
+                <Button className="text-sm bg-[#FF6B35] hover:bg-[#e55a2b]">Get Started</Button>
               </Link>
             </div>
           </div>
         </div>
       </header>
 
-      <section className="pt-32 pb-20 lg:pt-40 lg:pb-32">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-medium mb-6">
-              <Sparkles className="w-4 h-4 mr-2" />
-              Powered by Artificial Intelligence
-            </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary leading-tight mb-6">
-              AI-Powered Career Platform for{' '}
-              <span className="text-secondary">SNGCET Students</span>
-            </h1>
-            <p className="text-xl text-slate-600 mb-8 max-w-2xl mx-auto">
-              Streamline your career journey with intelligent resume screening, 
-              skill-based job matching, and personalized course recommendations — 
-              designed specifically for our college placement ecosystem.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/register">
-                <Button size="lg" className="w-full sm:w-auto">
-                  Get Started Free <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-              </Link>
-              <Link href="/login">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                  Student Login
-                </Button>
-              </Link>
-            </div>
+      {/* Hero Section */}
+      <section className="pt-32 pb-20 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="inline-flex items-center px-3 py-1.5 bg-[#FFF5E6] text-[#FF6B35] rounded-full text-sm font-medium mb-6">
+            <Sparkles className="w-4 h-4 mr-2" />
+            AI-Powered Career Platform
+          </div>
+          
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#1a1a1a] leading-tight mb-6 tracking-tight">
+            Find Your Dream Job with{' '}
+            <span className="text-[#FF6B35]">AI Intelligence</span>
+          </h1>
+          
+          <p className="text-lg md:text-xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
+            EsenceLab uses artificial intelligence to match students with the right opportunities. 
+            Upload your resume, get matched, and land your dream job.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/register">
+              <Button size="lg" className="bg-[#FF6B35] hover:bg-[#e55a2b] text-white px-8">
+                Start Now <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
+            <Link href="/login">
+              <Button variant="outline" size="lg" className="px-8 border-gray-300 hover:bg-gray-50">
+                Sign In
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
 
-      <section className="py-12 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="text-3xl md:text-4xl font-bold text-secondary mb-2">{stat.value}</div>
-                <div className="text-slate-600">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Features Section */}
+      <section className="py-20 px-6 bg-[#FFF8F0]">
+        <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">
-              How It Works
+            <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-4">
+              How EsenceLab Works
             </h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Our AI-powered platform makes career services simple and effective
+            <p className="text-gray-600 max-w-xl mx-auto">
+              Three simple steps to accelerate your career journey
             </p>
           </div>
+          
           <div className="grid md:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <div key={index} className="text-center p-8 bg-white rounded-2xl hover:shadow-xl transition-shadow">
-                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center mx-auto mb-6">
-                  <feature.icon className="w-8 h-8 text-white" />
+              <div key={index} className="bg-white p-8 rounded-2xl border border-gray-100 hover:shadow-lg transition-shadow">
+                <div className="w-12 h-12 bg-[#FFF5E6] rounded-xl flex items-center justify-center mb-5">
+                  <feature.icon className="w-6 h-6 text-[#FF6B35]" />
                 </div>
-                <h3 className="text-xl font-semibold text-primary mb-3">{feature.title}</h3>
-                <p className="text-slate-600">{feature.description}</p>
+                <h3 className="text-xl font-semibold text-[#1a1a1a] mb-3">{feature.title}</h3>
+                <p className="text-gray-600 leading-relaxed">{feature.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+      {/* Benefits Section */}
+      <section className="py-20 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
-              <h2 className="text-3xl font-bold text-primary mb-6">
-                Everything You Need for Career Success
+              <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-6">
+                Everything You Need to Succeed
               </h2>
-              <p className="text-lg text-slate-600 mb-6">
-                SNGCET CareerHub combines cutting-edge AI technology with our college 
-                placement ecosystem to help students and recruiters connect efficiently.
+              <p className="text-gray-600 mb-8 text-lg leading-relaxed">
+                EsenceLab combines AI technology with an intuitive platform 
+                to help students and recruiters connect efficiently.
               </p>
               <div className="grid sm:grid-cols-2 gap-4">
                 {benefits.map((benefit, index) => (
-                  <div key={index} className="flex items-start space-x-3">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-slate-700">{benefit}</span>
+                  <div key={index} className="flex items-center space-x-3">
+                    <CheckCircle className="w-5 h-5 text-[#10B981] flex-shrink-0" />
+                    <span className="text-gray-700">{benefit}</span>
                   </div>
                 ))}
               </div>
             </div>
-            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-8 text-white">
-              <div className="text-center mb-8">
+            
+            <div className="bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] rounded-2xl p-10 text-white">
+              <div className="text-center">
                 <div className="text-5xl font-bold mb-2">90%</div>
-                <div className="text-blue-100">Reduction in screening time</div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white/10 rounded-lg p-4 text-center">
-                  <div className="text-3xl font-bold">100%</div>
-                  <div className="text-blue-100 text-sm">AI Accuracy</div>
-                </div>
-                <div className="bg-white/10 rounded-lg p-4 text-center">
-                  <div className="text-3xl font-bold">24/7</div>
-                  <div className="text-blue-100 text-sm">Support</div>
+                <div className="text-orange-100 mb-8 text-lg">Faster screening time</div>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="bg-white/10 rounded-xl p-5">
+                    <div className="text-3xl font-bold">100%</div>
+                    <div className="text-orange-100 text-sm mt-1">AI Accuracy</div>
+                  </div>
+                  <div className="bg-white/10 rounded-xl p-5">
+                    <div className="text-3xl font-bold">24/7</div>
+                    <div className="text-orange-100 text-sm mt-1">Available</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -194,25 +177,25 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl p-8 md:p-12 text-white text-center">
+      {/* CTA Section */}
+      <section className="py-20 px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-[#1a1a1a] rounded-3xl p-10 md:p-14 text-white text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Ready to Boost Your Career?
+              Ready to Launch Your Career?
             </h2>
-            <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-              Join hundreds of SNGCET students who have already found their dream jobs 
-              through our AI-powered platform.
+            <p className="text-gray-400 mb-8 text-lg max-w-xl mx-auto">
+              Join EsenceLab today and let AI help you find the perfect job match.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/register">
-                <Button size="lg" className="w-full sm:w-auto bg-white text-blue-600 hover:bg-blue-50">
-                  Register Now
+                <Button size="lg" className="bg-[#FF6B35] hover:bg-[#e55a2b] text-white px-8">
+                  Create Account
                 </Button>
               </Link>
               <Link href="/login">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto border-white text-white hover:bg-white/10">
-                  Login
+                <Button variant="outline" size="lg" className="border-gray-600 text-white hover:bg-white/10 px-8">
+                  Sign In
                 </Button>
               </Link>
             </div>
@@ -220,19 +203,17 @@ export default function HomePage() {
         </div>
       </section>
 
-      <footer className="bg-slate-900 text-slate-400 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Footer */}
+      <footer className="py-10 px-6 border-t border-gray-100">
+        <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center space-x-3 mb-4 md:mb-0">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                <GraduationCap className="w-5 h-5 text-white" />
+            <div className="flex items-center space-x-2 mb-4 md:mb-0">
+              <div className="w-7 h-7 bg-[#FF6B35] rounded-lg flex items-center justify-center">
+                <span className="font-bold text-sm text-white">E</span>
               </div>
-              <div>
-                <span className="font-bold text-xl text-white">SNGCET</span>
-                <span className="font-bold text-xl text-secondary ml-1">CareerHub</span>
-              </div>
+              <span className="font-bold text-lg text-[#1a1a1a]">EsenceLab</span>
             </div>
-            <p className="text-sm">© 2024 SNGCET CareerHub. College Project. All rights reserved.</p>
+            <p className="text-sm text-gray-500">© 2026 EsenceLab. College Project. All rights reserved.</p>
           </div>
         </div>
       </footer>

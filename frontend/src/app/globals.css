@@ -2,19 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --primary: #0F172A;
-  --secondary: #3B82F6;
+  --primary: #1a1a1a;
+  --secondary: #FF6B35;
   --accent: #10B981;
   --warning: #F59E0B;
   --error: #EF4444;
-  --background: #F8FAFC;
+  --background: #FFFBF5;
+  --background-alt: #FFF8F0;
   --card: #FFFFFF;
-  --text-primary: #1E293B;
-  --text-secondary: #64748B;
-  --border: #E2E8F0;
+  --text-primary: #1a1a1a;
+  --text-secondary: #6B7280;
+  --text-muted: #9CA3AF;
+  --border: #E5E7EB;
+  --cream: #FFFBF5;
+  --cream-dark: #FFF5E6;
 }
 
 * {
@@ -30,9 +34,34 @@ body {
   font-family: 'Inter', system-ui, sans-serif;
   background-color: var(--background);
   color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a {
   color: inherit;
   text-decoration: none;
+}
+
+::selection {
+  background-color: var(--secondary);
+  color: white;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
 }
