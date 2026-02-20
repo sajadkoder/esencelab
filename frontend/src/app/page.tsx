@@ -148,40 +148,21 @@ export default function HomePage() {
       {/* Benefits Section */}
       <section className="py-20 px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-black mb-6">
-                Everything You Need to Succeed
-              </h2>
-              <p className="text-gray-600 mb-8 text-lg leading-relaxed">
-                EsenceLab combines AI technology with an intuitive platform 
-                to help students and recruiters connect efficiently.
-              </p>
-              <div className="grid sm:grid-cols-2 gap-4">
-                {benefits.map((benefit, index) => (
-                  <div key={index} className="flex items-center space-x-3">
-                    <CheckCircle className="w-5 h-5 text-black flex-shrink-0" />
-                    <span className="text-gray-700">{benefit}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <div className="bg-black rounded-2xl p-10 text-white">
-              <div className="text-center">
-                <div className="text-5xl font-bold mb-2">90%</div>
-                <div className="text-gray-400 mb-8 text-lg">Faster screening time</div>
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="bg-white/10 rounded-xl p-5">
-                    <div className="text-3xl font-bold">100%</div>
-                    <div className="text-gray-400 text-sm mt-1">AI Accuracy</div>
-                  </div>
-                  <div className="bg-white/10 rounded-xl p-5">
-                    <div className="text-3xl font-bold">24/7</div>
-                    <div className="text-gray-400 text-sm mt-1">Available</div>
-                  </div>
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-black mb-6">
+              Everything You Need to Succeed
+            </h2>
+            <p className="text-gray-600 mb-10 text-lg leading-relaxed">
+              EsenceLab combines AI technology with an intuitive platform 
+              to help students and recruiters connect efficiently.
+            </p>
+            <div className="grid sm:grid-cols-2 gap-4 text-left max-w-2xl mx-auto">
+              {benefits.map((benefit, index) => (
+                <div key={index} className="flex items-center space-x-3">
+                  <CheckCircle className="w-5 h-5 text-black flex-shrink-0" />
+                  <span className="text-gray-700">{benefit}</span>
                 </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
