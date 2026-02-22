@@ -91,14 +91,14 @@ export default function UsersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-black">User Management</h1>
-          <p className="text-gray-500">Manage platform users</p>
+          <p className="text-secondary">Manage platform users</p>
         </div>
       </div>
 
       <Card>
         <div className="flex items-center space-x-4 mb-6">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary w-4 h-4" />
             <input
               type="text"
               placeholder="Search users..."
@@ -124,20 +124,20 @@ export default function UsersPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 font-medium text-gray-500">Name</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-500">Email</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-500">Role</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-500">Status</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-500">Joined</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">Actions</th>
+                  <th className="text-left py-3 px-4 font-medium text-secondary">Name</th>
+                  <th className="text-left py-3 px-4 font-medium text-secondary">Email</th>
+                  <th className="text-left py-3 px-4 font-medium text-secondary">Role</th>
+                  <th className="text-left py-3 px-4 font-medium text-secondary">Status</th>
+                  <th className="text-left py-3 px-4 font-medium text-secondary">Joined</th>
+                  <th className="text-right py-3 px-4 font-medium text-secondary">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {users.map((u) => (
-                  <tr key={u.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <tr key={u.id} className="border-b border-border hover:bg-black/5">
                     <td className="py-3 px-4">
                       <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                        <div className="w-8 h-8 bg-black/5 rounded-full flex items-center justify-center">
                           <span className="text-black text-sm font-medium">
                             {u.name?.charAt(0).toUpperCase()}
                           </span>
@@ -145,7 +145,7 @@ export default function UsersPage() {
                         <span className="font-medium text-black">{u.name}</span>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-gray-600">{u.email}</td>
+                    <td className="py-3 px-4 text-secondary">{u.email}</td>
                     <td className="py-3 px-4">{getRoleBadge(u.role)}</td>
                     <td className="py-3 px-4">
                       <button
@@ -158,7 +158,7 @@ export default function UsersPage() {
                         {u.isActive ? 'Active' : 'Inactive'}
                       </button>
                     </td>
-                    <td className="py-3 px-4 text-gray-500 text-sm">
+                    <td className="py-3 px-4 text-secondary text-sm">
                       {new Date(u.createdAt || Date.now()).toLocaleDateString()}
                     </td>
                     <td className="py-3 px-4 text-right">
@@ -176,9 +176,9 @@ export default function UsersPage() {
           </div>
         ) : (
           <div className="text-center py-12">
-            <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <Users className="w-12 h-12 text-secondary/70 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-black mb-2">No users found</h3>
-            <p className="text-gray-500">Try adjusting your search criteria</p>
+            <p className="text-secondary">Try adjusting your search criteria</p>
           </div>
         )}
       </Card>

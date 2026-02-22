@@ -144,10 +144,10 @@ export default function MockInterviewPage() {
                             </div>
 
                             <div className="text-center">
-                                <div className="w-24 h-24 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-gray-700">
-                                    <Video className="w-10 h-10 text-gray-500" />
+                                <div className="w-24 h-24 bg-primary/90 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-gray-700">
+                                    <Video className="w-10 h-10 text-secondary" />
                                 </div>
-                                <p className="text-gray-400">Camera preview will appear here</p>
+                                <p className="text-secondary">Camera preview will appear here</p>
                             </div>
 
                             <div className="absolute bottom-4 left-0 right-0 px-6 flex justify-between items-end">
@@ -169,10 +169,10 @@ export default function MockInterviewPage() {
                             </div>
 
                             <div className="flex items-center gap-2">
-                                <button className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors">
+                                <button className="w-12 h-12 rounded-full bg-black/5 flex items-center justify-center text-secondary hover:bg-black/5 transition-colors">
                                     <Mic className="w-5 h-5" />
                                 </button>
-                                <button className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors">
+                                <button className="w-12 h-12 rounded-full bg-black/5 flex items-center justify-center text-secondary hover:bg-black/5 transition-colors">
                                     <Video className="w-5 h-5" />
                                 </button>
                             </div>

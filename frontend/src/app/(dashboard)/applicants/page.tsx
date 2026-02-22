@@ -137,36 +137,36 @@ export default function ApplicantsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-black">Applicants</h1>
-        <p className="text-gray-500">Review and manage job applications</p>
+        <p className="text-secondary">Review and manage job applications</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="text-center">
           <Users className="w-6 h-6 text-black mx-auto mb-2" />
           <p className="text-2xl font-bold text-black">{stats.total}</p>
-          <p className="text-sm text-gray-500">Total</p>
+          <p className="text-sm text-secondary">Total</p>
         </Card>
         <Card className="text-center">
           <Clock className="w-6 h-6 text-amber-500 mx-auto mb-2" />
           <p className="text-2xl font-bold text-amber-600">{stats.pending}</p>
-          <p className="text-sm text-gray-500">Pending</p>
+          <p className="text-sm text-secondary">Pending</p>
         </Card>
         <Card className="text-center">
           <CheckCircle className="w-6 h-6 text-green-500 mx-auto mb-2" />
           <p className="text-2xl font-bold text-green-600">{stats.shortlisted}</p>
-          <p className="text-sm text-gray-500">Shortlisted</p>
+          <p className="text-sm text-secondary">Shortlisted</p>
         </Card>
         <Card className="text-center">
           <Briefcase className="w-6 h-6 text-black mx-auto mb-2" />
           <p className="text-2xl font-bold text-black">{stats.interview}</p>
-          <p className="text-sm text-gray-500">Interview</p>
+          <p className="text-sm text-secondary">Interview</p>
         </Card>
       </div>
 
       <Card title="AI Candidate Ranking" subtitle="Similarity score based on job skills and resume skills">
         <div className="space-y-4">
           <div className="max-w-md">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Select Job</label>
+            <label className="block text-sm font-medium text-secondary/70 mb-1">Select Job</label>
             <select
               value={selectedJobId}
               onChange={(event) => setSelectedJobId(event.target.value)}
@@ -182,27 +182,27 @@ export default function ApplicantsPage() {
           </div>
 
           {loadingMatches ? (
-            <div className="text-sm text-gray-500 py-8 text-center">Loading AI candidate rankings...</div>
+            <div className="text-sm text-secondary py-8 text-center">Loading AI candidate rankings...</div>
           ) : candidateMatches.length > 0 ? (
             <div className="space-y-3">
               {candidateMatches.slice(0, 8).map((match) => (
-                <div key={match.candidateId} className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <div key={match.candidateId} className="p-4 bg-black/5 rounded-xl border border-border">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-medium text-black">{match.name}</p>
-                      <p className="text-sm text-gray-500">{match.email}</p>
+                      <p className="text-sm text-secondary">{match.email}</p>
                     </div>
                     <Badge variant={match.matchScore >= 70 ? 'success' : match.matchScore >= 50 ? 'warning' : 'secondary'}>
                       {match.matchScore}% Match
                     </Badge>
                   </div>
                   {match.missingSkills.length > 0 && (
-                    <p className="mt-2 text-xs text-gray-500">
+                    <p className="mt-2 text-xs text-secondary">
                       Missing: {match.missingSkills.slice(0, 5).join(', ')}
                     </p>
                   )}
                   {match.hasApplied && (
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1 text-xs text-secondary">
                       Application: {match.applicationStatus || 'pending'}
                     </p>
                   )}
@@ -210,7 +210,7 @@ export default function ApplicantsPage() {
               ))}
             </div>
           ) : (
-            <div className="text-sm text-gray-500 py-8 text-center">
+            <div className="text-sm text-secondary py-8 text-center">
               No candidate ranking available for this job yet.
             </div>
           )}
@@ -220,7 +220,7 @@ export default function ApplicantsPage() {
       <Card>
         <div className="flex items-center space-x-4 mb-6">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary w-4 h-4" />
             <input
               type="text"
               placeholder="Search by name or job..."
@@ -245,17 +245,17 @@ export default function ApplicantsPage() {
             {applications.map((app) => (
               <div
                 key={app.id}
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                className="flex items-center justify-between p-4 bg-black/5 rounded-xl hover:bg-black/5 transition-colors"
               >
                 <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                  <div className="w-12 h-12 bg-black/5 rounded-full flex items-center justify-center">
                     <span className="text-black font-medium">
                       {app.student?.name?.charAt(0).toUpperCase()}
                     </span>
                   </div>
                   <div>
                     <h4 className="font-medium text-black">{app.student?.name}</h4>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-secondary">
                       {app.job?.title} at {app.job?.company}
                     </p>
                     {app.matchScore && (
@@ -289,7 +289,7 @@ export default function ApplicantsPage() {
                     {app.status === 'shortlisted' && (
                       <button
                         onClick={() => handleStatusUpdate(app.id, 'interview')}
-                        className="px-3 py-1 bg-black text-white rounded-lg text-sm hover:bg-gray-800"
+                        className="px-3 py-1 bg-black text-white rounded-lg text-sm hover:bg-primary/90"
                       >
                         Schedule Interview
                       </button>
@@ -301,9 +301,9 @@ export default function ApplicantsPage() {
           </div>
         ) : (
           <div className="text-center py-12">
-            <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <Users className="w-12 h-12 text-secondary/70 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-black mb-2">No applicants yet</h3>
-            <p className="text-gray-500">Applications will appear here when candidates apply</p>
+            <p className="text-secondary">Applications will appear here when candidates apply</p>
           </div>
         )}
       </Card>
