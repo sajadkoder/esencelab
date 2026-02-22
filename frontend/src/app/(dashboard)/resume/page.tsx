@@ -169,8 +169,8 @@ export default function ResumeUploadPage() {
   return (
     <div className="layout-container section-spacing space-y-10 max-w-4xl mx-auto">
       <section>
-        <h1 className="heading-hero text-primary mb-2">Resume Management</h1>
-        <p className="text-body text-secondary">Upload your resume to get AI-powered recommendations.</p>
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-primary mb-2">Resume Management</h1>
+        <p className="text-base text-secondary">Upload your resume to get AI-powered recommendations.</p>
       </section>
 
       <AnimatePresence>

@@ -58,8 +58,8 @@ export default function CoursesPage() {
     <div className="layout-container section-spacing space-y-10 max-w-6xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="heading-hero text-primary mb-2">Learning Courses</h1>
-          <p className="text-body text-secondary">Upskill with curated courses to bridge your skill gaps.</p>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-primary mb-2">Learning Courses</h1>
+          <p className="text-base text-secondary">Upskill with curated courses to bridge your skill gaps.</p>
         </div>
       </div>
 

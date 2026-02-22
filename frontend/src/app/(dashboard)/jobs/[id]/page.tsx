@@ -105,7 +105,7 @@ export default function JobDetailPage() {
           <div className="mb-6">
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
               <div>
-                <h1 className="heading-hero text-primary mb-2 leading-tight">{job.title}</h1>
+                <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-primary mb-2 leading-tight">{job.title}</h1>
                 <p className="text-xl font-medium text-secondary flex items-center">
                   <Building className="w-5 h-5 mr-2.5 text-secondary" />
                   {job.company}

@@ -202,7 +202,7 @@ export default function StudentUpskillingHub({
         >
           <div className="text-center mb-10">
             <h2 className="heading-section text-primary mb-3">Upload Your Resume</h2>
-            <p className="text-body text-secondary">Let's analyze your profile and build your career roadmap.</p>
+            <p className="text-base text-secondary">Let's analyze your profile and build your career roadmap.</p>
           </div>
 
           <Card hoverable={false} className="border-dashed border-2 bg-transparent hover:bg-white/40 transition-colors p-12 flex flex-col items-center justify-center text-center cursor-pointer"
@@ -268,8 +268,8 @@ export default function StudentUpskillingHub({
   return (
     <div className="layout-container section-spacing space-y-12">
       <section className="space-y-3">
-        <h1 className="heading-hero text-primary mb-2">Welcome back, {user?.name || 'Student'}.</h1>
-        <p className="text-body text-secondary">Here's your career progress, let's keep improving together.</p>
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-primary mb-2">Welcome back, {user?.name || 'Student'}.</h1>
+        <p className="text-base text-secondary">Here's your career progress, let's keep improving together.</p>
       </section>
 
       <AnimatePresence>
@@ -290,7 +290,7 @@ export default function StudentUpskillingHub({
         <Card hoverable={false} className="flex flex-col md:flex-row items-center justify-between gap-10 p-8 md:p-12">
           <div className="space-y-4 max-w-lg text-center md:text-left flex-1">
             <h2 className="heading-section text-primary">Resume Strength Score</h2>
-            <p className="text-body text-secondary mb-6">You are {readiness}% ready for the {targetRole} role. Check your skill gaps and continue learning to increase your match.</p>
+            <p className="text-base text-secondary mb-6">You are {readiness}% ready for the {targetRole} role. Check your skill gaps and continue learning to increase your match.</p>
             {uploading ? (
               <div className="flex items-center md:justify-start justify-center gap-2 text-sm text-secondary">
                 <Loader2 className="h-4 w-4 animate-spin text-accent" />

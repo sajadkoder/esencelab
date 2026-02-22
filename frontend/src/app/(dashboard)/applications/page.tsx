@@ -82,8 +82,8 @@ export default function ApplicationsPage() {
   return (
     <div className="layout-container section-spacing space-y-10 max-w-6xl mx-auto">
       <div>
-        <h1 className="heading-hero text-primary mb-2">My Applications</h1>
-        <p className="text-body text-secondary">Track the status of your job applications</p>
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-primary mb-2">My Applications</h1>
+        <p className="text-base text-secondary">Track the status of your job applications</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">

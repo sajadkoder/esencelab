@@ -38,8 +38,8 @@ export default function MockInterviewPage() {
     return (
         <div className="layout-container section-spacing space-y-10 max-w-6xl mx-auto">
             <div>
-                <h1 className="heading-hero text-primary mb-2">Mock Interview Assistant</h1>
-                <p className="text-body text-secondary">Practice with our AI interviewer to perfect your delivery.</p>
+                <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-primary mb-2">Mock Interview Assistant</h1>
+                <p className="text-base text-secondary">Practice with our AI interviewer to perfect your delivery.</p>
             </div>
 
             {!sessionActive ? (

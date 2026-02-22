@@ -210,8 +210,8 @@ export default function DashboardPage() {
     return (
       <div className="layout-container section-spacing space-y-12">
         <section>
-          <h1 className="heading-hero text-primary mb-2">Recruiter Dashboard</h1>
-          <p className="text-body text-secondary">Post jobs and review ranked candidates quickly.</p>
+          <h1 className="text-3xl md:text-4xl font-bold text-primary mb-2 tracking-tight">Recruiter Dashboard</h1>
+          <p className="text-base text-secondary">Post jobs and review ranked candidates quickly.</p>
         </section>
 
         <AnimatePresence>
@@ -332,7 +332,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="py-12 text-center">
-                <p className="text-body text-secondary">
+                <p className="text-base text-secondary">
                   No ranked candidates available for the selected job.
                 </p>
               </div>
@@ -346,8 +346,8 @@ export default function DashboardPage() {
   return (
     <div className="layout-container section-spacing space-y-12">
       <section>
-        <h1 className="heading-hero text-primary mb-2">System Overview</h1>
-        <p className="text-body text-secondary">Real-time metrics and platform activity.</p>
+        <h1 className="text-3xl md:text-4xl font-bold text-primary mb-2 tracking-tight">System Overview</h1>
+        <p className="text-base text-secondary">Real-time metrics and platform activity.</p>
       </section>
 
       <AnimatePresence>
@@ -364,21 +364,21 @@ export default function DashboardPage() {
       </AnimatePresence>
 
       <section className="grid gap-6 md:grid-cols-3">
-        <Card className="text-center hover:scale-102 transition-transform duration-250">
+        <Card className="text-center hover:scale-[1.02] transition-transform duration-300">
           <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-soft text-accent">
             <Users className="h-7 w-7" />
           </div>
           <p className="text-sm font-medium text-secondary tracking-wide uppercase">Total Users</p>
           <p className="mt-2 text-5xl font-bold tracking-tight text-primary">{stats.totalUsers || 0}</p>
         </Card>
-        <Card className="text-center hover:scale-102 transition-transform duration-250">
+        <Card className="text-center hover:scale-[1.02] transition-transform duration-300">
           <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
             <FileText className="h-7 w-7" />
           </div>
           <p className="text-sm font-medium text-secondary tracking-wide uppercase">Total Resumes</p>
           <p className="mt-2 text-5xl font-bold tracking-tight text-primary">{stats.totalResumes || 0}</p>
         </Card>
-        <Card className="text-center hover:scale-102 transition-transform duration-250">
+        <Card className="text-center hover:scale-[1.02] transition-transform duration-300">
           <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
             <Briefcase className="h-7 w-7" />
           </div>
