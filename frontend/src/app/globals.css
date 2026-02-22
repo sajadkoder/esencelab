@@ -6,42 +6,17 @@
   .layout-container {
     @apply mx-auto w-full max-w-[1280px] px-[5%];
   }
-  
+
   .section-spacing {
     @apply py-[6%];
   }
 
   .glass-card {
-    @apply rounded-2xl bg-white/70 backdrop-blur-[20px] border border-black/5 p-[3%] transition-all duration-250 hover:scale-102 hover:shadow-sm;
+    @apply rounded-2xl bg-white/70 backdrop-blur-[20px] border border-black/5 p-[3%] transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-black/5;
   }
-  
+
   .glass-card-no-hover {
-    @apply rounded-2xl bg-white/70 backdrop-blur-[20px] border border-black/5 p-[3%] transition-all duration-250;
-  }
-
-  /* Typography Scale */
-  .heading-hero {
-    font-size: clamp(32px, 4vw, 64px);
-    font-weight: 600;
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-  }
-
-  .heading-section {
-    font-size: clamp(20px, 2vw, 32px);
-    font-weight: 500;
-    line-height: 1.2;
-    letter-spacing: -0.01em;
-  }
-
-  .text-body {
-    font-size: clamp(14px, 1vw, 18px);
-    line-height: 1.6;
-  }
-
-  .text-small {
-    font-size: clamp(12px, 0.9vw, 14px);
-    line-height: 1.5;
+    @apply rounded-2xl bg-white/70 backdrop-blur-[20px] border border-black/5 p-[3%] transition-all duration-300;
   }
 }
 
@@ -64,10 +39,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0,0,0,0.1);
+  background: rgba(0, 0, 0, 0.1);
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0,0,0,0.3);
+  background: rgba(0, 0, 0, 0.3);
 }

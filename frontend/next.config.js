@@ -1,8 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  poweredByHeader: false,
+  compress: true,
   images: {
     domains: ['localhost', 'res.cloudinary.com'],
+    formats: ['image/avif', 'image/webp'],
   },
   async rewrites() {
     return [
