@@ -36,154 +36,156 @@ export default function MockInterviewPage() {
     };
 
     return (
-        <div className="layout-container section-spacing space-y-10 max-w-6xl mx-auto">
-            <div>
-                <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-primary mb-2">Mock Interview Assistant</h1>
-                <p className="text-base text-secondary">Practice with our AI interviewer to perfect your delivery.</p>
-            </div>
+        <div className="layout-container section-spacing space-y-12 max-w-6xl mx-auto">
+            {!sessionActive && (
+                <div className="space-y-4 text-center max-w-2xl mx-auto">
+                    <h1 className="text-4xl md:text-5xl font-serif font-bold tracking-tight text-primary mb-2">The AI Mock Interviewer</h1>
+                    <p className="text-lg font-sans font-light text-secondary">Step into our simulation. Perfect your delivery with real-time feedback on pacing, filler words, and clarity.</p>
+                </div>
+            )}
 
             {!sessionActive ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div className="md:col-span-2 space-y-6">
-                        <Card hoverable={false} className="p-8">
-                            <h2 className="text-xl font-semibold text-primary mb-4">Start a Practice Session</h2>
-                            <p className="text-secondary mb-8">
-                                The AI interviewer will ask you behavioral and technical questions tailored to your target role.
-                                You will receive real-time feedback on your speech pace, filler words, and answer clarity.
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+                    <div className="md:col-span-2 space-y-8">
+                        <div className="glass-panel p-10 md:p-12 rounded-[2.5rem]">
+                            <h2 className="text-3xl font-serif text-primary mb-6">Initialize Session</h2>
+                            <p className="text-lg font-sans font-light text-secondary mb-10">
+                                The AI interviewer will dynamically generate behavioral and technical questions based on your target profile.
                             </p>
 
-                            <div className="space-y-4 mb-8">
-                                <div>
-                                    <label className="block text-sm font-medium text-secondary mb-2">Target Role</label>
-                                    <select
-                                        value={selectedRole}
-                                        onChange={(e) => setSelectedRole(e.target.value)}
-                                        className="w-full rounded-xl border border-border bg-white px-4 py-3 text-primary focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                                    >
-                                        <option value="Frontend Developer">Frontend Developer</option>
-                                        <option value="Backend Developer">Backend Developer</option>
-                                        <option value="Full Stack Developer">Full Stack Developer</option>
-                                        <option value="Data Scientist">Data Scientist</option>
-                                        <option value="Product Manager">Product Manager</option>
-                                    </select>
-                                </div>
+                            <div className="space-y-6 mb-10 relative">
+                                <label className="absolute left-6 transition-all duration-200 pointer-events-none text-[10px] uppercase tracking-widest px-1 bg-transparent text-secondary z-10 -top-2 font-bold">Target Role Configuration</label>
+                                <select
+                                    value={selectedRole}
+                                    onChange={(e) => setSelectedRole(e.target.value)}
+                                    className="w-full rounded-2xl border-[0.5px] border-border bg-white/50 px-6 py-5 font-sans font-medium text-lg text-primary transition-all focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent shadow-inner relative z-0 appearance-none"
+                                >
+                                    <option value="Frontend Developer">Frontend Developer</option>
+                                    <option value="Backend Developer">Backend Developer</option>
+                                    <option value="Full Stack Developer">Full Stack Developer</option>
+                                    <option value="Data Scientist">Data Scientist</option>
+                                    <option value="Product Manager">Product Manager</option>
+                                </select>
                             </div>
 
-                            <div className="flex gap-4">
-                                <Button variant="primary" onClick={handleStartSession} className="w-full sm:w-auto">
-                                    <PlayCircle className="w-5 h-5 mr-2" />
-                                    Begin Interview
-                                </Button>
-                                <Button variant="outline" className="w-full sm:w-auto">
-                                    Settings
+                            <div className="flex flex-col sm:flex-row gap-5">
+                                <Button onClick={handleStartSession} className="w-full sm:w-auto h-14 rounded-full px-12 font-serif text-xl bg-primary text-white hover:bg-black/90 transition-all shadow-xl shadow-primary/20">
+                                    <PlayCircle className="w-6 h-6 mr-3" />
+                                    Commence Simulation
                                 </Button>
                             </div>
-                        </Card>
+                        </div>
 
-                        <h3 className="text-lg font-semibold text-primary mt-8 mb-4">Past Sessions</h3>
-                        <Card hoverable={false} className="divide-y divide-border p-0">
-                            <div className="p-6 flex items-center justify-between hover:bg-background/50 transition-colors">
-                                <div>
-                                    <h4 className="font-medium text-primary">Frontend Developer Practice</h4>
-                                    <p className="text-sm text-secondary">Oct 12, 2023 • 15 mins</p>
+                        <div className="px-4">
+                            <h3 className="text-[10px] font-sans font-bold uppercase tracking-widest text-secondary mb-4">Simulation History</h3>
+                            <div className="space-y-4">
+                                <div className="glass-panel p-6 rounded-2xl flex items-center justify-between hover:-translate-y-1 transition-transform cursor-pointer">
+                                    <div>
+                                        <h4 className="font-serif font-bold text-lg text-primary">Senior Frontend Developer</h4>
+                                        <p className="text-xs font-sans font-semibold text-secondary uppercase tracking-widest mt-1">Oct 12 • 15 mins</p>
+                                    </div>
+                                    <Badge variant="success" className="font-sans font-bold text-[10px] uppercase px-3 py-1.5 shadow-sm">
+                                        85% Clarity
+                                    </Badge>
                                 </div>
-                                <Badge variant="success">Great (85%)</Badge>
-                            </div>
-                            <div className="p-6 flex items-center justify-between hover:bg-background/50 transition-colors">
-                                <div>
-                                    <h4 className="font-medium text-primary">React Technical Interview</h4>
-                                    <p className="text-sm text-secondary">Oct 05, 2023 • 25 mins</p>
+                                <div className="glass-panel p-6 rounded-2xl flex items-center justify-between hover:-translate-y-1 transition-transform cursor-pointer">
+                                    <div>
+                                        <h4 className="font-serif font-bold text-lg text-primary">React Technical Core</h4>
+                                        <p className="text-xs font-sans font-semibold text-secondary uppercase tracking-widest mt-1">Oct 05 • 25 mins</p>
+                                    </div>
+                                    <Badge variant="warning" className="font-sans font-bold text-[10px] uppercase px-3 py-1.5 shadow-sm">
+                                        62% Clarity
+                                    </Badge>
                                 </div>
-                                <Badge variant="warning">Needs Work (62%)</Badge>
                             </div>
-                        </Card>
+                        </div>
                     </div>
 
-                    <div className="space-y-6">
-                        <Card hoverable={false} className="bg-emerald-50 border-emerald-100 p-6">
-                            <h3 className="font-semibold text-emerald-800 mb-3 flex items-center">
-                                <CheckCircle2 className="w-5 h-5 mr-2" /> Tips for Success
+                    <div className="space-y-8">
+                        <div className="glass-panel p-8 bg-emerald-500/5 border-emerald-500/20 rounded-3xl">
+                            <h3 className="font-serif font-bold text-xl text-emerald-900 mb-6 flex items-center gap-3">
+                                <CheckCircle2 className="w-6 h-6 text-emerald-600" /> Optimal Parameters
                             </h3>
-                            <ul className="space-y-3 text-sm text-emerald-700">
-                                <li className="flex items-start"><span className="mr-2">•</span> Use the STAR method (Situation, Task, Action, Result) for behavioral questions.</li>
-                                <li className="flex items-start"><span className="mr-2">•</span> Speak clearly and at a moderate pace to allow the AI to transcribe accurately.</li>
-                                <li className="flex items-start"><span className="mr-2">•</span> Ensure your background is quiet and well-lit.</li>
+                            <ul className="space-y-4 text-sm font-sans font-medium text-emerald-800/80 leading-relaxed">
+                                <li className="flex items-start gap-3"><span className="text-emerald-500">•</span> Execute the STAR method for behavioral responses.</li>
+                                <li className="flex items-start gap-3"><span className="text-emerald-500">•</span> Maintain moderate audio pacing for optimal transcription fidelity.</li>
+                                <li className="flex items-start gap-3"><span className="text-emerald-500">•</span> Ensure adequate facial illumination.</li>
                             </ul>
-                        </Card>
+                        </div>
 
-                        <Card hoverable={false} className="p-6">
-                            <h3 className="font-medium text-primary mb-4">System Check</h3>
-                            <div className="space-y-4">
+                        <div className="glass-panel p-8 rounded-3xl">
+                            <h3 className="text-[10px] font-sans font-bold uppercase tracking-widest text-secondary mb-6">Hardware Status</h3>
+                            <div className="space-y-5">
                                 <div className="flex items-center justify-between">
-                                    <div className="flex items-center text-sm text-secondary">
-                                        <Video className="w-4 h-4 mr-2" /> Camera
+                                    <div className="flex items-center text-sm font-sans font-bold text-primary">
+                                        <Video className="w-5 h-5 mr-3 text-secondary" /> Video Input
                                     </div>
-                                    <Badge variant="success">Ready</Badge>
+                                    <Badge variant="success" className="bg-emerald-100/50 text-emerald-700 font-bold uppercase text-[9px] px-2 py-1 border-[0.5px] border-emerald-200">Online</Badge>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <div className="flex items-center text-sm text-secondary">
-                                        <Mic className="w-4 h-4 mr-2" /> Microphone
+                                    <div className="flex items-center text-sm font-sans font-bold text-primary">
+                                        <Mic className="w-5 h-5 mr-3 text-secondary" /> Audio Array
                                     </div>
-                                    <Badge variant="success">Ready</Badge>
+                                    <Badge variant="success" className="bg-emerald-100/50 text-emerald-700 font-bold uppercase text-[9px] px-2 py-1 border-[0.5px] border-emerald-200">Online</Badge>
                                 </div>
                             </div>
-                        </Card>
+                        </div>
                     </div>
                 </div>
             ) : (
                 <motion.div
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="max-w-4xl mx-auto"
+                    initial={{ opacity: 0, scale: 0.98, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                    className="max-w-5xl mx-auto"
                 >
-                    <Card hoverable={false} className="overflow-hidden p-0 border border-border">
-                        <div className="bg-black aspect-video relative flex items-center justify-center">
-                            <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-medium flex items-center">
-                                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse mr-2" />
-                                Recording
-                            </div>
+                    <div className="flex flex-col md:flex-row gap-6">
 
-                            <div className="text-center">
-                                <div className="w-24 h-24 bg-primary/90 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-gray-700">
-                                    <Video className="w-10 h-10 text-secondary" />
+                        {/* Teleprompter Area */}
+                        <div className="flex-1 glass-panel rounded-[2rem] p-10 md:p-16 flex flex-col justify-center min-h-[400px]">
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.5, duration: 1 }}
+                            >
+                                <h3 className="text-[10px] font-sans font-bold uppercase tracking-widest text-accent mb-6">Current Prompt</h3>
+                                <p className="font-serif text-3xl md:text-5xl text-primary leading-tight font-bold">
+                                    "Could you tell me about a time you had to optimize the performance of a React application?"
+                                </p>
+                            </motion.div>
+                        </div>
+
+                        {/* Video / Metrics Panel */}
+                        <div className="w-full md:w-[350px] flex flex-col gap-6">
+                            {/* Video Feed Placeholder */}
+                            <div className="glass-panel p-2 rounded-[2rem] bg-primary overflow-hidden relative aspect-[3/4]">
+                                <div className="absolute top-4 left-4 bg-white/10 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-[10px] font-sans font-bold uppercase tracking-widest flex items-center border-[0.5px] border-white/20">
+                                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse mr-2" />
+                                    Recording
                                 </div>
-                                <p className="text-secondary">Camera preview will appear here</p>
+
+                                <div className="absolute inset-0 flex flex-col items-center justify-center text-secondary">
+                                    <div className="w-20 h-20 rounded-full border-[0.5px] border-secondary/30 flex items-center justify-center mb-4">
+                                        <Video className="w-8 h-8 opacity-50" />
+                                    </div>
+                                    <p className="text-xs font-sans uppercase tracking-widest font-semibold opacity-50">Camera Matrix Active</p>
+                                </div>
                             </div>
 
-                            <div className="absolute bottom-4 left-0 right-0 px-6 flex justify-between items-end">
-                                <div className="bg-black/60 backdrop-blur-md max-w-lg rounded-2xl p-4 border border-white/10">
-                                    <p className="text-white text-sm">
-                                        <span className="font-semibold text-accent mb-1 block">AI Interviewer</span>
-                                        "Could you tell me about a time you had to optimize the performance of a React application? What specific metrics did you focus on?"
-                                    </p>
+                            {/* Controls */}
+                            <div className="glass-panel p-6 rounded-[2rem] flex items-center justify-between">
+                                <div className="text-sm font-sans font-bold text-primary tracking-widest">02:45</div>
+                                <button className="w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-xl shadow-black/20 hover:scale-105 transition-transform group" onClick={handleEndSession}>
+                                    <div className="w-6 h-6 rounded-sm bg-red-500 group-hover:bg-red-400 transition-colors" />
+                                </button>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                                    <div className="h-1 w-6 bg-accent rounded-full animate-pulse" style={{ animationDelay: '150ms' }} />
+                                    <div className="h-1 w-4 bg-accent rounded-full animate-pulse" style={{ animationDelay: '300ms' }} />
                                 </div>
                             </div>
                         </div>
 
-                        <div className="p-6 flex items-center justify-between bg-white">
-                            <div className="flex items-center gap-4">
-                                <Button variant="outline" className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600" onClick={handleEndSession}>
-                                    End Session
-                                </Button>
-                                <div className="text-sm font-mono text-secondary">02:45</div>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                <button className="w-12 h-12 rounded-full bg-black/5 flex items-center justify-center text-secondary hover:bg-black/5 transition-colors">
-                                    <Mic className="w-5 h-5" />
-                                </button>
-                                <button className="w-12 h-12 rounded-full bg-black/5 flex items-center justify-center text-secondary hover:bg-black/5 transition-colors">
-                                    <Video className="w-5 h-5" />
-                                </button>
-                            </div>
-                        </div>
-                    </Card>
-
-                    <div className="mt-6 flex justify-center gap-2">
-                        <span className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <span className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <span className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                        <span className="text-sm text-secondary ml-2">Listening to your answer...</span>
                     </div>
                 </motion.div>
             )}

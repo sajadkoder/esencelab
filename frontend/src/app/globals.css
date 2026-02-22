@@ -18,15 +18,19 @@
   .glass-card-no-hover {
     @apply rounded-2xl bg-white/70 backdrop-blur-[20px] border border-black/5 p-[3%] transition-all duration-300;
   }
+
+  .glass-panel {
+    @apply bg-white/40 backdrop-blur-2xl border-[0.5px] border-white/60 shadow-2xl shadow-black/5;
+  }
 }
 
 :root {
-  --background: #F7F4EF;
+  --background: #FDFCF8;
 }
 
 body {
   background-color: var(--background);
-  color: #0B0B0B;
+  color: #0A0A0A;
 }
 
 ::-webkit-scrollbar {
@@ -39,10 +43,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(10, 10, 10, 0.1);
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(10, 10, 10, 0.3);
 }

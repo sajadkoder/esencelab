@@ -267,9 +267,9 @@ export default function StudentUpskillingHub({
 
   return (
     <div className="layout-container section-spacing space-y-12">
-      <section className="space-y-3">
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-primary mb-2">Welcome back, {user?.name || 'Student'}.</h1>
-        <p className="text-base text-secondary">Here's your career progress, let's keep improving together.</p>
+      <section className="space-y-4">
+        <h1 className="text-5xl md:text-6xl font-serif font-bold tracking-tight text-primary leading-tight">Welcome back,<br /><span className="italic font-light text-secondary">{user?.name || 'Student'}.</span></h1>
+        <p className="text-lg font-sans text-secondary font-light max-w-2xl">Here's your career progress, let's keep improving together.</p>
       </section>
 
       <AnimatePresence>
@@ -278,7 +278,7 @@ export default function StudentUpskillingHub({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className={`rounded-xl border px-4 py-3 text-sm flex items-center gap-3 ${feedbackClass}`}
+            className={`rounded-2xl border-[0.5px] px-6 py-4 text-sm font-medium font-sans flex items-center gap-3 shadow-sm ${feedbackClass}`}
           >
             {feedback.tone === 'error' ? <AlertCircle className="h-5 w-5" /> : <CheckCircle2 className="h-5 w-5" />}
             {feedback.text}
@@ -287,18 +287,18 @@ export default function StudentUpskillingHub({
       </AnimatePresence>
 
       <section>
-        <Card hoverable={false} className="flex flex-col md:flex-row items-center justify-between gap-10 p-8 md:p-12">
-          <div className="space-y-4 max-w-lg text-center md:text-left flex-1">
-            <h2 className="heading-section text-primary">Resume Strength Score</h2>
-            <p className="text-base text-secondary mb-6">You are {readiness}% ready for the {targetRole} role. Check your skill gaps and continue learning to increase your match.</p>
+        <div className="glass-panel flex flex-col md:flex-row items-center justify-between gap-12 p-10 md:p-16 rounded-[2.5rem]">
+          <div className="space-y-6 max-w-lg text-center md:text-left flex-1">
+            <h2 className="text-3xl font-serif text-primary">Resume Strength Score</h2>
+            <p className="text-lg font-sans text-secondary mb-8 font-light">You are <span className="font-bold text-primary">{readiness}% ready</span> for the <span className="font-medium text-primary">{targetRole}</span> role. Fill your skill gaps to construct a bulletproof profile.</p>
             {uploading ? (
-              <div className="flex items-center md:justify-start justify-center gap-2 text-sm text-secondary">
-                <Loader2 className="h-4 w-4 animate-spin text-accent" />
-                <span>Analyzing your updated resume...</span>
+              <div className="flex items-center md:justify-start justify-center gap-3 text-sm font-sans font-medium text-accent">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span>Quantifying your value...</span>
               </div>
             ) : (
-              <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-                Update Resume
+              <Button onClick={() => fileInputRef.current?.click()} className="h-12 px-8 rounded-full font-serif text-lg bg-primary text-white hover:bg-black/80 transition-all shadow-xl shadow-primary/20">
+                Update Artifact
               </Button>
             )}
             <input
@@ -312,38 +312,64 @@ export default function StudentUpskillingHub({
               }}
             />
           </div>
-          <div className="flex-shrink-0">
-            <CircularProgress value={readiness} max={100} size={160} strokeWidth={12} />
+          <div className="flex-shrink-0 relative">
+            <div className="absolute inset-0 bg-accent/10 blur-[50px] rounded-full" />
+            <div className="p-4 rounded-full border-[0.5px] border-border bg-white/50 relative z-10 shadow-2xl shadow-black/5">
+              <CircularProgress value={readiness} max={100} size={200} strokeWidth={8} />
+            </div>
           </div>
-        </Card>
+        </div>
       </section>
 
-      <section className="space-y-6">
-        <h2 className="heading-section text-primary">Missing Skills</h2>
-        <div className="flex flex-wrap gap-3">
+      <section className="space-y-8">
+        <h2 className="text-2xl font-serif text-primary">Critical Missing Skills</h2>
+        <div className="flex flex-wrap gap-4">
           {topMissingSkills.length > 0 ? (
             topMissingSkills.map((skill) => (
-              <Badge key={skill} variant="secondary" className="text-sm py-1.5 px-4 font-normal">
+              <div key={skill} className="px-5 py-2.5 rounded-xl border-[0.5px] border-accent/20 bg-accent/5 text-accent font-sans text-sm font-semibold uppercase tracking-widest shadow-sm">
                 {skill}
-              </Badge>
+              </div>
             ))
           ) : (
-            <p className="text-sm text-secondary">Great work. You have strong coverage for your target roles.</p>
+            <p className="text-base font-sans font-light text-secondary bg-white/50 border-[0.5px] border-border py-4 px-6 rounded-2xl w-full">Flawless execution. You have elite coverage for your intended targets.</p>
           )}
         </div>
       </section>
 
-      <section className="space-y-6">
-        <h2 className="heading-section text-primary">Top Recommendations</h2>
+      <section className="space-y-8">
+        <h2 className="text-2xl font-serif text-primary">Top Recommendations</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {topRecommendedJobs.length > 0 ? (
-            topRecommendedJobs.map(renderJobCard)
+            topRecommendedJobs.map((entry) => {
+              const match = scoreToPercent(entry.matchScore);
+              return (
+                <div key={entry.job.id} className="p-6 rounded-3xl border-[0.5px] border-border bg-white/50 hover:bg-white transition-all shadow-sm hover:shadow-xl hover:-translate-y-1 flex flex-col group">
+                  <div className="mb-6 flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className="text-xl font-serif font-bold text-primary line-clamp-1 mb-1 group-hover:text-accent transition-colors">{entry.job.title}</h3>
+                      <p className="text-sm font-sans text-secondary uppercase tracking-widest font-semibold">{entry.job.company}</p>
+                    </div>
+                    <Badge variant={match > 75 ? 'success' : match > 50 ? 'warning' : 'secondary'} className="font-sans font-bold text-[10px] tracking-widest px-2 py-1 uppercase rounded-md shadow-sm">
+                      {match}% Fit
+                    </Badge>
+                  </div>
+                  <p className="text-sm font-sans font-light text-secondary flex-grow mb-8 line-clamp-3 leading-relaxed">{oneLine(entry.job.description, 150)}</p>
+                  <div>
+                    <Link href={`/jobs/${entry.job.id}`}>
+                      <Button variant="outline" size="sm" className="w-full rounded-2xl border-[0.5px] border-border bg-transparent hover:bg-black/5 font-sans font-medium h-10">
+                        Inspect Origin
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              );
+            })
           ) : (
-            <Card className="md:col-span-2 lg:col-span-3">
-              <p className="text-sm text-secondary">
-                We are preparing recommendations based on your profile.
+            <div className="md:col-span-2 lg:col-span-3 glass-panel p-8 rounded-3xl text-center">
+              <p className="text-base font-sans font-light text-secondary">
+                Analyzing market vectors... Preparing elite recommendations based on your profile blueprint.
               </p>
-            </Card>
+            </div>
           )}
         </div>
       </section>

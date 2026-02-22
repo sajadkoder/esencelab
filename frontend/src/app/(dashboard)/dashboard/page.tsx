@@ -210,8 +210,8 @@ export default function DashboardPage() {
     return (
       <div className="layout-container section-spacing space-y-12">
         <section>
-          <h1 className="text-3xl md:text-4xl font-bold text-primary mb-2 tracking-tight">Recruiter Dashboard</h1>
-          <p className="text-base text-secondary">Post jobs and review ranked candidates quickly.</p>
+          <h1 className="text-4xl md:text-5xl font-serif font-bold text-primary mb-3 tracking-tight">Recruiter Command Center</h1>
+          <p className="text-lg font-sans text-secondary font-light">Post jobs and review ranked candidates quickly.</p>
         </section>
 
         <AnimatePresence>
@@ -220,7 +220,7 @@ export default function DashboardPage() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="rounded-xl border border-accent-soft bg-accent-soft/30 px-4 py-3 text-sm text-accent"
+              className="rounded-2xl border-[0.5px] border-accent/20 bg-accent/5 px-6 py-4 text-sm font-sans font-medium text-accent shadow-sm"
             >
               {message}
             </motion.div>
@@ -228,8 +228,9 @@ export default function DashboardPage() {
         </AnimatePresence>
 
         <section>
-          <Card title="Post a New Job" className="max-w-4xl hover:scale-100 pb-8">
-            <form className="space-y-6 pt-4" onSubmit={handleCreateJob}>
+          <div className="glass-panel p-8 max-w-4xl rounded-3xl">
+            <h2 className="text-2xl font-serif text-primary mb-6">Post a New Job</h2>
+            <form className="space-y-6" onSubmit={handleCreateJob}>
               <Input
                 label="Job Title"
                 value={jobForm.title}
@@ -254,7 +255,7 @@ export default function DashboardPage() {
                 />
               </div>
               <div className="relative pt-2">
-                <label className="absolute left-4 transition-all duration-200 pointer-events-none text-xs px-1 bg-background text-secondary z-10 -top-1">
+                <label className="absolute left-4 transition-all duration-200 pointer-events-none text-[10px] uppercase tracking-widest px-1 bg-transparent text-secondary z-10 -top-1 font-bold">
                   Required Skills (comma separated)
                 </label>
                 <textarea
@@ -263,28 +264,29 @@ export default function DashboardPage() {
                   onChange={(event) =>
                     setJobForm((prev) => ({ ...prev, requirements: event.target.value }))
                   }
-                  className="w-full rounded-xl border border-border bg-transparent px-4 py-3.5 text-primary text-base transition-colors focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary relative z-0 appearance-none bg-white"
+                  className="w-full rounded-2xl border-[0.5px] border-border bg-white/50 px-4 py-4 font-sans text-primary text-base transition-all focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent shadow-inner relative z-0 appearance-none"
                   placeholder="Node.js, Express, SQL"
                   required
                 />
               </div>
-              <Button type="submit" isLoading={postingJob} className="w-full justify-center">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Post Job
+              <Button type="submit" isLoading={postingJob} className="w-full justify-center h-12 rounded-full font-serif text-lg bg-primary text-white hover:bg-black/80 transition-all">
+                <PlusCircle className="mr-2 h-5 w-5" />
+                Deploy Job Profile
               </Button>
             </form>
-          </Card>
+          </div>
         </section>
 
         <section>
-          <Card title="Ranked Candidates List" className="hover:scale-100">
-            <div className="mb-6 max-w-sm pt-4">
+          <div className="glass-panel p-8 rounded-3xl">
+            <h2 className="text-2xl font-serif text-primary mb-6">Ranked Candidates List</h2>
+            <div className="mb-8 max-w-sm">
               <div className="relative pt-2">
-                <label className="absolute left-4 transition-all duration-200 pointer-events-none text-xs px-1 bg-background text-secondary z-10 -top-1">Select Job</label>
+                <label className="absolute left-4 transition-all duration-200 pointer-events-none text-[10px] uppercase tracking-widest px-1 bg-transparent text-secondary z-10 -top-1 font-bold">Select Active Job</label>
                 <select
                   value={selectedJobId}
                   onChange={(event) => setSelectedJobId(event.target.value)}
-                  className="w-full rounded-xl border border-border bg-transparent px-4 py-3.5 text-primary text-base transition-colors focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary relative z-0 appearance-none bg-white"
+                  className="w-full rounded-2xl border-[0.5px] border-border bg-white/50 px-4 py-4 font-sans text-primary text-base transition-all focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent shadow-sm relative z-0 appearance-none"
                 >
                   {employerJobs.length === 0 && <option value="">No active jobs</option>}
                   {employerJobs.map((job) => (
@@ -302,42 +304,48 @@ export default function DashboardPage() {
             </div>
 
             {loadingMatches ? (
-              <div className="flex items-center justify-center gap-2 py-12 text-sm text-secondary">
-                <Loader2 className="h-5 w-5 animate-spin text-accent" />
-                <span>Scanning and ranking candidates...</span>
+              <div className="flex items-center justify-center gap-3 py-16 text-sm font-sans font-medium text-secondary">
+                <Loader2 className="h-6 w-6 animate-spin text-accent" />
+                <span>Running candidate analysis matrix...</span>
               </div>
             ) : topCandidateMatches.length > 0 ? (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {topCandidateMatches.map((candidate) => {
                   const topSkills = (candidate.matchedSkills || candidate.skills || []).slice(0, 3);
                   const match = scoreToPercent(candidate.matchScore);
                   return (
-                    <Card
+                    <div
                       key={candidate.candidateId}
-                      hoverable
-                      className="p-6"
+                      className="p-6 rounded-2xl border-[0.5px] border-border bg-white/60 hover:bg-white transition-all shadow-sm hover:shadow-lg hover:-translate-y-1 flex flex-col justify-between"
                     >
                       <div className="mb-4 flex items-start justify-between">
-                        <p className="text-lg font-semibold text-primary">{candidate.name}</p>
-                        <Badge variant={match > 75 ? 'success' : match > 50 ? 'warning' : 'secondary'}>
+                        <p className="text-xl font-serif font-bold text-primary">{candidate.name}</p>
+                        <Badge variant={match > 75 ? 'success' : match > 50 ? 'warning' : 'secondary'} className="font-sans font-semibold tracking-wide uppercase text-[10px] px-2 py-1">
                           {match}% Match
                         </Badge>
                       </div>
-                      <p className="text-sm text-secondary">
-                        Top skills: {topSkills.length > 0 ? topSkills.join(', ') : 'No strong overlap yet'}
-                      </p>
-                    </Card>
+                      <div>
+                        <p className="text-[10px] font-sans font-bold uppercase tracking-widest text-secondary mb-2">Detected Skills</p>
+                        <div className="flex flex-wrap gap-2">
+                          {topSkills.map(skill => (
+                            <span key={skill} className="px-2 py-1 text-[10px] font-semibold bg-primary/5 text-primary border-[0.5px] border-border rounded-md uppercase tracking-wider">
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
             ) : (
-              <div className="py-12 text-center">
-                <p className="text-base text-secondary">
+              <div className="py-16 text-center">
+                <p className="text-lg font-sans font-light text-secondary">
                   No ranked candidates available for the selected job.
                 </p>
               </div>
             )}
-          </Card>
+          </div>
         </section>
       </div>
     );
@@ -346,8 +354,8 @@ export default function DashboardPage() {
   return (
     <div className="layout-container section-spacing space-y-12">
       <section>
-        <h1 className="text-3xl md:text-4xl font-bold text-primary mb-2 tracking-tight">System Overview</h1>
-        <p className="text-base text-secondary">Real-time metrics and platform activity.</p>
+        <h1 className="text-4xl md:text-5xl font-serif font-bold text-primary mb-3 tracking-tight">System Global View</h1>
+        <p className="text-lg font-sans text-secondary font-light">Real-time telemetry and platform metrics.</p>
       </section>
 
       <AnimatePresence>
@@ -356,7 +364,7 @@ export default function DashboardPage() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            className="rounded-2xl border-[0.5px] border-red-200 bg-red-50/50 px-6 py-4 text-sm font-sans font-medium text-red-700 shadow-sm"
           >
             {message}
           </motion.div>
@@ -364,27 +372,27 @@ export default function DashboardPage() {
       </AnimatePresence>
 
       <section className="grid gap-6 md:grid-cols-3">
-        <Card className="text-center hover:scale-[1.02] transition-transform duration-300">
-          <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-soft text-accent">
-            <Users className="h-7 w-7" />
+        <div className="glass-panel p-8 text-center rounded-3xl hover:-translate-y-1 transition-transform duration-500">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/5 text-accent border-[0.5px] border-accent/20 shadow-inner">
+            <Users className="h-8 w-8" />
           </div>
-          <p className="text-sm font-medium text-secondary tracking-wide uppercase">Total Users</p>
-          <p className="mt-2 text-5xl font-bold tracking-tight text-primary">{stats.totalUsers || 0}</p>
-        </Card>
-        <Card className="text-center hover:scale-[1.02] transition-transform duration-300">
-          <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-            <FileText className="h-7 w-7" />
+          <p className="text-[10px] font-sans font-bold text-secondary tracking-widest uppercase mb-2">Network Size</p>
+          <p className="text-6xl font-serif font-bold tracking-tighter text-primary">{stats.totalUsers || 0}</p>
+        </div>
+        <div className="glass-panel p-8 text-center rounded-3xl hover:-translate-y-1 transition-transform duration-500">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/5 text-emerald-600 border-[0.5px] border-emerald-500/20 shadow-inner">
+            <FileText className="h-8 w-8" />
           </div>
-          <p className="text-sm font-medium text-secondary tracking-wide uppercase">Total Resumes</p>
-          <p className="mt-2 text-5xl font-bold tracking-tight text-primary">{stats.totalResumes || 0}</p>
-        </Card>
-        <Card className="text-center hover:scale-[1.02] transition-transform duration-300">
-          <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
-            <Briefcase className="h-7 w-7" />
+          <p className="text-[10px] font-sans font-bold text-secondary tracking-widest uppercase mb-2">Resumes Processed</p>
+          <p className="text-6xl font-serif font-bold tracking-tighter text-primary">{stats.totalResumes || 0}</p>
+        </div>
+        <div className="glass-panel p-8 text-center rounded-3xl hover:-translate-y-1 transition-transform duration-500">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-500/5 text-blue-600 border-[0.5px] border-blue-500/20 shadow-inner">
+            <Briefcase className="h-8 w-8" />
           </div>
-          <p className="text-sm font-medium text-secondary tracking-wide uppercase">Total Jobs</p>
-          <p className="mt-2 text-5xl font-bold tracking-tight text-primary">{stats.totalJobs || 0}</p>
-        </Card>
+          <p className="text-[10px] font-sans font-bold text-secondary tracking-widest uppercase mb-2">Active Roles</p>
+          <p className="text-6xl font-serif font-bold tracking-tighter text-primary">{stats.totalJobs || 0}</p>
+        </div>
       </section>
     </div>
   );
