@@ -29,8 +29,8 @@ export default function HomePage() {
 
   if (isLoading || isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FFFBF5]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
       </div>
     );
   }
@@ -38,48 +38,48 @@ export default function HomePage() {
   const features = [
     {
       icon: Zap,
-      title: 'AI Resume Screening',
-      description: 'Upload your resume and our AI extracts skills, education, and experience automatically.',
+      title: 'AI Skill Gap Analysis',
+      description: 'Upload your resume and get a clear breakdown of current skills and what to improve next.',
     },
     {
       icon: Target,
-      title: 'Smart Job Matching',
-      description: 'Get personalized job recommendations based on your skills and career goals.',
+      title: 'Personalized Learning Paths',
+      description: 'Receive curated course recommendations aligned to your target role and current level.',
     },
     {
       icon: TrendingUp,
-      title: 'Career Growth',
-      description: 'Discover courses to bridge skill gaps and accelerate your career.',
+      title: 'Progress Tracking',
+      description: 'Track your upskilling journey with measurable improvements and role readiness insights.',
     },
   ];
 
   const benefits = [
-    'Automated resume parsing',
-    'AI-powered skill matching',
-    'Real-time application tracking',
-    'Role-based dashboards',
-    'Job recommendations',
-    'Easy recruitment process',
+    'Skill gap identification from resume data',
+    'Course recommendations for each missing skill',
+    'Role-readiness score for target job paths',
+    'Student-focused dashboard for continuous learning',
+    'Placement preparation with practical guidance',
+    'Recruiter visibility after upskilling progress',
   ];
 
   return (
-    <div className="min-h-screen bg-[#FFFBF5]">
+    <div className="min-h-screen bg-[#F9FAFB]">
       {/* Header */}
-      <header className="fixed top-0 w-full z-50 bg-[#FFFBF5]/80 backdrop-blur-md border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-6">
+      <header className="nav-glass fixed top-0 w-full z-50">
+        <div className="app-container px-6">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <div className="w-9 h-9 bg-black rounded-lg flex items-center justify-center">
+              <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center">
                 <GraduationCapLogo className="w-5 h-5 text-white" />
               </div>
               <span className="font-bold text-xl text-black">EsenceLab</span>
             </div>
             <div className="flex items-center space-x-3">
               <Link href="/login">
-                <Button variant="outline" className="text-sm border-gray-300 text-black hover:bg-gray-50">Login</Button>
+                <Button variant="outline" className="text-sm">Login</Button>
               </Link>
               <Link href="/register">
-                <Button className="text-sm bg-black hover:bg-gray-800 text-white">Get Started</Button>
+                <Button className="text-sm">Get Started</Button>
               </Link>
             </div>
           </div>
@@ -87,31 +87,31 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center px-3 py-1.5 bg-black text-white rounded-full text-sm font-medium mb-6">
+      <section className="pt-32 pb-24 px-6">
+        <div className="app-container text-center">
+          <div className="inline-flex items-center px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm font-medium mb-6">
             <Sparkles className="w-4 h-4 mr-2" />
-            AI-Powered Career Platform
+            AI-Powered Student Upskilling Platform
           </div>
           
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-black leading-tight mb-6 tracking-tight">
-            Find Your Dream Job with{' '}
-            <span className="text-gray-600">AI Intelligence</span>
+          <h1 className="mx-auto max-w-4xl text-4xl md:text-5xl lg:text-6xl font-semibold text-gray-900 leading-tight mb-6 tracking-tight">
+            Build Industry-Ready Skills with{' '}
+            <span className="bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">AI Guidance</span>
           </h1>
           
           <p className="text-lg md:text-xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-            EsenceLab uses artificial intelligence to match students with the right opportunities. 
-            Upload your resume, get matched, and land your dream job.
+            EsenceLab helps students identify skill gaps, follow targeted learning paths,
+            and become placement-ready through AI-powered recommendations.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/register">
-              <Button size="lg" className="bg-black hover:bg-gray-800 text-white px-8">
-                Start Now <ArrowRight className="ml-2 w-5 h-5" />
+              <Button size="lg" className="px-8">
+                Start Upskilling <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
             <Link href="/login">
-              <Button variant="outline" size="lg" className="px-8 border-gray-300 text-black hover:bg-gray-50">
+              <Button variant="outline" size="lg" className="px-8">
                 Sign In
               </Button>
             </Link>
@@ -120,24 +120,24 @@ export default function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 px-6 bg-[#FFF8F0]">
-        <div className="max-w-6xl mx-auto">
+      <section className="py-24 px-6">
+        <div className="app-container">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-black mb-4">
-              How EsenceLab Works
+              How EsenceLab Upskills Students
             </h2>
             <p className="text-gray-600 max-w-xl mx-auto">
-              Three simple steps to accelerate your career journey
+              A practical learning workflow from resume analysis to placement readiness
             </p>
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <div key={index} className="bg-white p-8 rounded-2xl border border-gray-100 hover:shadow-lg transition-shadow">
-                <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center mb-5">
+              <div key={index} className="surface-card card-hover rounded-2xl p-8">
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center mb-5">
                   <feature.icon className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-black mb-3">{feature.title}</h3>
+                <h3 className="text-xl font-medium text-gray-900 mb-3">{feature.title}</h3>
                 <p className="text-gray-600 leading-relaxed">{feature.description}</p>
               </div>
             ))}
@@ -146,15 +146,15 @@ export default function HomePage() {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-20 px-6">
-        <div className="max-w-6xl mx-auto">
+      <section className="py-24 px-6">
+        <div className="app-container">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold text-black mb-6">
-              Everything You Need to Succeed
+              Everything You Need for Student Upskilling
             </h2>
             <p className="text-gray-600 mb-10 text-lg leading-relaxed">
-              EsenceLab combines AI technology with an intuitive platform 
-              to help students and recruiters connect efficiently.
+              EsenceLab combines AI analysis and structured learning support
+              so students can improve skills before placements.
             </p>
             <div className="grid sm:grid-cols-2 gap-4 text-left max-w-2xl mx-auto">
               {benefits.map((benefit, index) => (
@@ -169,23 +169,23 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-black rounded-3xl p-10 md:p-14 text-white text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Ready to Launch Your Career?
+      <section className="py-24 px-6">
+        <div className="app-container max-w-4xl">
+          <div className="surface-card rounded-3xl p-10 md:p-14 text-center text-black">
+            <h2 className="text-3xl md:text-4xl font-semibold mb-4">
+              Ready to Level Up Your Skills?
             </h2>
-            <p className="text-gray-400 mb-8 text-lg max-w-xl mx-auto">
-              Join EsenceLab today and let AI help you find the perfect job match.
+            <p className="text-gray-600 mb-8 text-lg max-w-xl mx-auto">
+              Join EsenceLab and follow an AI-guided upskilling plan designed for student success.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/register">
-                <Button size="lg" className="bg-white text-black hover:bg-gray-100 px-8">
+                <Button size="lg" className="px-8">
                   Create Account
                 </Button>
               </Link>
               <Link href="/login">
-                <Button variant="outline" size="lg" className="border-gray-600 text-white hover:bg-white/10 px-8">
+                <Button variant="outline" size="lg" className="px-8">
                   Sign In
                 </Button>
               </Link>
@@ -195,16 +195,16 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-10 px-6 border-t border-gray-100">
-        <div className="max-w-6xl mx-auto">
+      <footer className="py-10 px-6 border-t border-gray-200">
+        <div className="app-container">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-3 mb-4 md:mb-0">
-              <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                 <GraduationCapLogo className="w-4 h-4 text-white" />
               </div>
               <span className="font-bold text-lg text-black">EsenceLab</span>
             </div>
-            <p className="text-sm text-gray-500">© 2026 EsenceLab. College Project. All rights reserved.</p>
+            <p className="text-sm text-gray-500">(c) 2026 EsenceLab. College Project. All rights reserved.</p>
           </div>
         </div>
       </footer>

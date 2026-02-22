@@ -1,14 +1,14 @@
-export type UserRole = 'student' | 'recruiter' | 'admin';
+export type UserRole = 'student' | 'employer' | 'admin';
 
 export interface User {
   id: string;
   email: string;
   name: string;
   role: UserRole;
-  avatarUrl?: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+  avatarUrl?: string | null;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AuthState {
@@ -30,27 +30,6 @@ export interface RegisterData {
   role: UserRole;
 }
 
-export interface Resume {
-  id: string;
-  userId: string;
-  fileUrl: string;
-  fileName: string;
-  parsedData: ResumeParsedData;
-  skills: string[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ResumeParsedData {
-  name?: string;
-  email?: string;
-  phone?: string;
-  education?: Education[];
-  experience?: Experience[];
-  skills?: string[];
-  summary?: string;
-}
-
 export interface Education {
   institution?: string;
   degree?: string;
@@ -65,48 +44,76 @@ export interface Experience {
   description?: string;
 }
 
+export interface ResumeParsedData {
+  name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  education?: Education[];
+  experience?: Experience[];
+  skills?: string[];
+  summary?: string | null;
+  organizations?: string[];
+  dates?: string[];
+}
+
+export interface Resume {
+  id: string;
+  userId: string;
+  fileUrl: string;
+  fileName: string;
+  parsedData: ResumeParsedData;
+  skills: string[];
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export interface Job {
   id: string;
   title: string;
   company: string;
   description: string;
-  requirements: string;
+  requirements: string[] | string;
+  skills: string[];
   location: string;
-  salaryMin?: number;
-  salaryMax?: number;
-  jobType: 'full-time' | 'part-time' | 'internship' | 'contract';
+  salaryMin?: number | null;
+  salaryMax?: number | null;
+  jobType: 'full_time' | 'part_time' | 'internship' | 'contract';
   status: 'active' | 'closed';
-  recruiterId: string;
-  recruiter?: User;
+  employerId: string;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 export interface Application {
   id: string;
   jobId: string;
-  studentId: string;
-  resumeId: string;
+  candidateId: string;
   status: 'pending' | 'shortlisted' | 'rejected' | 'interview';
   matchScore?: number;
-  coverLetter?: string;
+  matchedSkills?: string[];
+  missingSkills?: string[];
+  explanation?: string | null;
+  notes?: string;
   job?: Job;
   student?: User;
-  resume?: Resume;
-  createdAt: string;
-  updatedAt: string;
+  resume?: Resume | null;
+  appliedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Course {
   id: string;
   title: string;
   description: string;
-  instructor: string;
+  provider: string;
   url: string;
-  thumbnailUrl?: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+  skills?: string[];
+  duration?: string;
+  level?: string;
+  rating?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface JobMatch {
@@ -114,10 +121,134 @@ export interface JobMatch {
   matchScore: number;
   matchedSkills: string[];
   missingSkills: string[];
+  explanation?: string | null;
+  explanationMeta?: {
+    summary: string;
+    matchedCount: number;
+    totalRequired: number;
+    improvementImpacts: Array<{
+      skill: string;
+      impact: number;
+    }>;
+  };
+}
+
+export interface CourseRecommendation extends Course {
+  matchedMissingSkills: string[];
+  relevanceScore: number;
+}
+
+export interface StudentRecommendations {
+  generatedAt: string;
+  recommendedJobs: JobMatch[];
+  missingSkills: string[];
+  recommendedCourses: CourseRecommendation[];
+  summary?: string;
+}
+
+export interface ResumeScoreEntry {
+  id: string;
+  userId: string;
+  roleId: string;
+  score: number;
+  sectionScores: {
+    skills: number;
+    projects: number;
+    experience: number;
+    education: number;
+  };
+  suggestions: string[];
+  createdAt: string;
+}
+
+export interface CareerRole {
+  id: string;
+  name: string;
+  description: string;
+  requiredSkills: string[];
+  suggestedTools: string[];
+  growthPath: string[];
+}
+
+export interface RoadmapItem {
+  skill: string;
+  status: 'completed' | 'in_progress' | 'missing';
+}
+
+export interface WeeklyPlannerItem {
+  day: number;
+  title: string;
+  tasks: string[];
+}
+
+export interface CareerOverview {
+  roleId: string;
+  role: CareerRole;
+  latestScore: ResumeScoreEntry | null;
+  scoreHistory: ResumeScoreEntry[];
+  roadmap: RoadmapItem[];
+  weeklyPlanner: WeeklyPlannerItem[];
+  progress: {
+    resumeImprovement: number;
+    skillsCompleted: number;
+    skillsInProgress: number;
+    totalSkills: number;
+    jobsMatchedImprovement: number;
+  };
+  missingSkills: string[];
+}
+
+export interface LearningPlan {
+  id: string;
+  userId: string;
+  roleId: string;
+  durationDays: number;
+  planData: {
+    roleId: string;
+    roleName: string;
+    durationDays: number;
+    generatedAt: string;
+    weeks: Array<{
+      week: number;
+      title: string;
+      goals: string[];
+      resources: Array<{
+        title: string;
+        provider: string;
+        url: string;
+      }>;
+    }>;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MockInterviewPack {
+  roleId: string;
+  roleName: string;
+  technical: Array<{
+    question: string;
+    suggestedAnswer: string;
+  }>;
+  behavioral: Array<{
+    question: string;
+    suggestedAnswer: string;
+  }>;
+}
+
+export interface JobTrackerData {
+  savedJobs: Array<{
+    id: string;
+    userId: string;
+    jobId: string;
+    createdAt: string;
+    job: Job;
+  }>;
+  applications: Application[];
 }
 
 export interface ApiResponse<T> {
-  success: boolean;
+  success?: boolean;
   data?: T;
   message?: string;
   error?: string;
@@ -127,6 +258,8 @@ export interface DashboardStats {
   totalUsers?: number;
   totalJobs?: number;
   totalApplications?: number;
+  totalCandidates?: number;
+  totalCourses?: number;
   totalResumes?: number;
   myApplications?: number;
   postedJobs?: number;

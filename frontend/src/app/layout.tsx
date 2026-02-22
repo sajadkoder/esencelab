@@ -1,10 +1,16 @@
 import type { Metadata } from 'next';
+import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-plus-jakarta',
+});
+
 export const metadata: Metadata = {
-  title: 'EsenceLab - AI Resume Screening & Job Matching',
-  description: 'AI-powered resume screening and job matching platform for campus recruitment',
+  title: 'Esencelab - Career Intelligence Platform',
+  description: 'AI-powered Career Intelligence Platform',
 };
 
 export default function RootLayout({
@@ -14,8 +20,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-[#FFFBF5]">
-        <AuthProvider>{children}</AuthProvider>
+      <body className={`${plusJakartaSans.variable} font-sans bg-background text-primary antialiased selection:bg-accent selection:text-white`}>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

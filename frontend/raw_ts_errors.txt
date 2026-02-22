@@ -1,0 +1,7 @@
+src/app/(dashboard)/applicants/page.tsx(113,19): error TS2322: Type '"success" | "warning" | "error" | "info"' is not assignable to type '"primary" | "secondary" | "success" | "warning" | "error" | undefined'.
+  Type '"info"' is not assignable to type '"primary" | "secondary" | "success" | "warning" | "error" | undefined'.
+src/app/(dashboard)/applicants/page.tsx(195,28): error TS2322: Type '"success" | "warning" | "default"' is not assignable to type '"primary" | "secondary" | "success" | "warning" | "error" | undefined'.
+  Type '"default"' is not assignable to type '"primary" | "secondary" | "success" | "warning" | "error" | undefined'.
+src/app/(dashboard)/interview/page.tsx(165,41): error TS2322: Type '"danger"' is not assignable to type '"primary" | "secondary" | "outline" | "ghost" | undefined'.
+src/app/(dashboard)/users/page.tsx(73,19): error TS2322: Type '"success" | "warning" | "info"' is not assignable to type '"primary" | "secondary" | "success" | "warning" | "error" | undefined'.
+  Type '"info"' is not assignable to type '"primary" | "secondary" | "success" | "warning" | "error" | undefined'.

@@ -1,0 +1,167 @@
+param(
+  [switch]$InstallDeps,
+  [switch]$SmokeTest
+)
+
+$ErrorActionPreference = "Stop"
+
+$repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
+$frontendDir = Join-Path $repoRoot "frontend"
+$backendDir = Join-Path $repoRoot "backend"
+$aiDir = Join-Path $repoRoot "ai-service"
+$backendEnvPath = Join-Path $backendDir ".env"
+$backendEnvExamplePath = Join-Path $backendDir ".env.example"
+$smokeScript = Join-Path $PSScriptRoot "local-smoke.ps1"
+
+function Write-Section([string]$message) {
+  Write-Host ""
+  Write-Host "== $message =="
+}
+
+function Ensure-Command([string]$name) {
+  if (-not (Get-Command $name -ErrorAction SilentlyContinue)) {
+    throw "Required command not found: $name"
+  }
+}
+
+function Invoke-Checked([string]$command, [string]$workingDir) {
+  Push-Location $workingDir
+  try {
+    cmd /c $command
+    if ($LASTEXITCODE -ne 0) {
+      throw "Command failed (exit code $LASTEXITCODE): $command"
+    }
+  } finally {
+    Pop-Location
+  }
+}
+
+function Stop-PortProcess([int]$port) {
+  $connections = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue
+  if ($connections) {
+    $pids = $connections | Select-Object -ExpandProperty OwningProcess -Unique
+    foreach ($procId in $pids) {
+      Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue
+    }
+  }
+}
+
+function Stop-ProcessByPattern([string]$pattern) {
+  $processes = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+    $_.CommandLine -and $_.CommandLine -match $pattern
+  }
+  foreach ($process in $processes) {
+    Stop-Process -Id $process.ProcessId -Force -ErrorAction SilentlyContinue
+  }
+}
+
+function Wait-ForUrl([string]$name, [string]$url, [int]$timeoutSeconds = 120) {
+  $start = Get-Date
+  while (((Get-Date) - $start).TotalSeconds -lt $timeoutSeconds) {
+    try {
+      $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 8
+      if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 500) {
+        Write-Host "$name is up at $url"
+        return $true
+      }
+    } catch {
+      if ($_.Exception.Response) {
+        $code = [int]$_.Exception.Response.StatusCode
+        if ($code -ge 200 -and $code -lt 500) {
+          Write-Host "$name is up at $url (HTTP $code)"
+          return $true
+        }
+      }
+    }
+    Start-Sleep -Seconds 2
+  }
+
+  Write-Host "$name failed to start at $url"
+  return $false
+}
+
+function Ensure-BackendEnv {
+  if (-not (Test-Path $backendEnvPath)) {
+    Copy-Item $backendEnvExamplePath $backendEnvPath
+  }
+
+  $content = Get-Content $backendEnvPath -Raw
+  if ($content -match "(?m)^DATA_PROVIDER=") {
+    $content = [regex]::Replace($content, "(?m)^DATA_PROVIDER=.*$", "DATA_PROVIDER=memory")
+  } else {
+    $content = $content.TrimEnd() + "`r`nDATA_PROVIDER=memory`r`n"
+  }
+
+  if ($content -match "(?m)^AI_SERVICE_URL=") {
+    $content = [regex]::Replace($content, "(?m)^AI_SERVICE_URL=.*$", "AI_SERVICE_URL=http://localhost:3002")
+  } else {
+    $content = $content.TrimEnd() + "`r`nAI_SERVICE_URL=http://localhost:3002`r`n"
+  }
+
+  if ($content -match "(?m)^FRONTEND_URL=") {
+    $content = [regex]::Replace($content, "(?m)^FRONTEND_URL=.*$", "FRONTEND_URL=http://localhost:3000")
+  } else {
+    $content = $content.TrimEnd() + "`r`nFRONTEND_URL=http://localhost:3000`r`n"
+  }
+
+  Set-Content -Path $backendEnvPath -Value $content
+}
+
+Ensure-Command "node"
+Ensure-Command "npm"
+Ensure-Command "python"
+
+if ($InstallDeps) {
+  Write-Section "Installing dependencies"
+  Invoke-Checked "npm install" $frontendDir
+  Invoke-Checked "npm install" $backendDir
+  Invoke-Checked "python -m pip install -r requirements.txt" $aiDir
+}
+
+Write-Section "Configuring backend for local demo DB"
+Ensure-BackendEnv
+
+Write-Section "Stopping existing services on ports 3000, 3001, 3002"
+Stop-ProcessByPattern "uvicorn app\.main:app"
+Stop-ProcessByPattern "ts-node-dev.+src/index\.ts"
+Stop-ProcessByPattern "next dev"
+Stop-PortProcess -port 3000
+Stop-PortProcess -port 3001
+Stop-PortProcess -port 3002
+Start-Sleep -Seconds 1
+
+Write-Section "Starting AI service"
+Start-Process -FilePath "cmd.exe" -ArgumentList "/c", "python -m uvicorn app.main:app --host 0.0.0.0 --port 3002" -WorkingDirectory $aiDir -WindowStyle Hidden
+
+Write-Section "Starting backend"
+Start-Process -FilePath "cmd.exe" -ArgumentList "/c", "npm run dev" -WorkingDirectory $backendDir -WindowStyle Hidden
+
+Write-Section "Starting frontend"
+Start-Process -FilePath "cmd.exe" -ArgumentList "/c", "npm run dev" -WorkingDirectory $frontendDir -WindowStyle Hidden
+
+Write-Section "Waiting for services"
+$frontendOk = Wait-ForUrl -name "Frontend" -url "http://localhost:3000/"
+$backendOk = Wait-ForUrl -name "Backend" -url "http://localhost:3001/api/health"
+$aiOk = Wait-ForUrl -name "AI Service" -url "http://localhost:3002/health"
+
+if (-not ($frontendOk -and $backendOk -and $aiOk)) {
+  throw "One or more services failed to start."
+}
+
+Write-Section "Local demo is ready"
+Write-Host "Frontend : http://localhost:3000"
+Write-Host "Backend  : http://localhost:3001"
+Write-Host "AI       : http://localhost:3002"
+Write-Host ""
+Write-Host "Demo credentials:"
+Write-Host "  Student  : student@esencelab.com / demo123"
+Write-Host "  Employer : recruiter@esencelab.com / demo123"
+Write-Host "  Admin    : admin@esencelab.com / demo123"
+
+if ($SmokeTest) {
+  if (-not (Test-Path $smokeScript)) {
+    throw "Smoke test script not found: $smokeScript"
+  }
+  Write-Section "Running smoke test"
+  powershell -ExecutionPolicy Bypass -File $smokeScript
+}

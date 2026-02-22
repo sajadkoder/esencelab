@@ -7,7 +7,9 @@ import api from '@/lib/api';
 import { Application } from '@/types';
 import Card from '@/components/Card';
 import Badge from '@/components/Badge';
-import { Briefcase, Clock, CheckCircle, XCircle, FileText } from 'lucide-react';
+import { Briefcase, FileText } from 'lucide-react';
+import { Skeleton } from '@/components/Skeleton';
+import { motion } from 'framer-motion';
 
 export default function ApplicationsPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -31,40 +33,35 @@ export default function ApplicationsPage() {
     try {
       const res = await api.get('/applications/my');
       setApplications(res.data.data || []);
-    } catch (error) {
-      console.error('Error fetching applications:', error);
+    } catch {
+      setApplications([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'shortlisted':
-        return <CheckCircle className="w-5 h-5 text-accent" />;
-      case 'rejected':
-        return <XCircle className="w-5 h-5 text-error" />;
-      case 'interview':
-        return <Clock className="w-5 h-5 text-warning" />;
-      default:
-        return <Clock className="w-5 h-5 text-slate-400" />;
-    }
-  };
-
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, 'success' | 'warning' | 'error' | 'info'> = {
+    const variants: Record<string, 'success' | 'warning' | 'primary' | 'error' | 'secondary'> = {
       pending: 'warning',
       shortlisted: 'success',
       rejected: 'error',
-      interview: 'info',
+      interview: 'primary',
     };
-    return <Badge variant={variants[status] || 'default'}>{status}</Badge>;
+    return <Badge variant={variants[status] || 'secondary'}>{status}</Badge>;
   };
 
   if (isLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-secondary"></div>
+      <div className="layout-container section-spacing space-y-8 max-w-5xl mx-auto">
+        <Skeleton className="h-16 w-1/3 mb-10" />
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+        </div>
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }
@@ -83,73 +80,87 @@ export default function ApplicationsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="layout-container section-spacing space-y-10 max-w-6xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold text-primary">My Applications</h1>
-        <p className="text-slate-500">Track your job applications</p>
+        <h1 className="heading-hero text-primary mb-2">My Applications</h1>
+        <p className="text-body text-secondary">Track the status of your job applications</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card className="text-center">
-          <p className="text-2xl font-bold text-slate-800">{stats.total}</p>
-          <p className="text-sm text-slate-500">Total</p>
+        <Card hoverable className="text-center py-6 px-4">
+          <p className="text-3xl font-semibold text-primary mb-1">{stats.total}</p>
+          <p className="text-xs uppercase tracking-wider text-secondary font-medium">Total</p>
         </Card>
-        <Card className="text-center">
-          <p className="text-2xl font-bold text-warning">{stats.pending}</p>
-          <p className="text-sm text-slate-500">Pending</p>
+        <Card hoverable className="text-center py-6 px-4 border-l-4 border-l-orange-400">
+          <p className="text-3xl font-semibold text-orange-500 mb-1">{stats.pending}</p>
+          <p className="text-xs uppercase tracking-wider text-secondary font-medium">Pending</p>
         </Card>
-        <Card className="text-center">
-          <p className="text-2xl font-bold text-accent">{stats.shortlisted}</p>
-          <p className="text-sm text-slate-500">Shortlisted</p>
+        <Card hoverable className="text-center py-6 px-4 border-l-4 border-l-emerald-400">
+          <p className="text-3xl font-semibold text-emerald-500 mb-1">{stats.shortlisted}</p>
+          <p className="text-xs uppercase tracking-wider text-secondary font-medium">Shortlisted</p>
         </Card>
-        <Card className="text-center">
-          <p className="text-2xl font-bold text-error">{stats.rejected}</p>
-          <p className="text-sm text-slate-500">Rejected</p>
+        <Card hoverable className="text-center py-6 px-4 border-l-4 border-l-red-400">
+          <p className="text-3xl font-semibold text-red-500 mb-1">{stats.rejected}</p>
+          <p className="text-xs uppercase tracking-wider text-secondary font-medium">Rejected</p>
         </Card>
-        <Card className="text-center">
-          <p className="text-2xl font-bold text-secondary">{stats.interview}</p>
-          <p className="text-sm text-slate-500">Interview</p>
+        <Card hoverable className="text-center py-6 px-4 border-l-4 border-l-accent text-accent">
+          <p className="text-3xl font-semibold text-accent mb-1">{stats.interview}</p>
+          <p className="text-xs uppercase tracking-wider text-secondary font-medium">Interview</p>
         </Card>
       </div>
 
       {applications.length > 0 ? (
-        <Card>
-          <div className="space-y-4">
+        <Card hoverable={false} className="overflow-hidden p-0 border border-border">
+          <div className="divide-y divide-border">
             {applications.map((app) => (
-              <div
+              <motion.div
                 key={app.id}
-                className="flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-6 bg-white hover:bg-background/50 transition-colors gap-4"
               >
-                <div className="flex items-center space-x-4">
-                  <div className="p-2 bg-white rounded-lg">
-                    <Briefcase className="w-6 h-6 text-secondary" />
+                <div className="flex items-start sm:items-center space-x-5">
+                  <div className="p-3 bg-accent-soft text-accent rounded-xl flex-shrink-0">
+                    <Briefcase className="w-6 h-6" />
                   </div>
                   <div>
-                    <h4 className="font-medium text-slate-800">{app.job?.title}</h4>
-                    <p className="text-sm text-slate-500">{app.job?.company} • {app.job?.location}</p>
-                    {app.matchScore && (
-                      <p className="text-xs text-slate-400">Match: {Math.round(app.matchScore * 100)}%</p>
-                    )}
+                    <h4 className="font-semibold text-lg text-primary mb-1">{app.job?.title || 'Job Position'}</h4>
+                    <p className="text-sm text-secondary font-medium mb-2">{app.job?.company} — {app.job?.location}</p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {app.matchScore !== undefined && (
+                        <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-1 rounded-md font-medium">
+                          Match: {Math.round(app.matchScore)}%
+                        </span>
+                      )}
+                      {Array.isArray((app as any).missingSkills) && (app as any).missingSkills.length > 0 && (
+                        <span className="text-xs text-secondary font-medium">
+                          Missing: {(app as any).missingSkills.slice(0, 3).join(', ')}
+                          {(app as any).missingSkills.length > 3 && '...'}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center space-x-4">
+                <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center mt-4 sm:mt-0 gap-2 w-full sm:w-auto">
                   {getStatusBadge(app.status)}
-                  <span className="text-xs text-slate-400">
-                    {new Date(app.createdAt).toLocaleDateString()}
+                  <span className="text-xs text-secondary font-medium">
+                    Applied: {new Date(app.appliedAt || app.createdAt || Date.now()).toLocaleDateString()}
                   </span>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </Card>
       ) : (
-        <Card className="text-center py-12">
-          <FileText className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-slate-800 mb-2">No applications yet</h3>
-          <p className="text-slate-500 mb-4">Start applying to jobs to track your progress</p>
+        <Card hoverable={false} className="text-center py-16 flex flex-col items-center">
+          <div className="w-16 h-16 bg-accent-soft rounded-full flex items-center justify-center mb-6">
+            <FileText className="w-8 h-8 text-accent" />
+          </div>
+          <h3 className="text-xl font-medium text-primary mb-2">No applications yet</h3>
+          <p className="text-secondary mb-6">Start applying to jobs to track your progress.</p>
           <button
             onClick={() => router.push('/jobs')}
-            className="text-secondary hover:underline font-medium"
+            className="text-accent hover:text-accent-hover font-medium hover:underline focus:outline-none"
           >
             Browse Jobs
           </button>

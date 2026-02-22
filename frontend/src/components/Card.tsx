@@ -3,24 +3,30 @@ import { ReactNode } from 'react';
 interface CardProps {
   children: ReactNode;
   className?: string;
+  hoverable?: boolean;
   title?: string;
   subtitle?: string;
   action?: ReactNode;
+  onClick?: () => void;
 }
 
-export default function Card({ children, className = '', title, subtitle, action }: CardProps) {
+export default function Card({ children, className = '', hoverable = true, title, subtitle, action, onClick }: CardProps) {
+  const baseClass = hoverable ? 'glass-card cursor-pointer' : 'glass-card-no-hover';
   return (
-    <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 ${className}`}>
+    <div
+      className={`${baseClass} overflow-hidden ${className}`}
+      onClick={onClick}
+    >
       {(title || action) && (
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
           <div>
-            {title && <h3 className="text-lg font-semibold text-black">{title}</h3>}
-            {subtitle && <p className="text-sm text-gray-500 mt-0.5">{subtitle}</p>}
+            {title && <h3 className="text-xl font-semibold text-primary">{title}</h3>}
+            {subtitle && <p className="mt-1 text-sm text-secondary">{subtitle}</p>}
           </div>
           {action && <div>{action}</div>}
         </div>
       )}
-      <div className="p-6">{children}</div>
+      <div>{children}</div>
     </div>
   );
 }

@@ -1,0 +1,467 @@
+export type SkillStatus = 'completed' | 'in_progress' | 'missing';
+
+export interface CareerRoleDefinition {
+  id: string;
+  name: string;
+  description: string;
+  requiredSkills: string[];
+  suggestedTools: string[];
+  growthPath: string[];
+}
+
+export interface ResumeSectionScores {
+  skills: number;
+  projects: number;
+  experience: number;
+  education: number;
+}
+
+export interface ResumeStrengthScore {
+  overallScore: number;
+  sections: ResumeSectionScores;
+  suggestions: string[];
+}
+
+export interface SkillRoadmapItem {
+  skill: string;
+  status: SkillStatus;
+}
+
+export interface LearningPlanWeek {
+  week: number;
+  title: string;
+  goals: string[];
+  resources: LearningResource[];
+}
+
+export interface LearningPlan {
+  roleId: string;
+  roleName: string;
+  durationDays: 30 | 60;
+  generatedAt: string;
+  weeks: LearningPlanWeek[];
+}
+
+export interface LearningResource {
+  title: string;
+  provider: string;
+  url: string;
+}
+
+export interface InterviewQuestion {
+  question: string;
+  suggestedAnswer: string;
+}
+
+export interface MockInterviewPack {
+  roleId: string;
+  roleName: string;
+  technical: InterviewQuestion[];
+  behavioral: InterviewQuestion[];
+}
+
+export interface RecommendationExplanation {
+  matchedCount: number;
+  totalRequired: number;
+  summary: string;
+  improvementImpacts: Array<{ skill: string; impact: number }>;
+}
+
+export const CAREER_ROLES: CareerRoleDefinition[] = [
+  {
+    id: 'backend_developer',
+    name: 'Backend Developer',
+    description: 'Build APIs, data layers, and reliable backend services.',
+    requiredSkills: ['Node.js', 'Express', 'SQL', 'PostgreSQL', 'REST API', 'Docker', 'Git'],
+    suggestedTools: ['Postman', 'pgAdmin', 'Docker Desktop', 'VS Code'],
+    growthPath: ['Junior Backend Developer', 'Backend Developer', 'Senior Backend Engineer'],
+  },
+  {
+    id: 'frontend_developer',
+    name: 'Frontend Developer',
+    description: 'Build interactive and accessible user interfaces.',
+    requiredSkills: ['HTML', 'CSS', 'JavaScript', 'TypeScript', 'React', 'Responsive Design', 'Git'],
+    suggestedTools: ['Figma', 'VS Code', 'Chrome DevTools', 'Vite'],
+    growthPath: ['Junior Frontend Developer', 'Frontend Developer', 'Senior Frontend Engineer'],
+  },
+  {
+    id: 'data_analyst',
+    name: 'Data Analyst',
+    description: 'Analyze datasets and deliver business insights.',
+    requiredSkills: ['Python', 'SQL', 'Excel', 'Pandas', 'Data Visualization', 'Statistics', 'Git'],
+    suggestedTools: ['Jupyter Notebook', 'Power BI', 'Tableau', 'Google Colab'],
+    growthPath: ['Junior Data Analyst', 'Data Analyst', 'Senior Data Analyst'],
+  },
+];
+
+const SKILL_RESOURCES: Record<string, LearningResource[]> = {
+  'node.js': [
+    {
+      title: 'Node.js Crash Course',
+      provider: 'Traversy Media',
+      url: 'https://www.youtube.com/watch?v=fBNz5xF-Kx4',
+    },
+  ],
+  express: [
+    {
+      title: 'Express.js Official Guide',
+      provider: 'Express',
+      url: 'https://expressjs.com/en/guide/routing.html',
+    },
+  ],
+  sql: [
+    {
+      title: 'SQL Tutorial',
+      provider: 'W3Schools',
+      url: 'https://www.w3schools.com/sql/',
+    },
+  ],
+  postgresql: [
+    {
+      title: 'PostgreSQL for Everybody',
+      provider: 'Coursera',
+      url: 'https://www.coursera.org/learn/postgresql',
+    },
+  ],
+  react: [
+    {
+      title: 'React Docs - Learn',
+      provider: 'React',
+      url: 'https://react.dev/learn',
+    },
+  ],
+  typescript: [
+    {
+      title: 'TypeScript Handbook',
+      provider: 'Microsoft',
+      url: 'https://www.typescriptlang.org/docs/',
+    },
+  ],
+  javascript: [
+    {
+      title: 'JavaScript Guide',
+      provider: 'MDN',
+      url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide',
+    },
+  ],
+  html: [
+    {
+      title: 'HTML Basics',
+      provider: 'MDN',
+      url: 'https://developer.mozilla.org/en-US/docs/Learn/HTML',
+    },
+  ],
+  css: [
+    {
+      title: 'CSS Fundamentals',
+      provider: 'MDN',
+      url: 'https://developer.mozilla.org/en-US/docs/Learn/CSS',
+    },
+  ],
+  python: [
+    {
+      title: 'Python for Everybody',
+      provider: 'Coursera',
+      url: 'https://www.coursera.org/specializations/python',
+    },
+  ],
+  pandas: [
+    {
+      title: 'Pandas Getting Started',
+      provider: 'Pandas',
+      url: 'https://pandas.pydata.org/docs/getting_started/index.html',
+    },
+  ],
+  excel: [
+    {
+      title: 'Excel Skills for Business',
+      provider: 'Coursera',
+      url: 'https://www.coursera.org/specializations/excel',
+    },
+  ],
+  docker: [
+    {
+      title: 'Docker for Beginners',
+      provider: 'Docker',
+      url: 'https://www.docker.com/101-tutorial/',
+    },
+  ],
+  git: [
+    {
+      title: 'Git Handbook',
+      provider: 'GitHub',
+      url: 'https://guides.github.com/introduction/git-handbook/',
+    },
+  ],
+  'data visualization': [
+    {
+      title: 'Data Visualization with Python',
+      provider: 'IBM',
+      url: 'https://www.coursera.org/learn/python-for-data-visualization',
+    },
+  ],
+  statistics: [
+    {
+      title: 'Intro to Statistics',
+      provider: 'Khan Academy',
+      url: 'https://www.khanacademy.org/math/statistics-probability',
+    },
+  ],
+};
+
+const clampPercent = (value: number) => Math.max(0, Math.min(100, Math.round(value)));
+
+const toNormalizedSkill = (skill: string) => skill.trim().toLowerCase();
+
+const dedupeNormalized = (skills: string[]) => {
+  const seen = new Set<string>();
+  const unique: string[] = [];
+  for (const skill of skills) {
+    const normalized = toNormalizedSkill(skill);
+    if (!normalized || seen.has(normalized)) continue;
+    seen.add(normalized);
+    unique.push(normalized);
+  }
+  return unique;
+};
+
+const toDisplaySkill = (skill: string) => {
+  if (!skill) return '';
+  if (skill.length <= 3) return skill.toUpperCase();
+  return skill
+    .split(' ')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+};
+
+const hasSkill = (skills: string[], candidate: string) =>
+  skills.includes(toNormalizedSkill(candidate));
+
+const countProjects = (parsedData: any) => {
+  const experienceCount = Array.isArray(parsedData?.experience) ? parsedData.experience.length : 0;
+  const summary = String(parsedData?.summary || '').toLowerCase();
+  const projectHint = summary.includes('project') ? 1 : 0;
+  return experienceCount + projectHint;
+};
+
+const getRole = (roleId: string) => CAREER_ROLES.find((role) => role.id === roleId) || CAREER_ROLES[0];
+
+export const calculateResumeStrength = (
+  parsedData: any,
+  resumeSkills: string[],
+  roleId?: string
+): ResumeStrengthScore => {
+  const normalizedSkills = dedupeNormalized(resumeSkills);
+  const role = getRole(roleId || CAREER_ROLES[0].id);
+
+  const requiredSkillCount = role.requiredSkills.length || 1;
+  const matchedRoleSkills = role.requiredSkills.filter((skill) => hasSkill(normalizedSkills, skill)).length;
+
+  const skillsScore = clampPercent((matchedRoleSkills / requiredSkillCount) * 100);
+  const projectsScore = clampPercent((countProjects(parsedData) / 3) * 100);
+  const experienceCount = Array.isArray(parsedData?.experience) ? parsedData.experience.length : 0;
+  const experienceScore = clampPercent((experienceCount / 3) * 100);
+  const educationCount = Array.isArray(parsedData?.education) ? parsedData.education.length : 0;
+  const educationScore = clampPercent((educationCount / 1) * 100);
+
+  const overallScore = clampPercent(
+    skillsScore * 0.45 + projectsScore * 0.2 + experienceScore * 0.2 + educationScore * 0.15
+  );
+
+  const suggestions: string[] = [];
+  if (skillsScore < 70) {
+    const missing = role.requiredSkills.filter((skill) => !hasSkill(normalizedSkills, skill)).slice(0, 3);
+    if (missing.length > 0) {
+      suggestions.push(`Add or strengthen these skills: ${missing.join(', ')}.`);
+    }
+  }
+  if (projectsScore < 60) {
+    suggestions.push('Add at least 2 project highlights with outcomes and tools used.');
+  }
+  if (experienceScore < 60) {
+    suggestions.push('Include internship or practical experience bullets with measurable impact.');
+  }
+  if (educationScore < 60) {
+    suggestions.push('Add complete education details including degree, institution, and graduation year.');
+  }
+  if (suggestions.length === 0) {
+    suggestions.push('Great progress. Keep your resume updated with latest projects and achievements.');
+  }
+
+  return {
+    overallScore,
+    sections: {
+      skills: skillsScore,
+      projects: projectsScore,
+      experience: experienceScore,
+      education: educationScore,
+    },
+    suggestions,
+  };
+};
+
+export const buildRoadmap = (
+  roleId: string,
+  resumeSkills: string[],
+  skillProgress: Array<{ skillName: string; status: SkillStatus }>
+): SkillRoadmapItem[] => {
+  const role = getRole(roleId);
+  const normalizedSkills = dedupeNormalized(resumeSkills);
+  const progressMap = new Map(
+    skillProgress.map((entry) => [toNormalizedSkill(entry.skillName), entry.status])
+  );
+
+  return role.requiredSkills.map((skill) => {
+    const normalized = toNormalizedSkill(skill);
+    const fromProgress = progressMap.get(normalized);
+    if (fromProgress) return { skill, status: fromProgress };
+    if (normalizedSkills.includes(normalized)) return { skill, status: 'completed' };
+    return { skill, status: 'missing' };
+  });
+};
+
+const fallbackResource = (skill: string): LearningResource => ({
+  title: `${toDisplaySkill(skill)} Learning Path`,
+  provider: 'freeCodeCamp',
+  url: 'https://www.freecodecamp.org/learn',
+});
+
+const pickResources = (skill: string) => {
+  const key = toNormalizedSkill(skill);
+  const resources = SKILL_RESOURCES[key];
+  if (resources && resources.length > 0) return resources;
+  return [fallbackResource(skill)];
+};
+
+export const generateLearningPlan = (
+  roleId: string,
+  roadmap: SkillRoadmapItem[],
+  durationDays: 30 | 60
+): LearningPlan => {
+  const role = getRole(roleId);
+  const weekCount = durationDays === 60 ? 8 : 4;
+  const skillsToFocus = roadmap.filter((entry) => entry.status !== 'completed').map((entry) => entry.skill);
+  const fallbackSkills = role.requiredSkills.slice(0, weekCount);
+  const focusSkills = skillsToFocus.length > 0 ? skillsToFocus : fallbackSkills;
+
+  const weeks: LearningPlanWeek[] = [];
+  for (let index = 0; index < weekCount; index += 1) {
+    const primarySkill = focusSkills[index % focusSkills.length];
+    const secondarySkill = focusSkills[(index + 1) % focusSkills.length];
+    const goals = [
+      `Complete core concepts of ${primarySkill}.`,
+      `Build one mini project using ${primarySkill}.`,
+      `Revise ${secondarySkill} basics and solve 3 practice tasks.`,
+    ];
+    const resources = [...pickResources(primarySkill), ...pickResources(secondarySkill)].slice(0, 3);
+
+    weeks.push({
+      week: index + 1,
+      title: `Week ${index + 1}: ${primarySkill} Focus`,
+      goals,
+      resources,
+    });
+  }
+
+  return {
+    roleId: role.id,
+    roleName: role.name,
+    durationDays,
+    generatedAt: new Date().toISOString(),
+    weeks,
+  };
+};
+
+export const generateWeeklyPlanner = (roadmap: SkillRoadmapItem[]) => {
+  const focus = roadmap.filter((entry) => entry.status !== 'completed').slice(0, 3);
+  const fallback = roadmap.slice(0, 3);
+  const selected = focus.length > 0 ? focus : fallback;
+
+  return selected.map((item, index) => ({
+    day: index + 1,
+    title: `Day ${index + 1}: ${item.skill}`,
+    tasks: [
+      `Review fundamentals of ${item.skill}.`,
+      `Practice one coding exercise using ${item.skill}.`,
+      `Document what you learned in your notes.`,
+    ],
+  }));
+};
+
+export const generateMockInterview = (roleId: string): MockInterviewPack => {
+  const role = getRole(roleId);
+  const coreSkills = role.requiredSkills.slice(0, 4);
+  const technical = coreSkills.map((skill) => ({
+    question: `How have you used ${skill} in a real project?`,
+    suggestedAnswer: `Explain one project where you used ${skill}, your exact contribution, and the result you achieved.`,
+  }));
+
+  const behavioral: InterviewQuestion[] = [
+    {
+      question: 'Tell me about a time you faced a difficult bug and how you solved it.',
+      suggestedAnswer: 'Use STAR format: situation, your actions, and the measurable outcome.',
+    },
+    {
+      question: 'How do you prioritize tasks when deadlines are tight?',
+      suggestedAnswer: 'Explain how you break tasks, estimate impact, and communicate tradeoffs early.',
+    },
+    {
+      question: 'Describe a project where you worked with a team.',
+      suggestedAnswer: 'Highlight collaboration, communication, and how your work helped the team deliver.',
+    },
+  ];
+
+  return {
+    roleId: role.id,
+    roleName: role.name,
+    technical,
+    behavioral,
+  };
+};
+
+export const buildRecommendationExplanation = (
+  resumeSkills: string[],
+  requiredSkills: string[]
+): RecommendationExplanation => {
+  const normalizedResumeSkills = dedupeNormalized(resumeSkills);
+  const normalizedRequired = dedupeNormalized(requiredSkills);
+
+  const matched = normalizedRequired.filter((skill) => normalizedResumeSkills.includes(skill));
+  const missing = normalizedRequired.filter((skill) => !normalizedResumeSkills.includes(skill));
+  const matchedCount = matched.length;
+  const totalRequired = normalizedRequired.length || 1;
+
+  const summary = `You match ${matchedCount} out of ${normalizedRequired.length} required skills.`;
+  const perSkillImpact = totalRequired > 0 ? clampPercent(100 / totalRequired) : 0;
+  const improvementImpacts = missing.slice(0, 3).map((skill) => ({
+    skill: toDisplaySkill(skill),
+    impact: perSkillImpact,
+  }));
+
+  return {
+    matchedCount,
+    totalRequired: normalizedRequired.length,
+    summary,
+    improvementImpacts,
+  };
+};
+
+export const deriveProgressDelta = (history: Array<{ score: number; createdAt: Date }>) => {
+  if (history.length < 2) return 0;
+  const sorted = [...history].sort(
+    (left, right) => left.createdAt.getTime() - right.createdAt.getTime()
+  );
+  const first = sorted[0].score;
+  const latest = sorted[sorted.length - 1].score;
+  return clampPercent(latest - first);
+};
+
+export const getRoleExplorerData = () =>
+  CAREER_ROLES.map((role) => ({
+    id: role.id,
+    name: role.name,
+    description: role.description,
+    requiredSkills: role.requiredSkills,
+    suggestedTools: role.suggestedTools,
+    growthPath: role.growthPath,
+  }));

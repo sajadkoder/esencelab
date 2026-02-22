@@ -1,30 +1,54 @@
 'use client';
 
-import { InputHTMLAttributes, forwardRef } from 'react';
+import { InputHTMLAttributes, forwardRef, useState } from 'react';
+import { motion } from 'framer-motion';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
+  label: string;
   error?: string;
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className = '', label, error, ...props }, ref) => {
+  ({ className = '', label, error, id, ...props }, ref) => {
+    const inputId = id || label.replace(/\s+/g, '-').toLowerCase();
+    const [isFocused, setIsFocused] = useState(false);
+
+    // Check if input has value to keep label floated
+    const hasValue = props.value !== undefined ? String(props.value).length > 0 : false;
+    const isFloating = isFocused || hasValue;
+
     return (
-      <div className="w-full">
-        {label && (
-          <label className="block text-sm font-medium text-black mb-1.5">
-            {label}
-          </label>
-        )}
+      <div className="w-full relative pt-2">
+        <label
+          htmlFor={inputId}
+          className={`absolute left-4 transition-all duration-200 pointer-events-none
+            ${isFloating ? '-top-1 text-xs px-1 bg-background text-secondary z-10' : 'top-5 text-base text-secondary z-0'}`}
+        >
+          {label}
+        </label>
         <input
+          id={inputId}
           ref={ref}
-          className={`w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-all duration-200 bg-white ${
-            error ? 'border-red-500' : ''
-          } ${className}`}
+          onFocus={(e) => {
+            setIsFocused(true);
+            props.onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            setIsFocused(false);
+            props.onBlur?.(e);
+          }}
+          className={`w-full rounded-xl border bg-transparent px-4 py-3.5 text-primary text-base transition-colors focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary relative z-0
+            ${error ? 'border-red-500' : 'border-border'} ${className}`}
           {...props}
         />
         {error && (
-          <p className="mt-1 text-sm text-red-500">{error}</p>
+          <motion.p
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-1.5 text-sm text-red-500 px-1"
+          >
+            {error}
+          </motion.p>
         )}
       </div>
     );

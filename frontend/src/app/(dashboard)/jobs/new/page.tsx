@@ -8,6 +8,7 @@ import Card from '@/components/Card';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
 import Select from '@/components/Select';
+import { Briefcase } from 'lucide-react';
 
 export default function NewJobPage() {
   const router = useRouter();
@@ -21,7 +22,7 @@ export default function NewJobPage() {
     location: '',
     salaryMin: '',
     salaryMax: '',
-    jobType: 'full-time',
+    jobType: 'full_time',
     status: 'active',
   });
 
@@ -43,53 +44,62 @@ export default function NewJobPage() {
     }
   };
 
-  if (user?.role !== 'recruiter' && user?.role !== 'admin') {
+  if (user?.role !== 'employer' && user?.role !== 'admin') {
     router.push('/dashboard');
     return null;
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-primary mb-6">Post a New Job</h1>
+    <div className="layout-container section-spacing max-w-3xl mx-auto space-y-8">
+      <div>
+        <h1 className="heading-hero text-primary mb-2 flex items-center">
+          <Briefcase className="w-8 h-8 mr-3 text-accent" />
+          Post a New Job
+        </h1>
+        <p className="text-body text-secondary">
+          Create a clear and compelling job description to attract top talent.
+        </p>
+      </div>
 
-      <Card>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <Input
-            label="Job Title"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            placeholder="e.g. Software Engineer"
-            required
-          />
-
-          <Input
-            label="Company Name"
-            value={formData.company}
-            onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-            placeholder="e.g. Acme Inc."
-            required
-          />
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Description</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={5}
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50"
-              placeholder="Job description..."
+      <Card hoverable={false} className="p-6 md:p-10 border border-border">
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Input
+              label="Job Title"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              placeholder="e.g. Software Engineer"
+              required
+            />
+            <Input
+              label="Company Name"
+              value={formData.company}
+              onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+              placeholder="e.g. Acme Inc."
               required
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Requirements</label>
+          <div className="space-y-1.5 bg-background p-1.5 rounded-xl border border-border focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all duration-200 group">
+            <label className="block text-xs font-semibold text-secondary uppercase tracking-wider px-2 pt-2">Description</label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              rows={5}
+              className="w-full bg-transparent px-3 pb-2 text-primary focus:outline-none resize-y min-h-[100px]"
+              placeholder="Provide a detailed job description..."
+              required
+            />
+          </div>
+
+          <div className="space-y-1.5 bg-background p-1.5 rounded-xl border border-border focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all duration-200 group">
+            <label className="block text-xs font-semibold text-secondary uppercase tracking-wider px-2 pt-2">Requirements</label>
             <textarea
               value={formData.requirements}
               onChange={(e) => setFormData({ ...formData, requirements: e.target.value })}
               rows={4}
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50"
-              placeholder="Job requirements..."
+              className="w-full bg-transparent px-3 pb-2 text-primary focus:outline-none resize-y min-h-[100px]"
+              placeholder="List the key skills and requirements..."
             />
           </div>
 
@@ -101,16 +111,16 @@ export default function NewJobPage() {
             required
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Input
-              label="Minimum Salary"
+              label="Minimum Salary (Optional)"
               type="number"
               value={formData.salaryMin}
               onChange={(e) => setFormData({ ...formData, salaryMin: e.target.value })}
               placeholder="e.g. 50000"
             />
             <Input
-              label="Maximum Salary"
+              label="Maximum Salary (Optional)"
               type="number"
               value={formData.salaryMax}
               onChange={(e) => setFormData({ ...formData, salaryMax: e.target.value })}
@@ -118,14 +128,14 @@ export default function NewJobPage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Select
               label="Job Type"
               value={formData.jobType}
               onChange={(e) => setFormData({ ...formData, jobType: e.target.value })}
               options={[
-                { value: 'full-time', label: 'Full Time' },
-                { value: 'part-time', label: 'Part Time' },
+                { value: 'full_time', label: 'Full Time' },
+                { value: 'part_time', label: 'Part Time' },
                 { value: 'internship', label: 'Internship' },
                 { value: 'contract', label: 'Contract' },
               ]}
@@ -141,12 +151,12 @@ export default function NewJobPage() {
             />
           </div>
 
-          <div className="flex gap-4">
-            <Button type="submit" isLoading={loading}>
-              Post Job
-            </Button>
-            <Button type="button" variant="outline" onClick={() => router.back()}>
+          <div className="pt-6 border-t border-border flex items-center gap-4 justify-end">
+            <Button type="button" variant="ghost" onClick={() => router.back()} disabled={loading}>
               Cancel
+            </Button>
+            <Button type="submit" variant="primary" isLoading={loading}>
+              Post Job
             </Button>
           </div>
         </form>
