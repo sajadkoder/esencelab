@@ -159,7 +159,7 @@ export default function HomePage() {
                   {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-6 w-full bg-black/5 rounded-md" />)}
                 </div>
               </div>
-              <div className="flex-1 p-6 md:p-10 space-y-8 bg-gray-50/50">
+              <div className="flex-1 p-6 md:p-10 space-y-8 bg-black/5/50">
                 <div className="h-10 w-48 bg-black/10 rounded-lg" />
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                   <div className="h-32 bg-white rounded-xl border border-black/5 shadow-sm p-5 flex flex-col justify-between">
