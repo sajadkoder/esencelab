@@ -15,7 +15,7 @@ const nextConfig = {
       },
       {
         source: '/ai/:path*',
-        destination: 'http://localhost:3002/ai/:path*',
+        destination: 'http://localhost:8000/ai/:path*',
       },
     ];
   },

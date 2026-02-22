@@ -1,5 +1,7 @@
 ﻿import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
 import multer from 'multer';
@@ -27,9 +29,22 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'esencelab-demo-secret';
 
-app.use(cors());
-app.use(express.json());
+app.use(helmet());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true,
+}));
+app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Rate limiter for auth routes (max 15 attempts per 15 minutes)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many attempts, please try again later' },
+});
 
 // Setup multer for file uploads
 const uploadDir = path.join(__dirname, 'uploads');
@@ -287,8 +302,8 @@ const localMatchScore = (resumeSkills: string[], requiredSkills: string[]) => {
       ratio >= 0.75
         ? 'Strong alignment between profile and required skills.'
         : ratio >= 0.5
-        ? 'Moderate alignment. Upskilling in missing areas is recommended.'
-        : 'Low alignment. Focus on building core required skills.',
+          ? 'Moderate alignment. Upskilling in missing areas is recommended.'
+          : 'Low alignment. Focus on building core required skills.',
   };
 };
 
@@ -322,7 +337,7 @@ const getMatchInsights = async (resumeSkills: string[], job: any) => {
 };
 
 // Auth Routes
-app.post('/api/auth/register', async (req, res) => {
+app.post('/api/auth/register', authLimiter, async (req, res) => {
   const { email, password, name, role } = req.body;
   if (!email || !password || !name) {
     return res.status(400).json({ message: 'Name, email and password are required' });
@@ -356,7 +371,7 @@ app.post('/api/auth/register', async (req, res) => {
   res.status(201).json({ token, user: sanitizeUser(profile) });
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', authLimiter, async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ message: 'Email and password are required' });
@@ -589,7 +604,7 @@ app.delete('/api/resume/:id', async (req, res) => {
 app.get('/api/jobs', (req, res) => {
   const { search, jobType, location, status, limit, my } = req.query;
   let jobs = [...db.jobs];
-  
+
   if (search) {
     const s = (search as string).toLowerCase();
     jobs = jobs.filter((j: any) => j.title.toLowerCase().includes(s) || j.company.toLowerCase().includes(s) || j.description.toLowerCase().includes(s));
@@ -611,7 +626,7 @@ app.get('/api/jobs', (req, res) => {
     const n = Number(limit);
     if (!Number.isNaN(n) && n > 0) jobs = jobs.slice(0, n);
   }
-  
+
   res.json({ data: { jobs } });
 });
 
@@ -631,9 +646,9 @@ app.post('/api/jobs', async (req, res) => {
   const requirements = Array.isArray(req.body.requirements)
     ? req.body.requirements
     : String(req.body.requirements || '')
-        .split(',')
-        .map((item) => item.trim())
-        .filter(Boolean);
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
   const skills = Array.isArray(req.body.skills) && req.body.skills.length > 0 ? req.body.skills : requirements;
 
   const safeJobType = ['full_time', 'part_time', 'internship', 'contract'].includes(req.body.jobType)
@@ -800,7 +815,7 @@ app.post('/api/applications', async (req, res) => {
     missingSkills = insights.missingSkills;
     explanation = insights.explanation;
   }
-  
+
   const application = {
     id: uuidv4(),
     jobId,
@@ -953,9 +968,8 @@ app.get('/api/recommendations', async (req, res) => {
       missingSkills,
       recommendedCourses,
       summary: recommendedJobs.length
-        ? `You are matching ${recommendedJobs[0].explanationMeta?.matchedCount || 0} out of ${
-            recommendedJobs[0].explanationMeta?.totalRequired || 0
-          } key skills for your top role.`
+        ? `You are matching ${recommendedJobs[0].explanationMeta?.matchedCount || 0} out of ${recommendedJobs[0].explanationMeta?.totalRequired || 0
+        } key skills for your top role.`
         : 'Upload your resume to start receiving recommendations.',
     },
   });
@@ -1365,33 +1379,39 @@ app.delete('/api/courses/:id', async (req, res) => {
 app.get('/api/dashboard/stats', (req, res) => {
   const profile = getProfileFromAuth(req);
   if (!profile) return res.json({ data: {} });
-  
+
   if (profile.role === 'student') {
     const myApps = db.applications.filter((a: any) => a.candidateId === profile.id);
-    res.json({ data: { 
-      myApplications: myApps.length,
-      shortlisted: myApps.filter((a: any) => a.status === 'shortlisted').length,
-      interviews: myApps.filter((a: any) => a.status === 'interview').length,
-      pending: myApps.filter((a: any) => a.status === 'pending').length
-    }});
+    res.json({
+      data: {
+        myApplications: myApps.length,
+        shortlisted: myApps.filter((a: any) => a.status === 'shortlisted').length,
+        interviews: myApps.filter((a: any) => a.status === 'interview').length,
+        pending: myApps.filter((a: any) => a.status === 'pending').length
+      }
+    });
   } else if (profile.role === 'employer') {
     const myJobs = db.jobs.filter((j: any) => j.employerId === profile.id);
     const myApps = db.applications.filter((a: any) => myJobs.some((j: any) => j.id === a.jobId));
-    res.json({ data: {
-      postedJobs: myJobs.length,
-      totalApplications: myApps.length,
-      interviewsScheduled: myApps.filter((a: any) => a.status === 'interview').length,
-      shortlisted: myApps.filter((a: any) => a.status === 'shortlisted').length
-    }});
+    res.json({
+      data: {
+        postedJobs: myJobs.length,
+        totalApplications: myApps.length,
+        interviewsScheduled: myApps.filter((a: any) => a.status === 'interview').length,
+        shortlisted: myApps.filter((a: any) => a.status === 'shortlisted').length
+      }
+    });
   } else {
-    res.json({ data: {
-      totalUsers: db.profiles.length,
-      totalJobs: db.jobs.length,
-      totalApplications: db.applications.length,
-      totalCandidates: db.candidates.length,
-      totalCourses: db.courses.length,
-      totalResumes: db.resumes.length,
-    }});
+    res.json({
+      data: {
+        totalUsers: db.profiles.length,
+        totalJobs: db.jobs.length,
+        totalApplications: db.applications.length,
+        totalCandidates: db.candidates.length,
+        totalCourses: db.courses.length,
+        totalResumes: db.resumes.length,
+      }
+    });
   }
 });
 

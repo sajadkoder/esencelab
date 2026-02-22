@@ -81,8 +81,8 @@ export default function JobsPage() {
     <div className="layout-container section-spacing space-y-10 max-w-6xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="heading-hero text-primary mb-2">Job Listings</h1>
-          <p className="text-body text-secondary">Find your dream job or hire top talent.</p>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-primary mb-2">Job Listings</h1>
+          <p className="text-base text-secondary">Find your dream job or hire top talent.</p>
         </div>
         {user?.role === 'employer' && (
           <Link href="/jobs/new">

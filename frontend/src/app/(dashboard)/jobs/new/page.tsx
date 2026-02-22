@@ -52,11 +52,11 @@ export default function NewJobPage() {
   return (
     <div className="layout-container section-spacing max-w-3xl mx-auto space-y-8">
       <div>
-        <h1 className="heading-hero text-primary mb-2 flex items-center">
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-primary mb-2 flex items-center">
           <Briefcase className="w-8 h-8 mr-3 text-accent" />
           Post a New Job
         </h1>
-        <p className="text-body text-secondary">
+        <p className="text-base text-secondary">
           Create a clear and compelling job description to attract top talent.
         </p>
       </div>

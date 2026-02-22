@@ -1,7 +1,6 @@
 'use client';
 
 import { InputHTMLAttributes, forwardRef, useState } from 'react';
-import { motion } from 'framer-motion';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
@@ -9,12 +8,11 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className = '', label, error, id, ...props }, ref) => {
+  ({ className = '', label, error, id, onFocus, onBlur, ...rest }, ref) => {
     const inputId = id || label.replace(/\s+/g, '-').toLowerCase();
     const [isFocused, setIsFocused] = useState(false);
 
-    // Check if input has value to keep label floated
-    const hasValue = props.value !== undefined ? String(props.value).length > 0 : false;
+    const hasValue = rest.value !== undefined ? String(rest.value).length > 0 : false;
     const isFloating = isFocused || hasValue;
 
     return (
@@ -31,24 +29,20 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           onFocus={(e) => {
             setIsFocused(true);
-            props.onFocus?.(e);
+            onFocus?.(e);
           }}
           onBlur={(e) => {
             setIsFocused(false);
-            props.onBlur?.(e);
+            onBlur?.(e);
           }}
           className={`w-full rounded-xl border bg-transparent px-4 py-3.5 text-primary text-base transition-colors focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary relative z-0
             ${error ? 'border-red-500' : 'border-border'} ${className}`}
-          {...props}
+          {...rest}
         />
         {error && (
-          <motion.p
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-1.5 text-sm text-red-500 px-1"
-          >
+          <p className="mt-1.5 text-sm text-red-500 px-1">
             {error}
-          </motion.p>
+          </p>
         )}
       </div>
     );
