@@ -2,67 +2,72 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@layer utilities {
+  .layout-container {
+    @apply mx-auto w-full max-w-[1280px] px-[5%];
+  }
+  
+  .section-spacing {
+    @apply py-[6%];
+  }
+
+  .glass-card {
+    @apply rounded-2xl bg-white/70 backdrop-blur-[20px] border border-black/5 p-[3%] transition-all duration-250 hover:scale-102 hover:shadow-sm;
+  }
+  
+  .glass-card-no-hover {
+    @apply rounded-2xl bg-white/70 backdrop-blur-[20px] border border-black/5 p-[3%] transition-all duration-250;
+  }
+
+  /* Typography Scale */
+  .heading-hero {
+    font-size: clamp(32px, 4vw, 64px);
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .heading-section {
+    font-size: clamp(20px, 2vw, 32px);
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  .text-body {
+    font-size: clamp(14px, 1vw, 18px);
+    line-height: 1.6;
+  }
+
+  .text-small {
+    font-size: clamp(12px, 0.9vw, 14px);
+    line-height: 1.5;
+  }
+}
 
 :root {
-  --primary: #000000;
-  --secondary: #1a1a1a;
-  --accent: #000000;
-  --warning: #F59E0B;
-  --error: #EF4444;
-  --success: #10B981;
-  --background: #FFFBF5;
-  --background-alt: #FFF8F0;
-  --card: #FFFFFF;
-  --text-primary: #000000;
-  --text-secondary: #6B7280;
-  --text-muted: #9CA3AF;
-  --border: #E5E7EB;
-  --cream: #FFFBF5;
-  --cream-dark: #FFF5E6;
+  --background: #F7F4EF;
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
-
-html,
 body {
-  max-width: 100vw;
-  overflow-x: hidden;
-  font-family: 'Inter', system-ui, sans-serif;
   background-color: var(--background);
-  color: var(--text-primary);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-::selection {
-  background-color: var(--primary);
-  color: white;
+  color: #0B0B0B;
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--background);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 4px;
+  background: rgba(0,0,0,0.1);
+  border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-secondary);
+  background: rgba(0,0,0,0.3);
 }

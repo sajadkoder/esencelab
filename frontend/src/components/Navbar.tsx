@@ -2,15 +2,17 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, LogOut, Menu, X, LayoutDashboard, Briefcase, GraduationCap, Settings } from 'lucide-react';
+import { User, LogOut, Menu, X, Settings } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-function GraduationCapLogo({ className }: { className?: string }) {
+function Logo({ className }: { className?: string }) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"></path>
-      <path d="M22 10v6"></path>
-      <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"></path>
+      <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+      <path d="M2 17l10 5 10-5"></path>
+      <path d="M2 12l10 5 10-5"></path>
     </svg>
   );
 }
@@ -19,6 +21,7 @@ export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const pathname = usePathname();
 
   const handleLogout = () => {
     logout();
@@ -27,25 +30,27 @@ export default function Navbar() {
 
   const getNavLinks = () => {
     if (!user) return [];
-    
+
     switch (user.role) {
       case 'student':
         return [
-          { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-          { href: '/jobs', label: 'Jobs', icon: Briefcase },
-          { href: '/courses', label: 'Courses', icon: GraduationCap },
+          { href: '/dashboard', label: 'Dashboard' },
+          { href: '/jobs', label: 'Jobs' },
+          { href: '/career', label: 'Career Explorer' },
+          { href: '/progress', label: 'Progress' },
+          { href: '/applications', label: 'Applications' },
         ];
       case 'employer':
         return [
-          { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-          { href: '/jobs', label: 'My Jobs', icon: Briefcase },
-          { href: '/applicants', label: 'Applicants', icon: UsersIcon },
+          { href: '/dashboard', label: 'Dashboard' },
+          { href: '/jobs', label: 'Jobs' },
+          { href: '/candidates', label: 'Candidates' },
         ];
       case 'admin':
         return [
-          { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-          { href: '/users', label: 'Users', icon: UsersIcon },
-          { href: '/courses', label: 'Courses', icon: GraduationCap },
+          { href: '/dashboard', label: 'Overview' },
+          { href: '/users', label: 'Users' },
+          { href: '/courses', label: 'Courses' },
         ];
       default:
         return [];
@@ -57,103 +62,123 @@ export default function Navbar() {
   if (!isAuthenticated) return null;
 
   return (
-    <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <Link href="/dashboard" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-              <GraduationCapLogo className="w-4 h-4 text-white" />
+    <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-[20px] border-b border-border transition-colors">
+      <div className="layout-container">
+        <div className="flex items-center justify-between h-20">
+          {/* Logo */}
+          <Link href="/dashboard" className="flex items-center space-x-3 group">
+            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center transition-transform group-hover:scale-105">
+              <Logo className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-xl text-black">EsenceLab</span>
+            <span className="font-bold text-xl tracking-tight text-primary">Esencelab</span>
           </Link>
 
+          {/* Center Links */}
           <div className="hidden md:flex items-center space-x-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="flex items-center space-x-1.5 text-gray-600 hover:text-black transition-colors font-medium"
-              >
-                <link.icon className="w-4 h-4" />
-                <span>{link.label}</span>
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href || pathname.startsWith(link.href + '/');
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`text-sm font-medium transition-colors relative ${isActive ? 'text-primary' : 'text-secondary hover:text-primary'}`}
+                >
+                  {link.label}
+                  {isActive && (
+                    <motion.div
+                      layoutId="navbar-indicator"
+                      className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary rounded-full"
+                    />
+                  )}
+                </Link>
+              );
+            })}
           </div>
 
+          {/* Right Profile */}
           <div className="hidden md:flex items-center space-x-4">
             <div className="relative">
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="flex items-center space-x-2 text-gray-600 hover:text-black transition-colors"
+                className="flex items-center space-x-3 rounded-full pl-2 pr-4 py-1.5 transition-colors hover:bg-black/5"
               >
-                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                  <User className="w-4 h-4 text-black" />
+                <div className="w-8 h-8 rounded-full bg-accent-soft text-accent flex items-center justify-center">
+                  <User className="w-4 h-4" />
                 </div>
-                <span className="font-medium">{user?.name}</span>
+                <span className="font-medium text-sm text-primary">{user?.name}</span>
               </button>
-              
-              {isProfileOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white text-black rounded-xl shadow-lg border border-gray-100 py-2 z-50">
-                  <div className="px-4 py-2 border-b border-gray-100">
-                    <p className="font-medium">{user?.name}</p>
-                    <p className="text-sm text-gray-500 capitalize">{user?.role}</p>
-                  </div>
-                  <Link href="/profile" className="block px-4 py-2 hover:bg-gray-50 flex items-center space-x-2 transition-colors">
-                    <Settings className="w-4 h-4" />
-                    <span>Settings</span>
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 hover:bg-red-50 flex items-center space-x-2 text-red-500 transition-colors"
+
+              <AnimatePresence>
+                {isProfileOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 z-50 mt-2 w-56 rounded-2xl border border-border bg-white/95 py-2 text-primary shadow-sm backdrop-blur-xl"
                   >
-                    <LogOut className="w-4 h-4" />
-                    <span>Logout</span>
-                  </button>
-                </div>
-              )}
+                    <div className="border-b border-border px-4 py-3 mb-2">
+                      <p className="font-medium truncate">{user?.name}</p>
+                      <p className="text-sm text-secondary capitalize">{user?.role}</p>
+                    </div>
+                    <Link href="/profile" className="px-4 py-2 hover:bg-black/5 flex items-center space-x-3 transition-colors text-sm">
+                      <Settings className="w-4 h-4 text-secondary" />
+                      <span>Settings</span>
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 hover:bg-red-50 flex items-center space-x-3 text-red-500 transition-colors text-sm mt-1"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Logout</span>
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
 
+          {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 text-gray-600"
+            className="md:hidden p-2 text-primary"
           >
             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
       </div>
 
-      {isMenuOpen && (
-        <div className="md:hidden bg-white border-b border-gray-100">
-          <div className="px-2 pt-2 pb-3 space-y-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="block px-3 py-2 text-gray-600 hover:text-black hover:bg-gray-50 rounded-lg flex items-center space-x-2 transition-colors"
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="md:hidden border-b border-border bg-white/95 backdrop-blur-xl overflow-hidden"
+          >
+            <div className="px-4 pt-2 pb-6 space-y-2">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="block px-4 py-3 text-primary hover:bg-black/5 rounded-xl font-medium transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <div className="border-t border-border my-2 pt-2"></div>
+              <button
+                onClick={handleLogout}
+                className="w-full text-left px-4 py-3 text-red-500 hover:bg-red-50 rounded-xl font-medium flex items-center space-x-3 transition-colors"
               >
-                <link.icon className="w-4 h-4" />
-                <span>{link.label}</span>
-              </Link>
-            ))}
-            <button
-              onClick={handleLogout}
-              className="w-full text-left px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg flex items-center space-x-2 transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Logout</span>
-            </button>
-          </div>
-        </div>
-      )}
+                <LogOut className="w-5 h-5" />
+                <span>Logout</span>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
-  );
-}
-
-function UsersIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-    </svg>
   );
 }

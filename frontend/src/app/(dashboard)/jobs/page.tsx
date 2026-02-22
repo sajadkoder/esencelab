@@ -12,6 +12,8 @@ import Link from 'next/link';
 import { Briefcase, MapPin, DollarSign, Clock, Search } from 'lucide-react';
 import Input from '@/components/Input';
 import Select from '@/components/Select';
+import { Skeleton } from '@/components/Skeleton';
+import { motion } from 'framer-motion';
 
 export default function JobsPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -40,73 +42,87 @@ export default function JobsPage() {
       if (searchTerm) params.append('search', searchTerm);
       if (jobType) params.append('jobType', jobType);
       if (location) params.append('location', location);
-      
+
       const res = await api.get(`/jobs?${params.toString()}`);
       setJobs(res.data.data?.jobs || []);
-    } catch (error) {
-      console.error('Error fetching jobs:', error);
+    } catch {
+      setJobs([]);
     } finally {
       setLoading(false);
     }
   };
 
   const getJobTypeBadge = (type: string) => {
-    const variants: Record<string, 'info' | 'success' | 'warning' | 'default'> = {
-      'full-time': 'info',
-      'part-time': 'success',
+    const variants: Record<string, 'success' | 'warning' | 'primary' | 'secondary'> = {
+      'full_time': 'primary',
+      'part_time': 'success',
       'internship': 'warning',
-      'contract': 'default',
+      'contract': 'secondary',
     };
-    return <Badge variant={variants[type] || 'default'}>{type}</Badge>;
+    return <Badge variant={variants[type] || 'secondary'}>{type.replace('_', ' ')}</Badge>;
   };
 
   if (isLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-secondary"></div>
+      <div className="layout-container section-spacing space-y-8 max-w-6xl mx-auto">
+        <Skeleton className="h-16 w-1/3 mb-8" />
+        <Skeleton className="h-24 w-full mb-8" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Skeleton className="h-56 w-full" />
+          <Skeleton className="h-56 w-full" />
+          <Skeleton className="h-56 w-full" />
+          <Skeleton className="h-56 w-full" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="layout-container section-spacing space-y-10 max-w-6xl mx-auto">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-primary">Job Listings</h1>
-          <p className="text-slate-500">Find your dream job or hire talent</p>
+          <h1 className="heading-hero text-primary mb-2">Job Listings</h1>
+          <p className="text-body text-secondary">Find your dream job or hire top talent.</p>
         </div>
-        {user?.role === 'recruiter' && (
+        {user?.role === 'employer' && (
           <Link href="/jobs/new">
-            <Button>Post New Job</Button>
+            <Button variant="primary">Post New Job</Button>
           </Link>
         )}
       </div>
 
-      <Card>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search jobs..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50"
-            />
+      <Card hoverable={false} className="p-6 md:p-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="md:col-span-2 relative pt-2">
+            <label className="absolute left-4 transition-all duration-200 pointer-events-none text-xs px-1 bg-background text-secondary z-10 -top-1">
+              Search Jobs
+            </label>
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-secondary w-4 h-4 z-10" />
+              <input
+                type="text"
+                placeholder="Keywords, role, or company"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full rounded-xl border border-border bg-transparent pl-11 pr-4 py-3.5 text-primary text-base transition-colors focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-white"
+              />
+            </div>
           </div>
           <Select
+            label="Job Type"
             value={jobType}
             onChange={(e) => setJobType(e.target.value)}
             options={[
               { value: '', label: 'All Types' },
-              { value: 'full-time', label: 'Full Time' },
-              { value: 'part-time', label: 'Part Time' },
+              { value: 'full_time', label: 'Full Time' },
+              { value: 'part_time', label: 'Part Time' },
               { value: 'internship', label: 'Internship' },
               { value: 'contract', label: 'Contract' },
             ]}
           />
           <Input
-            placeholder="Location"
+            label="Location"
+            placeholder="City, state, or remote"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
           />
@@ -114,48 +130,66 @@ export default function JobsPage() {
       </Card>
 
       {jobs.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
+          }}
+        >
           {jobs.map((job) => (
-            <Card key={job.id} className="hover:shadow-lg transition-shadow">
-              <div className="flex items-start justify-between mb-3">
-                <Badge variant={job.status === 'active' ? 'success' : 'default'}>
-                  {job.status}
-                </Badge>
-                {getJobTypeBadge(job.jobType)}
-              </div>
-              <h3 className="text-lg font-semibold text-slate-800 mb-1">{job.title}</h3>
-              <p className="text-slate-600 mb-3">{job.company}</p>
-              <div className="space-y-2 text-sm text-slate-500 mb-4">
-                <div className="flex items-center">
-                  <MapPin className="w-4 h-4 mr-2" />
-                  {job.location}
+            <motion.div key={job.id} variants={{ hidden: { opacity: 0, scale: 0.95 }, visible: { opacity: 1, scale: 1 } }}>
+              <Card hoverable className="flex flex-col h-full p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <Badge variant={job.status === 'active' ? 'success' : 'secondary'} className="px-3">
+                    {job.status}
+                  </Badge>
+                  {getJobTypeBadge(job.jobType)}
                 </div>
-                {(job.salaryMin || job.salaryMax) && (
+                <div>
+                  <h3 className="text-xl font-semibold text-primary mb-1 line-clamp-1" title={job.title}>{job.title}</h3>
+                  <p className="text-secondary font-medium mb-5">{job.company}</p>
+                </div>
+                <div className="space-y-3 text-sm text-secondary mb-8 flex-grow">
                   <div className="flex items-center">
-                    <DollarSign className="w-4 h-4 mr-2" />
-                    {job.salaryMin && job.salaryMax
-                      ? `$${job.salaryMin.toLocaleString()} - $${job.salaryMax.toLocaleString()}`
-                      : job.salaryMin
-                      ? `From $${job.salaryMin.toLocaleString()}`
-                      : `Up to $${job.salaryMax?.toLocaleString()}`}
+                    <MapPin className="w-4 h-4 mr-3 flex-shrink-0" />
+                    <span className="line-clamp-1" title={job.location}>{job.location}</span>
                   </div>
-                )}
-                <div className="flex items-center">
-                  <Clock className="w-4 h-4 mr-2" />
-                  {new Date(job.createdAt).toLocaleDateString()}
+                  {(job.salaryMin || job.salaryMax) && (
+                    <div className="flex items-center">
+                      <DollarSign className="w-4 h-4 mr-3 flex-shrink-0" />
+                      <span className="line-clamp-1">
+                        {job.salaryMin && job.salaryMax
+                          ? `$${job.salaryMin.toLocaleString()} - $${job.salaryMax.toLocaleString()}`
+                          : job.salaryMin
+                            ? `From $${job.salaryMin.toLocaleString()}`
+                            : `Up to $${job.salaryMax?.toLocaleString()}`}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex items-center">
+                    <Clock className="w-4 h-4 mr-3 flex-shrink-0" />
+                    <span>Posted {new Date(job.createdAt).toLocaleDateString()}</span>
+                  </div>
                 </div>
-              </div>
-              <Link href={`/jobs/${job.id}`}>
-                <Button variant="outline" className="w-full">View Details</Button>
-              </Link>
-            </Card>
+                <div className="mt-auto">
+                  <Link href={`/jobs/${job.id}`}>
+                    <Button variant="outline" className="w-full justify-center">View Details</Button>
+                  </Link>
+                </div>
+              </Card>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       ) : (
-        <Card className="text-center py-12">
-          <Briefcase className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-slate-800 mb-2">No jobs found</h3>
-          <p className="text-slate-500">Try adjusting your search criteria</p>
+        <Card hoverable={false} className="text-center py-16 flex flex-col items-center">
+          <div className="w-16 h-16 bg-accent-soft rounded-full flex items-center justify-center mb-6">
+            <Briefcase className="w-8 h-8 text-accent" />
+          </div>
+          <h3 className="text-xl font-medium text-primary mb-2">No jobs found</h3>
+          <p className="text-secondary">Try adjusting your search criteria or explore other categories.</p>
         </Card>
       )}
     </div>

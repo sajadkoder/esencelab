@@ -1,209 +1,157 @@
-# EsenceLab - AI-Powered Campus Recruitment Platform
+# EsenceLab
 
-<div align="center">
-  <img src="https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js" alt="Next.js" />
-  <img src="https://img.shields.io/badge/Express.js-Backend-green?style=for-the-badge&logo=express" alt="Express.js" />
-  <img src="https://img.shields.io/badge/FastAPI-AI%20Service-blue?style=for-the-badge&logo=python" alt="FastAPI" />
-  <img src="https://img.shields.io/badge/PostgreSQL-Database-blue?style=for-the-badge&logo=postgresql" alt="PostgreSQL" />
-</div>
+AI-powered, role-based campus recruitment platform for students, recruiters, and admins.
 
-<div align="center">
-  <h3>AI-Powered Resume Screening & Job Matching Platform</h3>
-  <p>Built with ❤️ for SNGCET College Placement Cell</p>
-</div>
+## Quick Start (One Shot, No Docker)
 
----
+This project can run fully local in demo mode with a local in-memory data provider.
 
-## Overview
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\local-demo.ps1 -InstallDeps -SmokeTest
+```
 
-EsenceLab is a full-stack AI-powered campus recruitment platform that connects students with recruiters through intelligent resume screening and job matching. Originally developed as a college project, it demonstrates the practical application of AI/ML in the recruitment domain.
+What this does:
+- Installs frontend/backend/python dependencies.
+- Forces backend to local demo DB mode (`DATA_PROVIDER=memory`).
+- Starts AI service, backend, and frontend on `3002`, `3001`, `3000`.
+- Runs an end-to-end smoke test for all core flows.
 
-### Built With
+Run later without reinstall:
 
-**Frontend:**
-- Next.js 14 (App Router)
-- TypeScript
-- Tailwind CSS
-- React Context API
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\local-demo.ps1 -SmokeTest
+```
 
-**Backend:**
-- Express.js
-- JWT Authentication
-- Multer (File Uploads)
+Run smoke test only (if services are already running):
 
-**AI Service:**
-- FastAPI (Python)
-- PyPDF2 (PDF Processing)
-- scikit-learn (TF-IDF Matching)
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\local-smoke.ps1
+```
 
-**Database:**
-- PostgreSQL (Supabase)
-- In-memory storage (Demo mode)
+## Tech Stack
+- Frontend: Next.js 14, TypeScript, Tailwind CSS
+- Backend: Node.js, Express.js, JWT, bcrypt
+- AI Service: FastAPI, pdfplumber/PyPDF2 (spaCy/scikit-learn optional fallbacks)
+- Local Demo DB: In-memory provider (`DATA_PROVIDER=memory`)
+- Optional Persistent DB: Supabase Postgres
 
----
+## Demo URLs
+- Frontend: `http://localhost:3000`
+- Backend API: `http://localhost:3001`
+- AI Service: `http://localhost:3002`
 
-## Features
+## Demo Credentials
+- Student: `student@esencelab.com` / `demo123`
+- Employer: `recruiter@esencelab.com` / `demo123`
+- Admin: `admin@esencelab.com` / `demo123`
 
-### For Students
-- AI Resume Screening - Upload PDF, auto-extract skills
-- Smart Job Matching - AI-powered recommendations
-- Application Tracking - Real-time status updates
-- Course Recommendations - Skill gap analysis
+## Features Covered
+- Role-based authentication and route protection
+- Student resume upload + AI parsing
+- AI skill extraction + similarity scoring
+- Resume strength scoring with section-wise feedback
+- Skill roadmap with progress tracking
+- Personalized 30/60-day learning plans + weekly planner
+- Mock interview assistant with session logging
+- Career role explorer and recommendation explanations
+- Job tracker (saved jobs + application notes/stages)
+- Job CRUD and application lifecycle
+- Recruiter candidate match ranking
+- Recommendations with missing skills and courses
+- Admin user/course management
+- Role-based dashboard stats
 
-### For Recruiters
-- Job Posting - Create and manage listings
-- Candidate Search - Browse student profiles
-- AI Matching - Get ranked candidates
-- Application Management - Review and update status
+## Manual Setup (If You Prefer)
 
-### For Admins
-- User Management
-- Platform Analytics
-- Course Management
-
----
-
-## Quick Start
-
-### Prerequisites
+### 1) Prerequisites
 - Node.js 18+
-- Python 3.11+
-- npm or yarn
+- Python 3.11+ (tested with Python 3.14 in local demo mode)
 
-### Installation
-
+### 2) Install dependencies
 ```bash
-# Clone repository
-git clone https://github.com/sajadkoder/esencelab.git
-cd esencelab
-
-# Install frontend
 cd frontend && npm install
-
-# Install backend
 cd ../backend && npm install
-
-# Install AI service
 cd ../ai-service && pip install -r requirements.txt
 ```
 
-### Run the Application
+### 3) Configure backend for local demo mode
+Create `backend/.env`:
 
-**Terminal 1 - Backend:**
+```env
+PORT=3001
+JWT_SECRET=change-me
+AI_SERVICE_URL=http://localhost:3002
+FRONTEND_URL=http://localhost:3000
+DATA_PROVIDER=memory
+```
+
+### 4) Configure frontend
+Create `frontend/.env.local`:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3001/api
+NEXT_PUBLIC_AI_SERVICE_URL=http://localhost:3002/ai
+```
+
+### 5) Start services (3 terminals)
 ```bash
-cd backend && npm run dev
+# terminal 1
+cd ai-service
+python -m uvicorn app.main:app --reload --port 3002
+
+# terminal 2
+cd backend
+npm run dev
+
+# terminal 3
+cd frontend
+npm run dev
 ```
 
-**Terminal 2 - AI Service:**
+## Optional Supabase Mode
+
+If you want persistence:
+1. Set `DATA_PROVIDER=supabase` in `backend/.env`.
+2. Add `SUPABASE_URL` and key(s).
+3. Run SQL in Supabase SQL editor:
+   - `supabase-schema.sql`
+   - `supabase-seed.sql`
+
+The schema includes extended tables for growth features:
+- `resume_scores`
+- `skill_progress`
+- `learning_plans`
+- `mock_interview_sessions`
+- `saved_jobs`
+- `career_preferences`
+
+## Repository Structure
+- `frontend/`: Next.js app
+- `backend/`: Express API
+- `ai-service/`: FastAPI service
+- `scripts/local-demo.ps1`: one-shot local setup + run
+- `scripts/local-smoke.ps1`: end-to-end smoke test
+- `supabase-schema.sql`: Supabase schema
+- `supabase-seed.sql`: Supabase seed data
+
+## Build Verification
 ```bash
-cd ai-service && python -m uvicorn app.main:app --reload --port 3002
+cd backend && npm run build
+cd ../frontend && npm run build
+cd ../ai-service && python -m py_compile app/main.py
 ```
 
-**Terminal 3 - Frontend:**
-```bash
-cd frontend && npm run dev
-```
-
-### Access
-- **Frontend:** http://localhost:3000
-- **Backend API:** http://localhost:3001
-- **AI Service:** http://localhost:3002
-
----
-
-## Demo Credentials
-
-| Role | Email | Password |
-|------|-------|----------|
-| Student | student@esencelab.com | demo123 |
-| Employer | recruiter@esencelab.com | demo123 |
-| Admin | admin@esencelab.com | demo123 |
-
----
-
-## Architecture
-
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   Frontend      │────▶│   Backend       │────▶│   AI Service    │
-│   Next.js       │     │   Express.js    │     │   FastAPI       │
-│   Port 3000     │     │   Port 3001     │     │   Port 3002     │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-```
-
----
-
-## API Endpoints
-
-### Authentication
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | /api/auth/register | Register user |
-| POST | /api/auth/login | Login |
-| GET | /api/auth/me | Get current user |
-
-### Jobs
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | /api/jobs | List jobs |
-| GET | /api/jobs/:id | Get job |
-| POST | /api/jobs | Create job |
-
-### Applications
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | /api/applications | List applications |
-| POST | /api/applications | Apply to job |
-| PUT | /api/applications/:id/status | Update status |
-
----
-
-## Project Structure
-
-```
-esencelab/
-├── frontend/          # Next.js app
-│   ├── src/app/       # Pages
-│   ├── components/    # UI components
-│   └── contexts/      # State management
-├── backend/           # Express.js API
-│   └── src/           # Routes & logic
-├── ai-service/        # FastAPI AI
-│   └── app/           # ML endpoints
-└── README.md
-```
-
----
-
-## Tech Stack Details
-
-| Layer | Technology | Purpose |
-|-------|------------|---------|
-| Frontend | Next.js 14 | React framework with App Router |
-| Styling | Tailwind CSS | Utility-first CSS |
-| Backend | Express.js | REST API server |
-| Auth | JWT | Token-based authentication |
-| AI | FastAPI | Python ML service |
-| PDF | PyPDF2 | Resume text extraction |
-| ML | scikit-learn | TF-IDF job matching |
-
----
-
-## College Project Details
-
-- **Project:** AI-Powered Campus Recruitment Platform
-- **College:** SNGCET
-- **Year:** 2026
-- **Team:** Sajad K, Harikrishnan, Jishnu, Adwatath
-
----
-
-## License
-
-Educational project for college curriculum.
-
----
-
-<div align="center">
-  <p>© 2026 EsenceLab. College Project.</p>
-</div>
+## New Career APIs (Student)
+- `GET /api/career/roles`
+- `POST /api/career/target-role`
+- `GET /api/career/overview`
+- `GET /api/career/roadmap`
+- `PUT /api/career/roadmap/skill`
+- `GET /api/career/learning-plan?durationDays=30|60`
+- `POST /api/career/learning-plan`
+- `GET /api/career/mock-interview`
+- `POST /api/career/mock-interview/session`
+- `GET /api/career/job-tracker`
+- `POST /api/career/job-tracker/save`
+- `DELETE /api/career/job-tracker/save/:jobId`
+- `PUT /api/career/job-tracker/application/:applicationId`

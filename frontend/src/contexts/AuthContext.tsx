@@ -13,6 +13,13 @@ interface AuthContextType extends AuthState {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const normalizeUser = (user: User): User => {
+  if ((user as any).role === 'recruiter') {
+    return { ...user, role: 'employer' as User['role'] };
+  }
+  return user;
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({
     user: null,
@@ -28,9 +35,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (token && userStr) {
       try {
         const user = JSON.parse(userStr);
+        const normalizedUser = normalizeUser(user);
         setState({
           token,
-          user,
+          user: normalizedUser,
           isLoading: false,
           isAuthenticated: true,
         });
@@ -52,13 +60,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (credentials: LoginCredentials) => {
     const response = await api.post('/auth/login', credentials);
     const { token, user } = response.data;
+    const normalizedUser = normalizeUser(user);
     
     localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
+    localStorage.setItem('user', JSON.stringify(normalizedUser));
     
     setState({
       token,
-      user,
+      user: normalizedUser,
       isLoading: false,
       isAuthenticated: true,
     });
@@ -67,13 +76,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (data: RegisterData) => {
     const response = await api.post('/auth/register', data);
     const { token, user } = response.data;
+    const normalizedUser = normalizeUser(user);
     
     localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
+    localStorage.setItem('user', JSON.stringify(normalizedUser));
     
     setState({
       token,
-      user,
+      user: normalizedUser,
       isLoading: false,
       isAuthenticated: true,
     });

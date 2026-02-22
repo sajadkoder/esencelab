@@ -9,14 +9,21 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: "#0F172A",
-        secondary: "#3B82F6",
-        accent: "#10B981",
-        warning: "#F59E0B",
-        error: "#EF4444",
+        background: "#F7F4EF",
+        primary: "#0B0B0B",
+        secondary: "rgba(0,0,0,0.6)",
+        accent: "#2563EB",
+        "accent-soft": "rgba(37,99,235,0.08)",
+        border: "rgba(0,0,0,0.08)",
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
+        sans: ["var(--font-plus-jakarta)", "sans-serif"],
+      },
+      transitionDuration: {
+        '250': '250ms',
+      },
+      scale: {
+        '102': '1.02',
       },
     },
   },
