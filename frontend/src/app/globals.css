@@ -22,10 +22,132 @@
   .glass-panel {
     @apply bg-white/40 backdrop-blur-2xl border-[0.5px] border-white/60 shadow-2xl shadow-black/5;
   }
+
+  .notion-surface {
+    background:
+      radial-gradient(circle at 12% -8%, rgba(212, 175, 55, 0.1), transparent 35%),
+      radial-gradient(circle at 85% 0%, rgba(10, 10, 10, 0.05), transparent 30%),
+      #fbfbfa;
+  }
+
+  .notion-grid {
+    background-image:
+      linear-gradient(to right, rgba(10, 10, 10, 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(10, 10, 10, 0.045) 1px, transparent 1px);
+    background-size: 38px 38px;
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.25));
+  }
+
+  .notion-panel {
+    @apply rounded-lg border border-black/10 bg-white/90 shadow-[0_1px_0_0_rgba(10,10,10,0.05)];
+  }
+
+  .notion-card {
+    @apply rounded-xl border border-black/10 bg-white p-5 shadow-[0_1px_0_0_rgba(10,10,10,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_28px_-18px_rgba(10,10,10,0.5)];
+  }
+
+  .landing-shell {
+    background:
+      radial-gradient(circle at 8% -6%, rgba(212, 175, 55, 0.12), transparent 34%),
+      radial-gradient(circle at 95% 0%, rgba(10, 10, 10, 0.08), transparent 30%),
+      #f8f8f6;
+  }
+
+  .landing-grid {
+    background-image:
+      linear-gradient(to right, rgba(10, 10, 10, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(10, 10, 10, 0.04) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.2));
+  }
+
+  .landing-aura {
+    @apply absolute h-[340px] w-[340px] rounded-full;
+    background: radial-gradient(circle, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0) 70%);
+    filter: blur(6px);
+    animation: drift 11s ease-in-out infinite;
+  }
+
+  .landing-aura-secondary {
+    @apply absolute h-[420px] w-[420px] rounded-full;
+    background: radial-gradient(circle, rgba(20, 20, 20, 0.14) 0%, rgba(20, 20, 20, 0) 72%);
+    filter: blur(10px);
+    animation: drift-alt 14s ease-in-out infinite;
+  }
+
+  .landing-noise {
+    background-image: radial-gradient(rgba(10, 10, 10, 0.06) 0.5px, transparent 0.5px);
+    background-size: 4px 4px;
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.35), transparent 90%);
+  }
+
+  .velocity-shell {
+    background:
+      radial-gradient(circle at 8% 12%, rgba(132, 216, 191, 0.24), transparent 36%),
+      radial-gradient(circle at 90% -4%, rgba(158, 201, 255, 0.2), transparent 34%),
+      linear-gradient(180deg, #f4f8f7 0%, #f9fbfc 46%, #f2f7fb 100%);
+  }
+
+  .velocity-grid {
+    background-image:
+      linear-gradient(to right, rgba(17, 34, 56, 0.06) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(17, 34, 56, 0.06) 1px, transparent 1px);
+    background-size: 46px 46px;
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.12));
+  }
+
+  .velocity-card {
+    @apply rounded-3xl border border-white/70 bg-white/80 shadow-[0_24px_52px_-34px_rgba(17,34,56,0.42)] backdrop-blur-xl;
+  }
+
+  .velocity-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    border-radius: 999px;
+    border: 1px solid rgba(17, 34, 56, 0.14);
+    background: rgba(255, 255, 255, 0.74);
+    padding: 0.33rem 0.76rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(17, 34, 56, 0.78);
+  }
+
+  .velocity-orb {
+    @apply pointer-events-none absolute rounded-full;
+    filter: blur(2px);
+  }
+
+  .velocity-orb-mint {
+    height: 320px;
+    width: 320px;
+    background: radial-gradient(circle, rgba(132, 216, 191, 0.32) 0%, rgba(132, 216, 191, 0) 74%);
+    animation: float-soft 13s ease-in-out infinite;
+  }
+
+  .velocity-orb-sky {
+    height: 340px;
+    width: 340px;
+    background: radial-gradient(circle, rgba(158, 201, 255, 0.28) 0%, rgba(158, 201, 255, 0) 72%);
+    animation: float-soft-reverse 15s ease-in-out infinite;
+  }
+
+  .velocity-orb-coral {
+    height: 280px;
+    width: 280px;
+    background: radial-gradient(circle, rgba(242, 178, 141, 0.24) 0%, rgba(242, 178, 141, 0) 74%);
+    animation: float-soft 11s ease-in-out infinite;
+  }
 }
 
 :root {
   --background: #FDFCF8;
+  --landing-ink: #112238;
+  --landing-mint: #84d8bf;
+  --landing-sky: #9ec9ff;
+  --landing-coral: #f2b28d;
 }
 
 body {
@@ -49,4 +171,44 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(10, 10, 10, 0.3);
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(24px, -14px, 0) scale(1.04);
+  }
+}
+
+@keyframes drift-alt {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-22px, 18px, 0) scale(1.03);
+  }
+}
+
+@keyframes float-soft {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(20px, -16px, 0) scale(1.04);
+  }
+}
+
+@keyframes float-soft-reverse {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-24px, 16px, 0) scale(1.03);
+  }
 }

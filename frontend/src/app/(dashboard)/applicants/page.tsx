@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
@@ -35,28 +35,7 @@ export default function ApplicantsPage() {
   const [candidateMatches, setCandidateMatches] = useState<CandidateMatch[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, isLoading, router]);
-
-  useEffect(() => {
-    if (isAuthenticated && (user?.role === 'employer' || user?.role === 'admin')) {
-      fetchApplications();
-      fetchJobs();
-    }
-  }, [isAuthenticated, user, statusFilter]);
-
-  useEffect(() => {
-    if (selectedJobId) {
-      fetchCandidateMatches(selectedJobId);
-    } else {
-      setCandidateMatches([]);
-    }
-  }, [selectedJobId]);
-
-  const fetchApplications = async () => {
+  const fetchApplications = useCallback(async () => {
     try {
       const params = statusFilter ? `?status=${statusFilter}` : '';
       const res = await api.get(`/applications${params}`);
@@ -66,23 +45,21 @@ export default function ApplicantsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter]);
 
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     try {
       const endpoint = user?.role === 'employer' ? '/jobs?my=true&status=active' : '/jobs?status=active';
       const res = await api.get(endpoint);
       const fetchedJobs = res.data.data?.jobs || [];
       setJobs(fetchedJobs);
-      if (!selectedJobId && fetchedJobs.length > 0) {
-        setSelectedJobId(fetchedJobs[0].id);
-      }
+      setSelectedJobId((current) => current || fetchedJobs[0]?.id || '');
     } catch {
       setJobs([]);
     }
-  };
+  }, [user?.role]);
 
-  const fetchCandidateMatches = async (jobId: string) => {
+  const fetchCandidateMatches = useCallback(async (jobId: string) => {
     setLoadingMatches(true);
     try {
       const res = await api.get(`/jobs/${jobId}/candidate-matches`);
@@ -92,13 +69,39 @@ export default function ApplicantsPage() {
     } finally {
       setLoadingMatches(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+    if (user?.role === 'employer' || user?.role === 'admin') {
+      void fetchApplications();
+      void fetchJobs();
+      return;
+    }
+    setLoading(false);
+  }, [fetchApplications, fetchJobs, isAuthenticated, user?.role]);
+
+  useEffect(() => {
+    if (selectedJobId) {
+      void fetchCandidateMatches(selectedJobId);
+      return;
+    }
+    setCandidateMatches([]);
+  }, [fetchCandidateMatches, selectedJobId]);
 
   const handleStatusUpdate = async (appId: string, newStatus: string) => {
     try {
       await api.put(`/applications/${appId}/status`, { status: newStatus });
-      fetchApplications();
-    } catch (error) {
+      void fetchApplications();
+    } catch {
       alert('Failed to update status');
     }
   };
@@ -206,6 +209,12 @@ export default function ApplicantsPage() {
                       Application: {match.applicationStatus || 'pending'}
                     </p>
                   )}
+                  <button
+                    onClick={() => router.push(`/applicants/${match.candidateId}`)}
+                    className="mt-3 rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-medium text-primary hover:bg-black/5"
+                  >
+                    View Profile
+                  </button>
                 </div>
               ))}
             </div>
@@ -268,6 +277,12 @@ export default function ApplicantsPage() {
                 <div className="flex items-center space-x-4">
                   {getStatusBadge(app.status)}
                   <div className="flex space-x-2">
+                    <button
+                      onClick={() => router.push(`/applicants/${app.candidateId}`)}
+                      className="px-3 py-1 border border-border rounded-lg text-sm hover:bg-black/5"
+                    >
+                      View Profile
+                    </button>
                     {app.status === 'pending' && (
                       <>
                         <button

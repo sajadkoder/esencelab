@@ -34,6 +34,18 @@ function Get-Status([string]$url) {
   }
 }
 
+function Get-StableStatus([string]$url, [int]$attempts = 5, [int]$delaySeconds = 1) {
+  $status = -1
+  for ($i = 0; $i -lt $attempts; $i++) {
+    $status = Get-Status $url
+    if ($status -eq 200) {
+      return $status
+    }
+    Start-Sleep -Seconds $delaySeconds
+  }
+  return $status
+}
+
 $studentToken = $null
 $employerToken = $null
 $adminToken = $null
@@ -42,7 +54,13 @@ $tempCourseId = $null
 $resumeId = $null
 $appId = $null
 
-Step "health_frontend" { Get-Status "http://localhost:3000/" }
+Step "health_frontend" {
+  $status = Get-StableStatus "http://localhost:3000/"
+  if ($status -ne 200) {
+    throw "Frontend health check failed with HTTP $status"
+  }
+  $status
+}
 Step "health_backend" { Invoke-RestMethod -Uri "http://localhost:3001/api/health" -Method GET -TimeoutSec 20 }
 Step "health_ai" { Invoke-RestMethod -Uri "http://localhost:3002/health" -Method GET -TimeoutSec 20 }
 
@@ -68,7 +86,11 @@ Step "frontend_routes" {
   $routes = @("/", "/login", "/register", "/dashboard", "/jobs", "/resume", "/applications", "/courses", "/applicants", "/users")
   $map = [ordered]@{}
   foreach ($route in $routes) {
-    $map[$route] = Get-Status ("http://localhost:3000" + $route)
+    $status = Get-StableStatus ("http://localhost:3000" + $route)
+    if ($status -ne 200) {
+      throw "Route $route returned HTTP $status"
+    }
+    $map[$route] = $status
   }
   $map
 }

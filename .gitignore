@@ -2,6 +2,7 @@ node_modules/
 .next/
 dist/
 build/
+*.tsbuildinfo
 *.log
 .env
 .env.local
@@ -32,3 +33,6 @@ backend/node_modules/@prisma/
 # Frontend
 frontend/node_modules/
 frontend/.next/
+
+# Prevent accidental lockfile at repo root (apps keep their own locks)
+/package-lock.json

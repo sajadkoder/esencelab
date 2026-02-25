@@ -10,6 +10,10 @@ export interface CareerRoleDefinition {
 }
 
 export interface ResumeSectionScores {
+  skillsCompleteness: number;
+  experienceRelevance: number;
+  projectStrength: number;
+  formattingConsistency: number;
   skills: number;
   projects: number;
   experience: number;
@@ -25,6 +29,7 @@ export interface ResumeStrengthScore {
 export interface SkillRoadmapItem {
   skill: string;
   status: SkillStatus;
+  level: 'beginner' | 'intermediate' | 'advanced';
 }
 
 export interface LearningPlanWeek {
@@ -237,11 +242,83 @@ const toDisplaySkill = (skill: string) => {
 const hasSkill = (skills: string[], candidate: string) =>
   skills.includes(toNormalizedSkill(candidate));
 
-const countProjects = (parsedData: any) => {
+const IMPACT_KEYWORDS = [
+  'improved',
+  'reduced',
+  'optimized',
+  'increased',
+  'delivered',
+  'built',
+  'designed',
+  'implemented',
+  'led',
+  'launched',
+  'automated',
+];
+
+const toTextBlob = (value: any): string => {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) return value.map((entry) => toTextBlob(entry)).join(' ');
+  if (value && typeof value === 'object') {
+    return Object.values(value)
+      .map((entry) => toTextBlob(entry))
+      .join(' ');
+  }
+  return '';
+};
+
+const projectEntries = (parsedData: any): any[] => {
+  if (Array.isArray(parsedData?.projects) && parsedData.projects.length > 0) {
+    return parsedData.projects;
+  }
+  const experience = Array.isArray(parsedData?.experience) ? parsedData.experience : [];
+  return experience.filter((entry: any) =>
+    String(toTextBlob(entry)).toLowerCase().includes('project')
+  );
+};
+
+const scoreExperienceRelevance = (parsedData: any, roleSkills: string[]) => {
+  const experience = Array.isArray(parsedData?.experience) ? parsedData.experience : [];
+  if (experience.length === 0) return 0;
+
+  const experienceBlob = toTextBlob(experience).toLowerCase();
+  const roleSkillMatches = roleSkills.filter((skill) =>
+    experienceBlob.includes(toNormalizedSkill(skill))
+  ).length;
+  const roleCoverage = roleSkills.length > 0 ? roleSkillMatches / roleSkills.length : 0;
+  const depthSignal = Math.min(experience.length / 3, 1);
+
+  return clampPercent(roleCoverage * 70 + depthSignal * 30);
+};
+
+const scoreProjectStrength = (parsedData: any) => {
+  const projects = projectEntries(parsedData);
+  if (projects.length === 0) return 0;
+
+  const projectBlob = toTextBlob(projects).toLowerCase();
+  const projectCountScore = Math.min(projects.length / 3, 1) * 60;
+  const impactHits = IMPACT_KEYWORDS.filter((keyword) => projectBlob.includes(keyword)).length;
+  const impactScore = Math.min(impactHits / 4, 1) * 40;
+
+  return clampPercent(projectCountScore + impactScore);
+};
+
+const scoreFormattingConsistency = (parsedData: any, normalizedSkills: string[]) => {
+  let score = 0;
+  const name = String(parsedData?.name || '').trim();
+  const email = String(parsedData?.email || '').trim();
+  const summary = String(parsedData?.summary || '').trim();
+  const educationCount = Array.isArray(parsedData?.education) ? parsedData.education.length : 0;
   const experienceCount = Array.isArray(parsedData?.experience) ? parsedData.experience.length : 0;
-  const summary = String(parsedData?.summary || '').toLowerCase();
-  const projectHint = summary.includes('project') ? 1 : 0;
-  return experienceCount + projectHint;
+
+  if (name.length >= 2) score += 20;
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) score += 20;
+  if (normalizedSkills.length >= 3) score += 20;
+  if (summary.length >= 30) score += 15;
+  if (experienceCount > 0) score += 15;
+  if (educationCount > 0) score += 10;
+
+  return clampPercent(score);
 };
 
 const getRole = (roleId: string) => CAREER_ROLES.find((role) => role.id === roleId) || CAREER_ROLES[0];
@@ -251,38 +328,39 @@ export const calculateResumeStrength = (
   resumeSkills: string[],
   roleId?: string
 ): ResumeStrengthScore => {
-  const normalizedSkills = dedupeNormalized(resumeSkills);
+  const parsedSkills = Array.isArray(parsedData?.skills) ? parsedData.skills : [];
+  const normalizedSkills = dedupeNormalized([...resumeSkills, ...parsedSkills]);
   const role = getRole(roleId || CAREER_ROLES[0].id);
 
   const requiredSkillCount = role.requiredSkills.length || 1;
   const matchedRoleSkills = role.requiredSkills.filter((skill) => hasSkill(normalizedSkills, skill)).length;
-
-  const skillsScore = clampPercent((matchedRoleSkills / requiredSkillCount) * 100);
-  const projectsScore = clampPercent((countProjects(parsedData) / 3) * 100);
-  const experienceCount = Array.isArray(parsedData?.experience) ? parsedData.experience.length : 0;
-  const experienceScore = clampPercent((experienceCount / 3) * 100);
-  const educationCount = Array.isArray(parsedData?.education) ? parsedData.education.length : 0;
-  const educationScore = clampPercent((educationCount / 1) * 100);
+  const skillsCompleteness = clampPercent((matchedRoleSkills / requiredSkillCount) * 100);
+  const experienceRelevance = scoreExperienceRelevance(parsedData, role.requiredSkills);
+  const projectStrength = scoreProjectStrength(parsedData);
+  const formattingConsistency = scoreFormattingConsistency(parsedData, normalizedSkills);
 
   const overallScore = clampPercent(
-    skillsScore * 0.45 + projectsScore * 0.2 + experienceScore * 0.2 + educationScore * 0.15
+    skillsCompleteness * 0.4 +
+      experienceRelevance * 0.25 +
+      projectStrength * 0.2 +
+      formattingConsistency * 0.15
   );
 
   const suggestions: string[] = [];
-  if (skillsScore < 70) {
+  if (skillsCompleteness < 70) {
     const missing = role.requiredSkills.filter((skill) => !hasSkill(normalizedSkills, skill)).slice(0, 3);
     if (missing.length > 0) {
       suggestions.push(`Add or strengthen these skills: ${missing.join(', ')}.`);
     }
   }
-  if (projectsScore < 60) {
+  if (experienceRelevance < 60) {
+    suggestions.push('Make experience bullets role-relevant by including tools, outcomes, and impact.');
+  }
+  if (projectStrength < 60) {
     suggestions.push('Add at least 2 project highlights with outcomes and tools used.');
   }
-  if (experienceScore < 60) {
-    suggestions.push('Include internship or practical experience bullets with measurable impact.');
-  }
-  if (educationScore < 60) {
-    suggestions.push('Add complete education details including degree, institution, and graduation year.');
+  if (formattingConsistency < 70) {
+    suggestions.push('Improve resume structure by including clear contact info, summary, and section completeness.');
   }
   if (suggestions.length === 0) {
     suggestions.push('Great progress. Keep your resume updated with latest projects and achievements.');
@@ -291,10 +369,14 @@ export const calculateResumeStrength = (
   return {
     overallScore,
     sections: {
-      skills: skillsScore,
-      projects: projectsScore,
-      experience: experienceScore,
-      education: educationScore,
+      skillsCompleteness,
+      experienceRelevance,
+      projectStrength,
+      formattingConsistency,
+      skills: skillsCompleteness,
+      projects: projectStrength,
+      experience: experienceRelevance,
+      education: formattingConsistency,
     },
     suggestions,
   };
@@ -311,12 +393,18 @@ export const buildRoadmap = (
     skillProgress.map((entry) => [toNormalizedSkill(entry.skillName), entry.status])
   );
 
-  return role.requiredSkills.map((skill) => {
+  const total = role.requiredSkills.length || 1;
+  const beginnerCutoff = Math.ceil(total / 3);
+  const intermediateCutoff = Math.ceil((2 * total) / 3);
+
+  return role.requiredSkills.map((skill, index) => {
     const normalized = toNormalizedSkill(skill);
+    const level =
+      index < beginnerCutoff ? 'beginner' : index < intermediateCutoff ? 'intermediate' : 'advanced';
     const fromProgress = progressMap.get(normalized);
-    if (fromProgress) return { skill, status: fromProgress };
-    if (normalizedSkills.includes(normalized)) return { skill, status: 'completed' };
-    return { skill, status: 'missing' };
+    if (fromProgress) return { skill, status: fromProgress, level };
+    if (normalizedSkills.includes(normalized)) return { skill, status: 'completed', level };
+    return { skill, status: 'missing', level };
   });
 };
 

@@ -12,7 +12,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     const inputId = id || label.replace(/\s+/g, '-').toLowerCase();
     const [isFocused, setIsFocused] = useState(false);
 
-    const hasValue = rest.value !== undefined ? String(rest.value).length > 0 : false;
+    const controlledValue = rest.value !== undefined ? String(rest.value) : '';
+    const uncontrolledValue = rest.defaultValue !== undefined ? String(rest.defaultValue) : '';
+    const hasValue = controlledValue.length > 0 || uncontrolledValue.length > 0;
     const isFloating = isFocused || hasValue;
 
     return (

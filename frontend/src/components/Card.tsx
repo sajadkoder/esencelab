@@ -11,11 +11,24 @@ interface CardProps {
 }
 
 export default function Card({ children, className = '', hoverable = true, title, subtitle, action, onClick }: CardProps) {
-  const baseClass = hoverable ? 'glass-card cursor-pointer' : 'glass-card-no-hover';
+  const baseClass = hoverable ? 'glass-card' : 'glass-card-no-hover';
+  const isInteractive = typeof onClick === 'function';
   return (
     <div
-      className={`${baseClass} overflow-hidden ${className}`}
+      className={`${baseClass} overflow-hidden ${isInteractive ? 'cursor-pointer' : ''} ${className}`}
       onClick={onClick}
+      role={isInteractive ? 'button' : undefined}
+      tabIndex={isInteractive ? 0 : undefined}
+      onKeyDown={
+        isInteractive
+          ? (event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                onClick?.();
+              }
+            }
+          : undefined
+      }
     >
       {(title || action) && (
         <div className="flex items-center justify-between border-b border-border pb-4 mb-4">

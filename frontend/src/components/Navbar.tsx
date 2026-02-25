@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, LogOut, Menu, X } from 'lucide-react';
+import { LogOut, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 function Logo({ className }: { className?: string }) {
@@ -68,6 +68,7 @@ export default function Navbar() {
       case 'admin':
         return [
           { href: '/dashboard', label: 'Overview' },
+          { href: '/jobs', label: 'Jobs' },
           { href: '/users', label: 'Users' },
           { href: '/applicants', label: 'Applicants' },
         ];
@@ -172,7 +173,7 @@ export default function Navbar() {
           >
             <div className="px-4 pt-2 pb-4 space-y-1">
               {navLinks.map((link) => {
-                const isActive = pathname === link.href;
+                const isActive = pathname === link.href || pathname.startsWith(link.href + '/');
                 return (
                   <Link
                     key={link.href}

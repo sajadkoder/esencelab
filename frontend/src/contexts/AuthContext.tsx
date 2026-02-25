@@ -90,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    void api.post('/auth/logout').catch(() => undefined);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setState({

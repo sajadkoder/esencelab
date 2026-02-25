@@ -36,6 +36,11 @@ export const getDashboardStats = async () => {
   return res.data.data || {};
 };
 
+export const getAdminMonitoring = async () => {
+  const res = await api.get('/admin/monitoring');
+  return res.data.data || {};
+};
+
 export const getLatestJobs = async (limit = 6): Promise<Job[]> => {
   const res = await api.get(`/jobs?limit=${limit}`);
   return res.data.data?.jobs || [];
@@ -56,6 +61,8 @@ export const createJob = async (payload: {
   company: string;
   location: string;
   requirements: string;
+  description?: string;
+  experienceLevel?: 'entry' | 'junior' | 'mid' | 'senior' | 'lead';
 }) => {
   const requirements = payload.requirements
     .split(',')
@@ -67,13 +74,39 @@ export const createJob = async (payload: {
     title: payload.title,
     company: payload.company,
     location: payload.location,
-    description: `Opportunity for ${payload.title} candidates.`,
+    description:
+      payload.description?.trim() || `Opportunity for ${payload.title} candidates.`,
     requirements: safeRequirements,
     skills: safeRequirements,
+    experienceLevel: payload.experienceLevel || 'mid',
     jobType: 'full_time',
     status: 'active',
   });
   return res.data.data;
+};
+
+export const updateJob = async (
+  jobId: string,
+  payload: Partial<{
+    title: string;
+    company: string;
+    description: string;
+    location: string;
+    requirements: string[] | string;
+    skills: string[];
+    experienceLevel: 'entry' | 'junior' | 'mid' | 'senior' | 'lead';
+    jobType: 'full_time' | 'part_time' | 'internship' | 'contract';
+    status: 'active' | 'closed';
+    salaryMin: number | null;
+    salaryMax: number | null;
+  }>
+) => {
+  const res = await api.put(`/jobs/${jobId}`, payload);
+  return res.data.data;
+};
+
+export const deleteJob = async (jobId: string) => {
+  await api.delete(`/jobs/${jobId}`);
 };
 
 export const getResume = async (): Promise<Resume | null> => {
@@ -88,10 +121,12 @@ export const getResume = async (): Promise<Resume | null> => {
 
 export const uploadResume = async (
   file: File,
-  onProgress?: (progress: number) => void
+  onProgress?: (progress: number) => void,
+  options?: { replaceExisting?: boolean }
 ): Promise<Resume> => {
   const formData = new FormData();
   formData.append('file', file);
+  formData.append('replaceExisting', String(options?.replaceExisting ?? true));
 
   const res = await api.post('/resume/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
@@ -200,9 +235,26 @@ export const saveInterviewSession = async (payload: {
   return res.data.data;
 };
 
+export const getMockInterviewSessions = async () => {
+  const res = await api.get('/career/mock-interview/sessions');
+  return res.data.data || [];
+};
+
 export const getJobTracker = async (): Promise<JobTrackerData> => {
   const res = await api.get('/career/job-tracker');
-  return res.data.data || { savedJobs: [], applications: [] };
+  return (
+    res.data.data || {
+      savedJobs: [],
+      applications: [],
+      statusCounts: {
+        saved: 0,
+        applied: 0,
+        interviewing: 0,
+        offer: 0,
+        rejected: 0,
+      },
+    }
+  );
 };
 
 export const saveJobForLater = async (jobId: string) => {
@@ -216,10 +268,17 @@ export const removeSavedJob = async (jobId: string) => {
 
 export const updateTrackedApplication = async (
   applicationId: string,
-  payload: { notes?: string; status?: 'pending' | 'shortlisted' | 'interview' | 'rejected' }
+  payload: {
+    notes?: string;
+    status?: 'pending' | 'shortlisted' | 'interview' | 'rejected' | 'applied' | 'interviewing' | 'offer';
+  }
 ) => {
   const res = await api.put(`/career/job-tracker/application/${applicationId}`, payload);
   return res.data.data;
+};
+
+export const deleteTrackedApplication = async (applicationId: string) => {
+  await api.delete(`/career/job-tracker/application/${applicationId}`);
 };
 
 export const getReadableErrorMessage = (error: any, fallback: string) => {

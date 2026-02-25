@@ -61,6 +61,17 @@ powershell -ExecutionPolicy Bypass -File .\scripts\local-smoke.ps1
 - Admin user/course management
 - Role-based dashboard stats
 
+## Team Members
+- Sajad (GitHub: `sajadkoder`) - Project lead, full-stack implementation, AI workflow integration
+
+## Credits
+- Open-source frameworks and libraries: Next.js, React, Express, FastAPI, Supabase, Tailwind CSS
+- Python PDF/NLP ecosystem used in this project: PyPDF2, pdfplumber
+
+## Build Specs And Chunks
+- Master feature spec: [docs/MASTER_BUILD_SPEC.md](docs/MASTER_BUILD_SPEC.md)
+- Chunked execution plan: [docs/CHUNKED_IMPLEMENTATION_PLAN.md](docs/CHUNKED_IMPLEMENTATION_PLAN.md)
+
 ## Manual Setup (If You Prefer)
 
 ### 1) Prerequisites

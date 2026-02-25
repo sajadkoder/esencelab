@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
@@ -9,11 +9,12 @@ import Card from '@/components/Card';
 import Badge from '@/components/Badge';
 import Button from '@/components/Button';
 import Link from 'next/link';
-import { Briefcase, MapPin, DollarSign, Clock, Search } from 'lucide-react';
+import { Briefcase, MapPin, DollarSign, Clock, Search, Trash2 } from 'lucide-react';
 import Input from '@/components/Input';
 import Select from '@/components/Select';
 import { Skeleton } from '@/components/Skeleton';
 import { motion } from 'framer-motion';
+import { getReadableErrorMessage } from '@/lib/dashboardApi';
 
 export default function JobsPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -22,7 +23,10 @@ export default function JobsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [jobType, setJobType] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [location, setLocation] = useState('');
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionJobId, setActionJobId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -30,18 +34,17 @@ export default function JobsPage() {
     }
   }, [isAuthenticated, isLoading, router]);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchJobs();
-    }
-  }, [isAuthenticated, searchTerm, jobType, location]);
-
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
+    const isManager = user?.role === 'employer' || user?.role === 'admin';
     try {
+      setActionError(null);
       const params = new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
       if (jobType) params.append('jobType', jobType);
+      if (statusFilter) params.append('status', statusFilter);
       if (location) params.append('location', location);
+      if (isManager && !statusFilter) params.append('status', 'all');
+      if (user?.role === 'employer') params.append('my', 'true');
 
       const res = await api.get(`/jobs?${params.toString()}`);
       setJobs(res.data.data?.jobs || []);
@@ -49,6 +52,41 @@ export default function JobsPage() {
       setJobs([]);
     } finally {
       setLoading(false);
+    }
+  }, [jobType, location, searchTerm, statusFilter, user?.role]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      void fetchJobs();
+    }
+  }, [fetchJobs, isAuthenticated]);
+
+  const handleToggleStatus = async (job: Job) => {
+    const nextStatus = job.status === 'active' ? 'closed' : 'active';
+    setActionJobId(job.id);
+    setActionError(null);
+    try {
+      await api.put(`/jobs/${job.id}`, { status: nextStatus });
+      await fetchJobs();
+    } catch (error: any) {
+      setActionError(getReadableErrorMessage(error, 'Failed to update job status.'));
+    } finally {
+      setActionJobId(null);
+    }
+  };
+
+  const handleDeleteJob = async (job: Job) => {
+    const confirmed = window.confirm(`Delete "${job.title}" at ${job.company}?`);
+    if (!confirmed) return;
+    setActionJobId(job.id);
+    setActionError(null);
+    try {
+      await api.delete(`/jobs/${job.id}`);
+      await fetchJobs();
+    } catch (error: any) {
+      setActionError(getReadableErrorMessage(error, 'Failed to delete job.'));
+    } finally {
+      setActionJobId(null);
     }
   };
 
@@ -84,12 +122,18 @@ export default function JobsPage() {
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-primary mb-2">Job Listings</h1>
           <p className="text-base text-secondary">Find your dream job or hire top talent.</p>
         </div>
-        {user?.role === 'employer' && (
+        {(user?.role === 'employer' || user?.role === 'admin') && (
           <Link href="/jobs/new">
             <Button variant="primary">Post New Job</Button>
           </Link>
         )}
       </div>
+
+      {actionError && (
+        <Card hoverable={false} className="border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {actionError}
+        </Card>
+      )}
 
       <Card hoverable={false} className="p-6 md:p-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -118,6 +162,16 @@ export default function JobsPage() {
               { value: 'part_time', label: 'Part Time' },
               { value: 'internship', label: 'Internship' },
               { value: 'contract', label: 'Contract' },
+            ]}
+          />
+          <Select
+            label="Status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            options={[
+              { value: '', label: 'All Statuses' },
+              { value: 'active', label: 'Active' },
+              { value: 'closed', label: 'Closed' },
             ]}
           />
           <Input
@@ -178,6 +232,29 @@ export default function JobsPage() {
                   <Link href={`/jobs/${job.id}`}>
                     <Button variant="outline" className="w-full justify-center">View Details</Button>
                   </Link>
+                  {(user?.role === 'admin' || (user?.role === 'employer' && job.employerId === user.id)) && (
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleToggleStatus(job)}
+                        isLoading={actionJobId === job.id}
+                        className="w-full justify-center"
+                      >
+                        {job.status === 'active' ? 'Close' : 'Reopen'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleDeleteJob(job)}
+                        isLoading={actionJobId === job.id}
+                        className="w-full justify-center text-red-600 hover:bg-red-50"
+                      >
+                        <Trash2 className="mr-1 h-4 w-4" />
+                        Delete
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </Card>
             </motion.div>
