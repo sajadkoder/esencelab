@@ -417,6 +417,10 @@ export class SupabaseStore {
     await this.delete('applications', 'candidate_id', candidateId);
   }
 
+  async deleteApplication(id: string) {
+    await this.delete('applications', 'id', id);
+  }
+
   async upsertCourse(course: AnyRecord) {
     await this.upsert('courses', {
       id: course.id,

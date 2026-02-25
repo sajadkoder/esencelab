@@ -95,6 +95,7 @@ class ResumeParseResponse(BaseModel):
 class MatchRequest(BaseModel):
     resumeSkills: List[str]
     jobRequirements: str
+    jobRequiredSkills: Optional[List[str]] = None
     includeExplanation: bool = False
 
 
@@ -312,19 +313,38 @@ def empty_parsed_resume() -> Dict[str, Any]:
     }
 
 
-def calculate_tfidf_match(resume_skills: List[str], job_requirements: str) -> float:
-    if not resume_skills or not job_requirements.strip():
+def normalize_skill_list(skills: List[str]) -> List[str]:
+    deduped: Dict[str, str] = {}
+    for skill in skills:
+        cleaned = str(skill or "").strip()
+        if not cleaned:
+            continue
+        key = cleaned.lower()
+        if key not in deduped:
+            deduped[key] = cleaned
+    return list(deduped.values())
+
+
+def calculate_tfidf_match(
+    resume_skills: List[str],
+    required_skills: List[str],
+    job_requirements: str = "",
+) -> float:
+    if not resume_skills or (not required_skills and not job_requirements.strip()):
         return 0.0
 
     resume_text = " ".join(resume_skills)
-    corpus = [resume_text, job_requirements]
+    required_text = " ".join(required_skills).strip() or job_requirements.strip()
+    corpus = [resume_text, required_text]
 
     if TfidfVectorizer is None or cosine_similarity is None:
         resume_set = {skill.lower() for skill in resume_skills}
-        job_skills = {skill.lower() for skill in extract_skills(job_requirements)}
-        if not job_skills:
+        required_set = {skill.lower() for skill in required_skills} or {
+            skill.lower() for skill in extract_skills(job_requirements)
+        }
+        if not required_set:
             return 0.0
-        return len(resume_set & job_skills) / len(job_skills)
+        return len(resume_set & required_set) / len(required_set)
 
     vectorizer = TfidfVectorizer(ngram_range=(1, 2))
     tfidf_matrix = vectorizer.fit_transform(corpus)
@@ -379,18 +399,25 @@ async def parse_resume_endpoint(file: UploadFile = File(...)):
 @app.post("/ai/match", response_model=MatchResponse)
 async def match_jobs(request: MatchRequest):
     try:
-        resume_skills = [skill.strip() for skill in request.resumeSkills if skill.strip()]
-        job_skills = extract_skills(request.jobRequirements)
+        resume_skills = normalize_skill_list(request.resumeSkills)
+        job_skills = normalize_skill_list(
+            request.jobRequiredSkills if request.jobRequiredSkills else extract_skills(request.jobRequirements)
+        )
 
         resume_set = {skill.lower() for skill in resume_skills}
         job_set = {skill.lower() for skill in job_skills}
+        display_map = {skill.lower(): skill for skill in job_skills}
 
-        matched = sorted([skill.title() for skill in (resume_set & job_set)])
-        missing = sorted([skill.title() for skill in (job_set - resume_set)])
+        matched = sorted([display_map.get(skill, skill.title()) for skill in (resume_set & job_set)])
+        missing = sorted([display_map.get(skill, skill.title()) for skill in (job_set - resume_set)])
 
         skill_overlap = len(matched) / len(job_set) if job_set else 0.0
-        tfidf_score = calculate_tfidf_match(resume_skills, request.jobRequirements)
-        final_score = round(((skill_overlap * 0.6) + (tfidf_score * 0.4)), 2)
+        tfidf_score = calculate_tfidf_match(
+            resume_skills,
+            job_skills,
+            request.jobRequirements,
+        )
+        final_score = round(((skill_overlap * 0.55) + (tfidf_score * 0.45)), 4)
 
         explanation = generate_explanation(final_score, matched, missing) if request.includeExplanation else None
 

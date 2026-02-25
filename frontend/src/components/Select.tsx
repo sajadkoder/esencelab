@@ -1,6 +1,6 @@
 'use client';
 
-import { SelectHTMLAttributes, forwardRef, useState } from 'react';
+import { SelectHTMLAttributes, forwardRef } from 'react';
 
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label: string;
@@ -11,7 +11,6 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
 const Select = forwardRef<HTMLSelectElement, SelectProps>(
   ({ className = '', label, error, options, id, onFocus, onBlur, ...rest }, ref) => {
     const inputId = id || label.replace(/\s+/g, '-').toLowerCase();
-    const [isFocused, setIsFocused] = useState(false);
 
     return (
       <div className="w-full relative pt-2">
@@ -25,11 +24,9 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           id={inputId}
           ref={ref}
           onFocus={(e) => {
-            setIsFocused(true);
             onFocus?.(e);
           }}
           onBlur={(e) => {
-            setIsFocused(false);
             onBlur?.(e);
           }}
           className={`w-full rounded-xl border bg-transparent px-4 py-3.5 text-primary text-base transition-colors focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary relative z-0 appearance-none

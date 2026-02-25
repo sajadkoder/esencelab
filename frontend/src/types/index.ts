@@ -5,6 +5,7 @@ export interface User {
   email: string;
   name: string;
   role: UserRole;
+  canonicalRole?: 'student' | 'recruiter' | 'admin';
   avatarUrl?: string | null;
   isActive?: boolean;
   createdAt?: string;
@@ -50,6 +51,7 @@ export interface ResumeParsedData {
   phone?: string | null;
   education?: Education[];
   experience?: Experience[];
+  projects?: Array<Record<string, unknown>>;
   skills?: string[];
   summary?: string | null;
   organizations?: string[];
@@ -88,7 +90,9 @@ export interface Application {
   id: string;
   jobId: string;
   candidateId: string;
-  status: 'pending' | 'shortlisted' | 'rejected' | 'interview';
+  status: 'pending' | 'shortlisted' | 'rejected' | 'interview' | 'applied' | 'interviewing' | 'offer';
+  trackerStatus?: 'applied' | 'interviewing' | 'offer' | 'rejected';
+  storageStatus?: 'pending' | 'shortlisted' | 'interview' | 'rejected';
   matchScore?: number;
   matchedSkills?: string[];
   missingSkills?: string[];
@@ -119,9 +123,11 @@ export interface Course {
 export interface JobMatch {
   job: Job;
   matchScore: number;
+  requiredSkills?: string[];
   matchedSkills: string[];
   missingSkills: string[];
   explanation?: string | null;
+  shortSummary?: string;
   explanationMeta?: {
     summary: string;
     matchedCount: number;
@@ -152,6 +158,10 @@ export interface ResumeScoreEntry {
   roleId: string;
   score: number;
   sectionScores: {
+    skillsCompleteness?: number;
+    experienceRelevance?: number;
+    projectStrength?: number;
+    formattingConsistency?: number;
     skills: number;
     projects: number;
     experience: number;
@@ -173,6 +183,7 @@ export interface CareerRole {
 export interface RoadmapItem {
   skill: string;
   status: 'completed' | 'in_progress' | 'missing';
+  level?: 'beginner' | 'intermediate' | 'advanced';
 }
 
 export interface WeeklyPlannerItem {
@@ -194,6 +205,13 @@ export interface CareerOverview {
     skillsInProgress: number;
     totalSkills: number;
     jobsMatchedImprovement: number;
+  };
+  applicationStatusCounts?: {
+    saved: number;
+    applied: number;
+    interviewing: number;
+    offer: number;
+    rejected: number;
   };
   missingSkills: string[];
 }
@@ -245,6 +263,13 @@ export interface JobTrackerData {
     job: Job;
   }>;
   applications: Application[];
+  statusCounts?: {
+    saved: number;
+    applied: number;
+    interviewing: number;
+    offer: number;
+    rejected: number;
+  };
 }
 
 export interface ApiResponse<T> {

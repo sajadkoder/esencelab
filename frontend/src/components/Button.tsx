@@ -12,14 +12,14 @@ interface ButtonProps extends HTMLMotionProps<"button"> {
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className = '', variant = 'primary', size = 'md', isLoading, children, disabled, ...props }, ref) => {
+  ({ className = '', variant = 'primary', size = 'md', isLoading, children, disabled, type = 'button', ...props }, ref) => {
     const baseStyles =
-      'inline-flex items-center justify-center rounded-xl font-medium transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed';
+      'inline-flex items-center justify-center rounded-xl font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed';
 
     const variants = {
-      primary: 'bg-primary text-background hover:bg-black/80',
-      secondary: 'bg-accent text-white hover:bg-blue-700',
-      outline: 'border border-border text-primary hover:bg-black/5',
+      primary: 'bg-primary text-white hover:bg-black/85',
+      secondary: 'bg-accent text-black hover:bg-[#c79f27]',
+      outline: 'border border-border bg-white text-primary hover:bg-black/5',
       ghost: 'bg-transparent text-primary hover:bg-black/5',
     };
 
@@ -35,6 +35,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         whileHover={{ scale: disabled || isLoading ? 1 : 1.02 }}
         whileTap={{ scale: disabled || isLoading ? 1 : 0.98 }}
         className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+        type={type}
         disabled={disabled || isLoading}
         {...props}
       >

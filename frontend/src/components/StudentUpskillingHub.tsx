@@ -8,12 +8,14 @@ import Button from '@/components/Button';
 import Badge from '@/components/Badge';
 import { CircularProgress } from '@/components/Progress';
 import { Skeleton } from '@/components/Skeleton';
-import { CareerOverview, JobMatch, Resume, StudentRecommendations } from '@/types';
+import { CareerOverview, LearningPlan, Resume, StudentRecommendations } from '@/types';
 import {
   clearRecommendationCache,
   getCareerOverview,
+  getLearningPlan,
   getReadableErrorMessage,
   getResume,
+  updateRoadmapSkill,
   uploadResume,
 } from '@/lib/dashboardApi';
 import { useAuth } from '@/contexts/AuthContext';
@@ -63,6 +65,8 @@ export default function StudentUpskillingHub({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [overview, setOverview] = useState<CareerOverview | null>(null);
+  const [learningPlan, setLearningPlan] = useState<LearningPlan | null>(null);
+  const [updatingSkill, setUpdatingSkill] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -70,10 +74,15 @@ export default function StudentUpskillingHub({
       const resumeData = await getResume();
       setResume(resumeData);
       if (resumeData) {
-        const overviewData = await getCareerOverview();
+        const [overviewData, learningPlanData] = await Promise.all([
+          getCareerOverview(),
+          getLearningPlan(undefined, 30),
+        ]);
         setOverview(overviewData);
+        setLearningPlan(learningPlanData);
       } else {
         setOverview(null);
+        setLearningPlan(null);
       }
     } catch (error: any) {
       setFeedback({
@@ -114,6 +123,47 @@ export default function StudentUpskillingHub({
     return overview?.role?.name || topRecommendedJobs[0]?.job?.title || 'your selected role';
   }, [overview?.role?.name, topRecommendedJobs]);
 
+  const roadmapByLevel = useMemo(() => {
+    const grouped: Record<string, Array<{ skill: string; status: 'completed' | 'in_progress' | 'missing'; level?: string }>> = {
+      beginner: [],
+      intermediate: [],
+      advanced: [],
+      other: [],
+    };
+    (overview?.roadmap || []).forEach((item) => {
+      const level = item.level || 'other';
+      if (!grouped[level]) grouped[level] = [];
+      grouped[level].push(item);
+    });
+    return grouped;
+  }, [overview?.roadmap]);
+
+  const handleRoadmapStatusCycle = async (
+    skillName: string,
+    current: 'completed' | 'in_progress' | 'missing'
+  ) => {
+    if (!overview || updatingSkill) return;
+    const nextStatus: 'completed' | 'in_progress' | 'missing' =
+      current === 'missing' ? 'in_progress' : current === 'in_progress' ? 'completed' : 'missing';
+
+    setUpdatingSkill(skillName);
+    try {
+      const result = await updateRoadmapSkill({
+        roleId: overview.roleId,
+        skillName,
+        status: nextStatus,
+      });
+      setOverview((prev) => (prev ? { ...prev, roadmap: result.roadmap } : prev));
+    } catch (error: any) {
+      setFeedback({
+        tone: 'error',
+        text: getReadableErrorMessage(error, 'Unable to update roadmap skill right now.'),
+      });
+    } finally {
+      setUpdatingSkill(null);
+    }
+  };
+
   const processResumeUpload = async (candidate: File | null) => {
     if (!candidate || uploading) return;
     const validationError = validatePdf(candidate);
@@ -152,31 +202,6 @@ export default function StudentUpskillingHub({
         ? 'border-red-200 bg-red-50 text-red-700'
         : 'border-accent-soft text-accent';
 
-  const renderJobCard = (entry: JobMatch) => {
-    const match = scoreToPercent(entry.matchScore);
-    return (
-      <Card key={entry.job.id} hoverable className="flex flex-col">
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <div>
-            <h3 className="text-lg font-semibold text-primary line-clamp-1">{entry.job.title}</h3>
-            <p className="text-sm text-secondary">{entry.job.company}</p>
-          </div>
-          <Badge variant={match > 75 ? 'success' : match > 50 ? 'warning' : 'secondary'}>
-            {match}% Match
-          </Badge>
-        </div>
-        <p className="text-sm text-secondary flex-grow mb-6 line-clamp-2">{oneLine(entry.job.description)}</p>
-        <div>
-          <Link href={`/jobs/${entry.job.id}`}>
-            <Button variant="outline" size="sm" className="w-full">
-              View Details
-            </Button>
-          </Link>
-        </div>
-      </Card>
-    );
-  };
-
   if (loading) {
     return (
       <div className="space-y-8 layout-container section-spacing">
@@ -201,8 +226,8 @@ export default function StudentUpskillingHub({
           className="w-full max-w-2xl"
         >
           <div className="text-center mb-10">
-            <h2 className="heading-section text-primary mb-3">Upload Your Resume</h2>
-            <p className="text-base text-secondary">Let's analyze your profile and build your career roadmap.</p>
+            <h2 className="text-3xl md:text-4xl font-serif font-semibold tracking-tight text-primary mb-3">Upload Your Resume</h2>
+            <p className="text-base text-secondary">Let&apos;s analyze your profile and build your career roadmap.</p>
           </div>
 
           <Card hoverable={false} className="border-dashed border-2 bg-transparent hover:bg-white/40 transition-colors p-12 flex flex-col items-center justify-center text-center cursor-pointer"
@@ -269,7 +294,7 @@ export default function StudentUpskillingHub({
     <div className="layout-container section-spacing space-y-12">
       <section className="space-y-4">
         <h1 className="text-5xl md:text-6xl font-serif font-bold tracking-tight text-primary leading-tight">Welcome back,<br /><span className="italic font-light text-secondary">{user?.name || 'Student'}.</span></h1>
-        <p className="text-lg font-sans text-secondary font-light max-w-2xl">Here's your career progress, let's keep improving together.</p>
+        <p className="text-lg font-sans text-secondary font-light max-w-2xl">Here&apos;s your career progress, let&apos;s keep improving together.</p>
       </section>
 
       <AnimatePresence>
@@ -294,11 +319,11 @@ export default function StudentUpskillingHub({
             {uploading ? (
               <div className="flex items-center md:justify-start justify-center gap-3 text-sm font-sans font-medium text-accent">
                 <Loader2 className="h-5 w-5 animate-spin" />
-                <span>Quantifying your value...</span>
+                <span>Updating your profile insights...</span>
               </div>
             ) : (
               <Button onClick={() => fileInputRef.current?.click()} className="h-12 px-8 rounded-full font-serif text-lg bg-primary text-white hover:bg-black/80 transition-all shadow-xl shadow-primary/20">
-                Update Artifact
+                Update Resume
               </Button>
             )}
             <input
@@ -331,9 +356,91 @@ export default function StudentUpskillingHub({
               </div>
             ))
           ) : (
-            <p className="text-base font-sans font-light text-secondary bg-white/50 border-[0.5px] border-border py-4 px-6 rounded-2xl w-full">Flawless execution. You have elite coverage for your intended targets.</p>
+            <p className="text-base font-sans font-light text-secondary bg-white/50 border-[0.5px] border-border py-4 px-6 rounded-2xl w-full">Great progress. Your current profile already covers most role requirements.</p>
           )}
         </div>
+      </section>
+
+      <section className="space-y-8">
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="text-2xl font-serif text-primary">Skill Roadmap Checklist</h2>
+          {overview?.applicationStatusCounts && (
+            <div className="text-xs text-secondary">
+              Applied: {overview.applicationStatusCounts.applied} · Interviewing: {overview.applicationStatusCounts.interviewing} · Offer: {overview.applicationStatusCounts.offer}
+            </div>
+          )}
+        </div>
+        <div className="grid gap-6 lg:grid-cols-3">
+          {(['beginner', 'intermediate', 'advanced'] as const).map((level) => (
+            <Card key={level} hoverable={false} className="p-5 space-y-4">
+              <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-secondary">{level}</h3>
+              {(roadmapByLevel[level] || []).length > 0 ? (
+                <div className="space-y-2">
+                  {(roadmapByLevel[level] || []).map((item) => (
+                    <button
+                      key={`${level}-${item.skill}`}
+                      onClick={() => void handleRoadmapStatusCycle(item.skill, item.status)}
+                      disabled={updatingSkill === item.skill}
+                      className="w-full rounded-xl border border-border bg-white/70 px-3 py-2 text-left text-sm transition hover:bg-white disabled:opacity-60"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="line-clamp-1">{item.skill}</span>
+                        <Badge
+                          variant={
+                            item.status === 'completed'
+                              ? 'success'
+                              : item.status === 'in_progress'
+                                ? 'warning'
+                                : 'secondary'
+                          }
+                        >
+                          {item.status}
+                        </Badge>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-secondary">No skills mapped in this stage.</p>
+              )}
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-8">
+        <h2 className="text-2xl font-serif text-primary">30-Day Learning Plan</h2>
+        {learningPlan?.planData?.weeks?.length ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            {learningPlan.planData.weeks.slice(0, 4).map((week) => (
+              <Card key={week.week} hoverable={false} className="p-5 space-y-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.12em] text-secondary">Week {week.week}</p>
+                  <h3 className="text-lg font-semibold text-primary">{week.title}</h3>
+                </div>
+                <ul className="space-y-1 text-sm text-secondary">
+                  {week.goals.slice(0, 3).map((goal) => (
+                    <li key={goal} className="line-clamp-2">{goal}</li>
+                  ))}
+                </ul>
+                {week.resources?.length > 0 && (
+                  <a
+                    href={week.resources[0].url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex text-sm font-semibold text-accent hover:underline"
+                  >
+                    Resource: {week.resources[0].title}
+                  </a>
+                )}
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card hoverable={false} className="p-6 text-sm text-secondary">
+            Learning plan will appear after roadmap generation.
+          </Card>
+        )}
       </section>
 
       <section className="space-y-8">
@@ -357,7 +464,7 @@ export default function StudentUpskillingHub({
                   <div>
                     <Link href={`/jobs/${entry.job.id}`}>
                       <Button variant="outline" size="sm" className="w-full rounded-2xl border-[0.5px] border-border bg-transparent hover:bg-black/5 font-sans font-medium h-10">
-                        Inspect Origin
+                        View Job
                       </Button>
                     </Link>
                   </div>
@@ -367,7 +474,7 @@ export default function StudentUpskillingHub({
           ) : (
             <div className="md:col-span-2 lg:col-span-3 glass-panel p-8 rounded-3xl text-center">
               <p className="text-base font-sans font-light text-secondary">
-                Analyzing market vectors... Preparing elite recommendations based on your profile blueprint.
+                We are preparing recommendations based on your latest resume and skill profile.
               </p>
             </div>
           )}

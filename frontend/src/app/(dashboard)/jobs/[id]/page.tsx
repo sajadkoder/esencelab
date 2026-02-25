@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
@@ -9,18 +9,43 @@ import Card from '@/components/Card';
 import Badge from '@/components/Badge';
 import Button from '@/components/Button';
 import Link from 'next/link';
-import { MapPin, DollarSign, Clock, Briefcase, ArrowLeft, Building, CheckCircle, ChevronLeft } from 'lucide-react';
+import { MapPin, DollarSign, Clock, Briefcase, Building, CheckCircle, ChevronLeft } from 'lucide-react';
 import { Skeleton } from '@/components/Skeleton';
 import { motion } from 'framer-motion';
 
 export default function JobDetailPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
-  const params = useParams();
+  const params = useParams<{ id?: string | string[] }>();
+  const jobId = Array.isArray(params.id) ? params.id[0] : params.id;
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
+
+  const fetchJob = useCallback(async () => {
+    if (!jobId) return;
+    try {
+      const res = await api.get(`/jobs/${jobId}`);
+      setJob(res.data.data);
+    } catch {
+      router.push('/jobs');
+    } finally {
+      setLoading(false);
+    }
+  }, [jobId, router]);
+
+  const checkApplication = useCallback(async () => {
+    if (!jobId) return;
+    try {
+      const res = await api.get('/applications/my');
+      const applications = res.data.data || [];
+      const applied = applications.some((app: Application) => app.jobId === jobId);
+      setHasApplied(applied);
+    } catch {
+      setHasApplied(false);
+    }
+  }, [jobId]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -29,40 +54,18 @@ export default function JobDetailPage() {
   }, [isAuthenticated, isLoading, router]);
 
   useEffect(() => {
-    if (isAuthenticated && params.id) {
-      fetchJob();
-      checkApplication();
+    if (isAuthenticated && jobId) {
+      void fetchJob();
+      void checkApplication();
     }
-  }, [isAuthenticated, params.id]);
-
-  const fetchJob = async () => {
-    try {
-      const res = await api.get(`/jobs/${params.id}`);
-      setJob(res.data.data);
-    } catch {
-      router.push('/jobs');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const checkApplication = async () => {
-    try {
-      const res = await api.get(`/applications/my`);
-      const applications = res.data.data || [];
-      const applied = applications.some((app: Application) => app.jobId === params.id);
-      setHasApplied(applied);
-    } catch {
-      setHasApplied(false);
-    }
-  };
+  }, [checkApplication, fetchJob, isAuthenticated, jobId]);
 
   const handleApply = async () => {
-    if (!user?.id) return;
+    if (!user?.id || !jobId) return;
 
     setApplying(true);
     try {
-      await api.post('/applications', { jobId: params.id });
+      await api.post('/applications', { jobId });
       setHasApplied(true);
       alert('Application submitted successfully!');
     } catch (error: any) {

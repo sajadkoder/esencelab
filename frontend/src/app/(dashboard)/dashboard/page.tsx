@@ -2,7 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Briefcase, FileText, Loader2, PlusCircle, Users } from 'lucide-react';
+import { BarChart3, Briefcase, FileText, Loader2, PlusCircle, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Card from '@/components/Card';
 import Button from '@/components/Button';
@@ -13,8 +13,8 @@ import StudentUpskillingHub from '@/components/StudentUpskillingHub';
 import { DashboardStats, Job, StudentRecommendations } from '@/types';
 import {
   createJob,
+  getAdminMonitoring,
   getCandidateMatches,
-  getDashboardStats,
   getEmployerJobs,
   getReadableErrorMessage,
   getStudentRecommendations,
@@ -64,8 +64,10 @@ export default function DashboardPage() {
   const [jobForm, setJobForm] = useState({
     title: '',
     company: '',
+    description: '',
     location: '',
     requirements: '',
+    experienceLevel: 'mid' as 'entry' | 'junior' | 'mid' | 'senior' | 'lead',
   });
 
   useEffect(() => {
@@ -106,7 +108,7 @@ export default function DashboardPage() {
 
   const fetchAdminDashboard = useCallback(async () => {
     try {
-      const data = await getDashboardStats();
+      const data = await getAdminMonitoring();
       setStats(data);
     } catch (error: any) {
       setMessage(getReadableErrorMessage(error, 'Failed to load admin dashboard.'));
@@ -164,8 +166,10 @@ export default function DashboardPage() {
       setJobForm({
         title: '',
         company: '',
+        description: '',
         location: '',
         requirements: '',
+        experienceLevel: 'mid',
       });
       setMessage('Job posted successfully.');
       await fetchEmployerDashboard();
@@ -256,6 +260,21 @@ export default function DashboardPage() {
               </div>
               <div className="relative pt-2">
                 <label className="absolute left-4 transition-all duration-200 pointer-events-none text-[10px] uppercase tracking-widest px-1 bg-transparent text-secondary z-10 -top-1 font-bold">
+                  Description
+                </label>
+                <textarea
+                  rows={3}
+                  value={jobForm.description}
+                  onChange={(event) =>
+                    setJobForm((prev) => ({ ...prev, description: event.target.value }))
+                  }
+                  className="w-full rounded-2xl border-[0.5px] border-border bg-white/50 px-4 py-4 font-sans text-primary text-base transition-all focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent shadow-inner relative z-0 appearance-none"
+                  placeholder="What outcomes should this hire deliver?"
+                  required
+                />
+              </div>
+              <div className="relative pt-2">
+                <label className="absolute left-4 transition-all duration-200 pointer-events-none text-[10px] uppercase tracking-widest px-1 bg-transparent text-secondary z-10 -top-1 font-bold">
                   Required Skills (comma separated)
                 </label>
                 <textarea
@@ -268,6 +287,27 @@ export default function DashboardPage() {
                   placeholder="Node.js, Express, SQL"
                   required
                 />
+              </div>
+              <div className="relative pt-2 max-w-xs">
+                <label className="absolute left-4 transition-all duration-200 pointer-events-none text-[10px] uppercase tracking-widest px-1 bg-transparent text-secondary z-10 -top-1 font-bold">
+                  Experience Level
+                </label>
+                <select
+                  value={jobForm.experienceLevel}
+                  onChange={(event) =>
+                    setJobForm((prev) => ({
+                      ...prev,
+                      experienceLevel: event.target.value as 'entry' | 'junior' | 'mid' | 'senior' | 'lead',
+                    }))
+                  }
+                  className="w-full rounded-2xl border-[0.5px] border-border bg-white/50 px-4 py-4 font-sans text-primary text-base transition-all focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent shadow-sm relative z-0 appearance-none"
+                >
+                  <option value="entry">Entry</option>
+                  <option value="junior">Junior</option>
+                  <option value="mid">Mid</option>
+                  <option value="senior">Senior</option>
+                  <option value="lead">Lead</option>
+                </select>
               </div>
               <Button type="submit" isLoading={postingJob} className="w-full justify-center h-12 rounded-full font-serif text-lg bg-primary text-white hover:bg-black/80 transition-all">
                 <PlusCircle className="mr-2 h-5 w-5" />
@@ -334,6 +374,13 @@ export default function DashboardPage() {
                           ))}
                         </div>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => router.push(`/applicants/${candidate.candidateId}`)}
+                        className="mt-4 w-full rounded-xl border-[0.5px] border-border px-3 py-2 text-xs font-semibold uppercase tracking-wider text-primary transition-colors hover:bg-black/5"
+                      >
+                        View Profile
+                      </button>
                     </div>
                   );
                 })}
@@ -371,7 +418,7 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
 
-      <section className="grid gap-6 md:grid-cols-3">
+      <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         <div className="glass-panel p-8 text-center rounded-3xl hover:-translate-y-1 transition-transform duration-500">
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/5 text-accent border-[0.5px] border-accent/20 shadow-inner">
             <Users className="h-8 w-8" />
@@ -392,6 +439,13 @@ export default function DashboardPage() {
           </div>
           <p className="text-[10px] font-sans font-bold text-secondary tracking-widest uppercase mb-2">Active Roles</p>
           <p className="text-6xl font-serif font-bold tracking-tighter text-primary">{stats.totalJobs || 0}</p>
+        </div>
+        <div className="glass-panel p-8 text-center rounded-3xl hover:-translate-y-1 transition-transform duration-500">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/5 text-amber-600 border-[0.5px] border-amber-500/20 shadow-inner">
+            <BarChart3 className="h-8 w-8" />
+          </div>
+          <p className="text-[10px] font-sans font-bold text-secondary tracking-widest uppercase mb-2">Applications</p>
+          <p className="text-6xl font-serif font-bold tracking-tighter text-primary">{stats.totalApplications || 0}</p>
         </div>
       </section>
     </div>

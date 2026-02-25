@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
@@ -23,13 +23,7 @@ export default function UsersPage() {
     }
   }, [isAuthenticated, isLoading, router]);
 
-  useEffect(() => {
-    if (isAuthenticated && user?.role === 'admin') {
-      fetchUsers();
-    }
-  }, [isAuthenticated, user, searchTerm, roleFilter]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
@@ -42,15 +36,26 @@ export default function UsersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [roleFilter, searchTerm]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+    if (user?.role === 'admin') {
+      void fetchUsers();
+      return;
+    }
+    setLoading(false);
+  }, [fetchUsers, isAuthenticated, user?.role]);
 
   const handleDelete = async (userId: string) => {
     if (!confirm('Are you sure you want to delete this user?')) return;
 
     try {
       await api.delete(`/users/${userId}`);
-      fetchUsers();
-    } catch (error) {
+      void fetchUsers();
+    } catch {
       alert('Failed to delete user');
     }
   };
@@ -58,8 +63,8 @@ export default function UsersPage() {
   const handleToggleStatus = async (userId: string, currentStatus: boolean) => {
     try {
       await api.put(`/users/${userId}`, { isActive: !currentStatus });
-      fetchUsers();
-    } catch (error) {
+      void fetchUsers();
+    } catch {
       alert('Failed to update user status');
     }
   };

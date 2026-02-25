@@ -65,15 +65,15 @@ export default function ResumeUploadPage() {
     void fetchResume();
   }, [fetchResume, router, user?.role]);
 
-  const validatePdf = (candidate: File) => {
+  const validatePdf = useCallback((candidate: File) => {
     const isPdf =
       candidate.type === 'application/pdf' || candidate.name.toLowerCase().endsWith('.pdf');
     if (!isPdf) return 'Invalid file type. Please upload a PDF.';
     if (candidate.size > 5 * 1024 * 1024) return 'File too large. Maximum size is 5MB.';
     return null;
-  };
+  }, []);
 
-  const setSelectedFile = (candidate: File | null) => {
+  const setSelectedFile = useCallback((candidate: File | null) => {
     if (!candidate) {
       setFile(null);
       return;
@@ -85,7 +85,7 @@ export default function ResumeUploadPage() {
     }
     setFeedback(null);
     setFile(candidate);
-  };
+  }, [validatePdf]);
 
   const handleDrag = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -99,7 +99,7 @@ export default function ResumeUploadPage() {
     event.stopPropagation();
     setDragActive(false);
     setSelectedFile(event.dataTransfer.files?.[0] || null);
-  }, []);
+  }, [setSelectedFile]);
 
   const handleUpload = async () => {
     if (!file || uploading) return;
@@ -270,7 +270,7 @@ export default function ResumeUploadPage() {
               <p className="mb-3 text-2xl font-serif text-primary">
                 Ingest Artifact Blueprint
               </p>
-              <p className="text-[10px] font-sans font-bold uppercase tracking-widest text-secondary mb-8">Strictly PDF • Max 5MB</p>
+              <p className="text-[10px] font-sans font-bold uppercase tracking-widest text-secondary mb-8">Strictly PDF - Max 5MB</p>
               <Button className="rounded-full px-10 h-12 font-sans font-medium bg-white text-primary border-[0.5px] border-border shadow-sm pointer-events-none">Initialize Parsing Sequence</Button>
             </div>
           )}
@@ -384,3 +384,5 @@ export default function ResumeUploadPage() {
     </div>
   );
 }
+
+

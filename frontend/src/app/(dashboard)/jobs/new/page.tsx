@@ -22,6 +22,7 @@ export default function NewJobPage() {
     location: '',
     salaryMin: '',
     salaryMax: '',
+    experienceLevel: 'mid',
     jobType: 'full_time',
     status: 'active',
   });
@@ -129,6 +130,18 @@ export default function NewJobPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Select
+              label="Experience Level"
+              value={formData.experienceLevel}
+              onChange={(e) => setFormData({ ...formData, experienceLevel: e.target.value })}
+              options={[
+                { value: 'entry', label: 'Entry' },
+                { value: 'junior', label: 'Junior' },
+                { value: 'mid', label: 'Mid' },
+                { value: 'senior', label: 'Senior' },
+                { value: 'lead', label: 'Lead' },
+              ]}
+            />
             <Select
               label="Job Type"
               value={formData.jobType}
